@@ -128,7 +128,8 @@ class CityLearnEnv(Environment, Env):
     @property
     def done(self) -> bool:
         """Check if simulation has reached completion."""
-
+        print(self.time_step )
+        print(self.time_steps )
         return self.time_step == self.time_steps - 1
 
     @property

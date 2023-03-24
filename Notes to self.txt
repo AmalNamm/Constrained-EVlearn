@@ -1,0 +1,36 @@
+Check or send email to check if the environment has EVs or stationary storage
+
+
+
+Certainly! CityLearn is an open-source platform for implementing and testing reinforcement learning algorithms in urban environments. It provides a set of environments based on building energy simulation, where agents can control the energy consumption of buildings and receive rewards based on their energy efficiency.
+
+The code for CityLearn can be found on their GitHub repository (https://github.com/citylearn/citylearn). The repository contains several Python scripts and modules that implement the different components of the platform.
+
+Here's a brief overview of some of the key parts of the code:
+
+CityLearn: This class represents the main environment in CityLearn. It is responsible for initializing the simulation, loading the building models, and executing the simulation steps.
+
+Building: This class represents an individual building in the simulation. It contains information about the building's geometry, construction, and HVAC system.
+
+Action: This class represents the actions that an agent can take in the simulation. The actions correspond to different HVAC setpoints that can be adjusted by the agent.
+
+RewardFunction: This class calculates the rewards that an agent receives in the simulation. The rewards are based on the energy consumption of the building and the environmental impact of that consumption.
+
+Agent: This class represents an RL agent that interacts with the simulation. It takes observations of the building's state and selects actions to maximize its reward.
+
+TrainEnv: This class implements a training environment for the RL agent. It runs multiple episodes of the simulation and returns the cumulative rewards for each episode.
+
+TestEnv: This class implements a testing environment for the RL agent. It runs a single episode of the simulation and returns the cumulative reward.
+
+The CityLearn code is designed to be flexible and extensible, allowing users to modify or add new components as needed. It also includes several example RL agents and training scripts to help users get started.
+
+
+
+
+Tiago Fonseca
+Does it model or have anything related to EVs ? Or only to Heat pumps and so on ? 
+Yes, CityLearn does include support for electric vehicles (EVs). In fact, the latest version of CityLearn (version 0.3.0) includes a new environment called the Electric Vehicle Energy Management (EVE) environment, which models the energy consumption and charging behavior of electric vehicles in a smart city context.
+
+In the EVE environment, agents can control the charging schedules of EVs and coordinate their charging behavior to reduce peak demand and minimize costs. The environment includes realistic models of EV battery charging and discharging, as well as the impact of EV charging on the electricity grid.
+
+CityLearn also includes support for other types of energy systems, including heating, ventilation, and air conditioning (HVAC) systems, as well as renewable energy sources such as solar panels and wind turbines. These systems can be integrated with the EV charging behavior to model the overall energy consumption and demand of a smart city.
