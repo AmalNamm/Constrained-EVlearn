@@ -111,7 +111,7 @@ class MARLISA(SAC):
     def iterations(self, iterations: int):
         self.__iterations = 2 if iterations is None else iterations
 
-    def add_to_buffer(self, observations: List[List[float]], actions: List[List[float]], reward: List[float], next_observations: List[List[float]], done: bool):
+    def update(self, observations: List[List[float]], actions: List[List[float]], reward: List[float], next_observations: List[List[float]], done: bool):
         r"""Update replay buffer.
 
         Parameters
@@ -280,18 +280,18 @@ class MARLISA(SAC):
             else:
                 pass
 
-    def get_post_exploration_actions(self, observations: List[List[float]]) -> List[List[float]]:
+    def get_post_exploration_prediction(self, observations: List[List[float]], deterministic: bool) -> List[List[float]]:
         func = {
             True: self.get_post_exploration_actions_with_information_sharing,
             False: self.get_post_exploration_actions_without_information_sharing
         }[self.information_sharing]
-        actions, coordination_variables = func(observations)
+        actions, coordination_variables = func(observations, deterministic)
         self.__coordination_variables_history[0] = deepcopy(self.__coordination_variables_history[1])
         self.__coordination_variables_history[1] = coordination_variables[0:]
         
         return actions
 
-    def get_exploration_actions(self, observations: List[List[float]]) -> List[List[float]]:
+    def get_exploration_prediction(self, observations: List[List[float]]) -> List[List[float]]:
         func = {
             True: self.get_exploration_actions_with_information_sharing,
             False: self.get_exploration_actions_without_information_sharing
@@ -302,7 +302,7 @@ class MARLISA(SAC):
         
         return actions
 
-    def get_post_exploration_actions_with_information_sharing(self, observations: List[List[float]]) -> Tuple[List[List[float]], List[List[float]]]:
+    def get_post_exploration_actions_with_information_sharing(self, observations: List[List[float]], deterministic: bool) -> Tuple[List[List[float]], List[List[float]]]:
         agent_count = len(self.action_dimension)
         actions = [None for _ in range(agent_count)]
         action_order = list(range(agent_count))
@@ -321,7 +321,7 @@ class MARLISA(SAC):
                 o = self.pca[c].transform(o.reshape(1,-1))[0]
                 o = torch.FloatTensor(o).unsqueeze(0).to(self.device)
                 result = self.policy_net[i].sample(o)
-                a = result[2] if self.time_step >= self.deterministic_start_time_step else result[0]
+                a = result[2] if self.time_step >= self.deterministic_start_time_step or deterministic else result[0]
                 a = list(a.detach().cpu().numpy()[0])
                 actions[c] = a
                 expected_demand[c] = self.predict_demand(c, o_, a)
@@ -337,7 +337,7 @@ class MARLISA(SAC):
         
         return actions, coordination_variables
 
-    def get_post_exploration_actions_without_information_sharing(self, observations: List[List[float]]) -> Tuple[List[List[float]], List[List[float]]]:
+    def get_post_exploration_actions_without_information_sharing(self, observations: List[List[float]], deterministic: bool) -> Tuple[List[List[float]], List[List[float]]]:
         agent_count = len(self.action_dimension)
         actions = [None for _ in range(agent_count)]
         coordination_variables = [[0.0, 0.0] for _ in range(agent_count)]
@@ -348,7 +348,7 @@ class MARLISA(SAC):
             o = self.pca[i].transform(o.reshape(1,-1))[0]
             o = torch.FloatTensor(o).unsqueeze(0).to(self.device)
             result = self.policy_net[i].sample(o)
-            a = result[2] if self.time_step >= self.deterministic_start_time_step else result[0]
+            a = result[2] if self.time_step >= self.deterministic_start_time_step or deterministic else result[0]
             a = list(a.detach().cpu().numpy()[0])
             actions[i] = a
         
@@ -373,7 +373,7 @@ class MARLISA(SAC):
         return actions, coordination_variables
 
     def get_exploration_actions_without_information_sharing(self, observations: List[List[float]]) -> Tuple[List[List[float]], List[List[float]]]:
-        actions = super().get_exploration_actions(observations)
+        actions = super().get_exploration_prediction(observations)
         coordination_variables = [[0.0, 0.0] for _ in range(len(self.action_dimension))]
 
         return actions, coordination_variables
