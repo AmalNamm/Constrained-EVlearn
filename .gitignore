@@ -178,3 +178,5 @@ examples/*
 !examples/*.ipynb
 
 # test files
+.vscode/settings.json
+Test_API_VPS.py
