@@ -3,7 +3,7 @@ import numpy as np
 from citylearn.base import Environment
 np.seterr(divide = 'ignore', invalid = 'ignore')
 ZERO_DIVISION_CAPACITY = 0.00001
-
+#fayaz test
 class Device(Environment):
     def __init__(self, efficiency: float = None, **kwargs):
         r"""Initialize `Device`.
