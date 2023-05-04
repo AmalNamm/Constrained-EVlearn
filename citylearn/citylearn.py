@@ -123,7 +123,7 @@ class CityLearnEnv(Environment, Env):
         """Names of common observations across all buildings i.e. observations that have the same value irrespective of the building."""
 
         return self.__shared_observations
-
+fayaz test
     @property
     def done(self) -> bool:
         """Check if simulation has reached completion."""
