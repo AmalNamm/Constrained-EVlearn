@@ -1,4 +1,4 @@
-from typing import Iterable, List, Union
+from typing import Iterable, List, Union, Dict
 import numpy as np
 from citylearn.base import Environment
 np.seterr(divide = 'ignore', invalid = 'ignore')
@@ -889,3 +889,288 @@ class Battery(ElectricDevice, StorageDevice):
         super().reset()
         self.__efficiency_history = self.__efficiency_history[0:1]
         self.__capacity_history = self.__capacity_history[0:1]
+
+
+###########################################################################################################################
+
+class Charger(Device):
+    def __init__(
+        self,
+        max_charging_power: float = 50.0,
+        min_charging_power: float = 0.0,
+        max_discharging_power: float = 50.0,
+        min_discharging_power: float = 0.0,
+        charge_efficiency_curve: Dict[float, float] = None,
+        discharge_efficiency_curve: Dict[float, float] = None,
+        max_connected_cars: int = 1,
+        **kwargs
+    ):
+        r"""Initializes the `Electric Vehicle Charger` class with the given attributes.
+
+        Parameters
+        ----------
+        max_charging_power : float, default 50
+            Maximum charging power in kW.
+        min_charging_power : float, default 0
+            Minimum charging power in kW.
+        max_discharging_power : float, default 50
+            Maximum discharging power in kW.
+        min_discharging_power : float, default 0
+            Minimum discharging power in kW.
+        charge_efficiency_curve : dict, default {3.6: 0.95, 7.2: 0.97, 22: 0.98, 50: 0.98}
+            Efficiency curve for charging containing power levels and corresponding efficiency values.
+        discharge_efficiency_curve : dict, default {3.6: 0.95, 7.2: 0.97, 22: 0.98, 50: 0.98}
+            Efficiency curve for discharging containing power levels and corresponding efficiency values.
+        max_connected_cars : int, default 1
+            Maximum number of cars that can be connected to the charger simultaneously.
+
+        Other Parameters
+        ----------------
+        **kwargs : dict
+            Other keyword arguments used to initialize super classes.
+        """
+
+        self.max_charging_power = max_charging_power
+        self.min_charging_power = min_charging_power
+        self.max_discharging_power = max_discharging_power
+        self.min_discharging_power = min_discharging_power
+        self.charge_efficiency_curve = charge_efficiency_curve or {3.6: 0.95, 7.2: 0.97, 22: 0.98, 50: 0.98}
+        self.discharge_efficiency_curve = discharge_efficiency_curve or {3.6: 0.95, 7.2: 0.97, 22: 0.98, 50: 0.98}
+        self.efficiency = efficiency
+        self.max_connected_cars = max_connected_cars
+        self.connected_cars = []
+
+    @property
+    def max_charging_power(self) -> float:
+        """Maximum charging power in kW."""
+        return self._max_charging_power
+
+    @property
+    def min_charging_power(self) -> float:
+        """Minimum charging power in kW."""
+        return self._min_charging_power
+
+    @property
+    def max_discharging_power(self) -> float:
+        """Maximum discharging power in kW."""
+        return self._max_discharging_power
+
+    @property
+    def min_discharging_power(self) -> float:
+        """Minimum discharging power in kW."""
+        return self._min_discharging_power
+
+    @property
+    def charge_efficiency_curve(self) -> dict:
+        """Efficiency curve for charging containing power levels and corresponding efficiency values."""
+        return self._charge_efficiency_curve
+
+    @property
+    def discharge_efficiency_curve(self) -> dict:
+        """Efficiency curve for discharging containing power levels and corresponding efficiency values."""
+        return self._discharge_efficiency_curve
+
+    @property
+    def max_connected_cars(self) -> int:
+        """Maximum number of cars that can be connected to the charger simultaneously."""
+        return self._max_connected_cars
+
+    @property
+    def connected_cars(self) -> list:
+        """List of connected cars to the charger."""
+        return self._connected_cars
+
+    @max_charging_power.setter
+    def max_charging_power(self, max_charging_power: float):
+        self._max_charging_power = max_charging_power
+
+    @min_charging_power.setter
+    def min_charging_power(self, min_charging_power: float):
+        self._min_charging_power = min_charging_power
+
+    @max_discharging_power.setter
+    def max_discharging_power(self, max_discharging_power: float):
+        self._max_discharging_power = max_discharging_power
+
+    @min_discharging_power.setter
+    def min_discharging_power(self, min_discharging_power: float):
+        self._min_discharging_power = min_discharging_power
+
+    @charge_efficiency_curve.setter
+    def charge_efficiency_curve(self, charge_efficiency_curve: dict):
+        self._charge_efficiency_curve = charge_efficiency_curve
+
+    @discharge_efficiency_curve.setter
+    def discharge_efficiency_curve(self, discharge_efficiency_curve: dict):
+        self._discharge_efficiency_curve = discharge_efficiency_curve
+
+    @max_connected_cars.setter
+    def max_connected_cars(self, max_connected_cars: int):
+        self._max_connected_cars = max_connected_cars
+
+    @connected_cars.setter
+    def connected_cars(self, connected_cars: list):
+        self._connected_cars = connected_cars
+
+    def connect_car(self, car):
+        """
+        Connects a car to the charger.
+
+        Parameters
+        ----------
+        car : object
+            Car instance to be connected to the charger.
+
+        Raises
+        ------
+        ValueError
+            If the charger has reached its maximum connected cars' capacity.
+        """
+        if len(self.connected_cars) < self.max_connected_cars:
+            self.connected_cars.append(car)
+        else:
+            raise ValueError("Charger has reached its maximum connected cars capacity")
+
+    def disconnect_car(self, car):
+        """
+        Disconnects a car from the charger.
+
+        Parameters
+        ----------
+        car : object
+            Car instance to be disconnected from the charger.
+        """
+        self.connected_cars.remove(car)
+
+    def update_evs_soc(self, energy: float):
+        charging = energy >= 0
+
+        if charging:
+            current_power_level = min(max(abs(energy), self.min_charging_power), self.max_charging_power)
+        else:
+            current_power_level = min(max(abs(energy), self.min_discharging_power), self.max_discharging_power)
+
+        if charging:
+            efficiency_curve = self.charge_efficiency_curve
+        else:
+            efficiency_curve = self.discharge_efficiency_curve
+
+        lower_power_level = max([power for power in efficiency_curve if power <= current_power_level])
+        upper_power_level = min([power for power in efficiency_curve if power >= current_power_level])
+
+        if lower_power_level == upper_power_level:
+            charge_discharge_efficiency = efficiency_curve[lower_power_level]
+        else:
+            lower_efficiency = efficiency_curve[lower_power_level]
+            upper_efficiency = efficiency_curve[upper_power_level]
+            charge_discharge_efficiency = lower_efficiency + (current_power_level - lower_power_level) * (
+                        upper_efficiency - lower_efficiency) / (upper_power_level - lower_power_level)
+
+        car = self.connected_cars[0]
+        energy_kwh = current_power_level * charge_discharge_efficiency * (
+                    15 / 60)  # Convert the power to energy by multiplying by the time step (15 minutes)
+
+        if charging:
+            car.soc = min(car.soc + energy_kwh, car.capacity)
+        else:
+            car.soc = max(0, car.soc - energy_kwh)
+
+    def reset(self):
+        """
+        Resets the Charger to its initial state by disconnecting all cars.
+        """
+        self.connected_cars = []
+
+
+class EVCar:
+    def __init__(self, battery: Battery, energy_consumption_rate: float, time_step: float = 15):
+        """
+        Initialize the EVCar class.
+
+        Parameters
+        ----------
+        battery : Battery
+            An instance of the Battery class.
+        energy_consumption_rate : float
+            Energy consumption rate of the car while driving in kWh per distance unit (e.g., kWh/k).
+        time_step : float, default: 15
+            Time step duration in minutes.
+        """
+        self.battery = battery
+        self.energy_consumption_rate = energy_consumption_rate
+        self.location = "parked_not_charging"
+        self.time_step = time_step
+        self.distance_travelled = 0
+
+    def travel(self, speed: float):
+        """
+        Update the car's location to 'travelling', calculate the energy consumption based on the
+        provided speed, and update the battery's state of charge.
+
+        Parameters
+        ----------
+        speed : float
+            The car's speed in distance units per hour (e.g., km/h or miles/h).
+        """
+        self.location = "travelling"
+        distance = speed * (self.time_step / 60)  # Convert speed to distance based on the time step.
+        self.distance_travelled += distance
+        energy_consumption = distance * self.energy_consumption_rate
+        self.battery.charge(-energy_consumption)  # Discharge the battery to account for energy consumption while driving.
+
+    def park(self):
+        """Update the car's location to 'parked_not_charging'."""
+        self.location = "parked_not_charging"
+
+    def charge(self, energy: float):
+        """
+        Charge or discharge the battery with the specified amount of energy.
+
+        Parameters
+        ----------
+        energy : float
+            Energy to charge if (+) or discharge if (-) in kWh.
+        """
+        self.battery.charge(energy)
+
+    @property
+    def location(self) -> str:
+        """Return the car's location status."""
+        return self._location
+
+    @location.setter
+    def location(self, location: str):
+        if location not in ["charging", "parked_not_charging", "travelling"]:
+            raise ValueError("Invalid location status.")
+        self._location = location
+
+    @property
+    def energy_consumption_rate(self) -> float:
+        """Return the energy consumption rate of the car while driving."""
+        return self._energy_consumption_rate
+
+    @energy_consumption_rate.setter
+    def energy_consumption_rate(self, energy_consumption_rate: float):
+        if energy_consumption_rate < 0:
+            raise ValueError("Energy consumption rate must be non-negative.")
+        self._energy_consumption_rate = energy_consumption_rate
+
+    @property
+    def time_step(self) -> float:
+        """Return the time step duration."""
+        return self._time_step
+
+    @time_step.setter
+    def time_step(self, time_step: float):
+        if time_step <= 0:
+            raise ValueError("Time step duration must be greater than zero.")
+        self._time_step = time_step
+
+    def reset(self):
+        """
+        Reset the EVCar to its initial state.
+        """
+        self.location = "parked_not_charging"
+        self.distance_travelled = 0
+        self.battery.reset()
+

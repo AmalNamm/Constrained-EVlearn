@@ -1,0 +1,51 @@
+Check or send email to check if the environment has EVs or stationary storage
+
+
+
+Certainly! CityLearn is an open-source platform for implementing and testing reinforcement learning algorithms in urban environments. It provides a set of environments based on building energy simulation, where agents can control the energy consumption of buildings and receive rewards based on their energy efficiency.
+
+The code for CityLearn can be found on their GitHub repository (https://github.com/citylearn/citylearn). The repository contains several Python scripts and modules that implement the different components of the platform.
+
+Here's a brief overview of some of the key parts of the code:
+
+CityLearn: This class represents the main environment in CityLearn. It is responsible for initializing the simulation, loading the building models, and executing the simulation steps.
+
+Building: This class represents an individual building in the simulation. It contains information about the building's geometry, construction, and HVAC system.
+
+Action: This class represents the actions that an agent can take in the simulation. The actions correspond to different HVAC setpoints that can be adjusted by the agent.
+
+RewardFunction: This class calculates the rewards that an agent receives in the simulation. The rewards are based on the energy consumption of the building and the environmental impact of that consumption.
+
+Agent: This class represents an RL agent that interacts with the simulation. It takes observations of the building's state and selects actions to maximize its reward.
+
+TrainEnv: This class implements a training environment for the RL agent. It runs multiple episodes of the simulation and returns the cumulative rewards for each episode.
+
+TestEnv: This class implements a testing environment for the RL agent. It runs a single episode of the simulation and returns the cumulative reward.
+
+The CityLearn code is designed to be flexible and extensible, allowing users to modify or add new components as needed. It also includes several example RL agents and training scripts to help users get started.
+
+
+
+TODO
+
+After integrating the `Charger` and `EVCar` classes into the CityLearn energy model, you can follow these steps to proceed with your simulation:
+
+1. **Create instances of your classes**: Instantiate `Charger` and `EVCar` objects with appropriate parameters. Ensure that the number of instances created matches the desired number of EVs and chargers in your simulation.
+
+2. **Initialize the energy model**: Update the CityLearn energy model with the new classes you've added. This may involve modifying the building model and updating the energy consumption calculations to account for the presence of chargers and electric vehicles.
+
+3. **Integrate EVs and chargers into the reward function**: Modify the reinforcement learning algorithm's reward function to account for the energy consumption and charging behavior of EVs. This could include penalties for high grid load or rewards for optimal charging schedules.
+
+4. **Define the simulation time steps**: Set up the simulation to run in fixed time steps (e.g., 15 minutes). In each time step, update the state of the EVs and chargers by calling their respective methods, such as `charge`, `discharge`, `travel`, and `update_location`. Make sure to recalculate the energy consumption and grid load at each time step.
+
+5. **Implement the reinforcement learning algorithm**: Train the RL algorithm to learn optimal charging and discharging schedules for the EVs, as well as any other control variables in the energy model. You may need to experiment with different RL algorithms, hyperparameters, and training settings to achieve satisfactory results.
+
+6. **Evaluate and analyze the results**: After training, evaluate the performance of the learned policy on a test set of scenarios. Analyze the results to understand the impact of the EVs and chargers on the energy consumption, grid load, and overall efficiency of the system. You can also visualize the charging and discharging schedules, as well as the location and movement of the EVs during the simulation.
+
+7. **Iterate and refine**: Based on your analysis, identify areas for improvement in the model, such as more accurate energy consumption calculations or better representations of the charging infrastructure. Refine the model and retrain the RL algorithm as necessary.
+
+Keep in mind that these steps are just a high-level overview. The specific implementation details will depend on the structure and requirements of the CityLearn energy model you're working with.
+
+
+
+
