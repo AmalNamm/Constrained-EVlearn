@@ -5,14 +5,14 @@ from gym import spaces
 import numpy as np
 from citylearn.base import Environment
 from citylearn.data import EnergySimulation, CarbonIntensity, Pricing, Weather
-from citylearn.energy_model import Battery, ElectricHeater, HeatPump, PV, StorageTank
+from citylearn.energy_model import Battery, ElectricHeater, HeatPump, PV, StorageTank, Charger
 from citylearn.preprocessing import Normalize, PeriodicNormalization
 
 class Building(Environment):
     def __init__(
         self, energy_simulation: EnergySimulation, weather: Weather, observation_metadata: Mapping[str, bool], action_metadata: Mapping[str, bool], carbon_intensity: CarbonIntensity = None, 
         pricing: Pricing = None, dhw_storage: StorageTank = None, cooling_storage: StorageTank = None, heating_storage: StorageTank = None, electrical_storage: Battery = None, 
-        dhw_device: Union[HeatPump, ElectricHeater] = None, cooling_device: HeatPump = None, heating_device: Union[HeatPump, ElectricHeater] = None, pv: PV = None, name: str = None, **kwargs
+        dhw_device: Union[HeatPump, ElectricHeater] = None, cooling_device: HeatPump = None, heating_device: Union[HeatPump, ElectricHeater] = None, pv: PV = None, charger: Charger = None, name: str = None, **kwargs
     ):
         r"""Initialize `Building`.
 
@@ -46,6 +46,8 @@ class Building(Environment):
             Electric device for meeting space heating demand and charging `heating_storage`.
         pv : PV, optional
             PV object for offsetting electricity demand from grid.
+        charger :  Charger, optional
+            Charger for available at the building for EVs
         name : str, optional
             Unique building name.
 
@@ -68,6 +70,7 @@ class Building(Environment):
         self.cooling_device = cooling_device
         self.heating_device = heating_device
         self.pv = pv
+        self.charger = charger
         self.observation_metadata = observation_metadata
         self.action_metadata = action_metadata
         self.__observation_epsilon = 0.0 # to avoid out of bound observations
@@ -166,6 +169,12 @@ class Building(Environment):
         """PV object for offsetting electricity demand from grid."""
 
         return self.__pv
+
+    @property
+    def charger(self) -> Charger:
+        """EV Charger object for charging connected eletric vehicles."""
+
+        return self.__charger
 
     @property
     def name(self) -> str:
@@ -511,6 +520,10 @@ class Building(Environment):
     @pv.setter
     def pv(self, pv: PV):
         self.__pv = PV(0.0) if pv is None else pv
+
+    @charger.setter
+    def charger(self, charger: Charger):
+        self.__charger = Charger(0.0) if charger is None else charger
 
     @observation_space.setter
     def observation_space(self, observation_space: spaces.Box):
@@ -968,6 +981,7 @@ class Building(Environment):
         self.heating_device.reset()
         self.dhw_device.reset()
         self.pv.reset()
+        self.charger.reset()
 
         # variable reset
         self.__cooling_electricity_consumption = []

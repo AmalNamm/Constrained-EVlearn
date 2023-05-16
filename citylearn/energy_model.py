@@ -936,7 +936,6 @@ class Charger(Device):
         self.min_discharging_power = min_discharging_power
         self.charge_efficiency_curve = charge_efficiency_curve or {3.6: 0.95, 7.2: 0.97, 22: 0.98, 50: 0.98}
         self.discharge_efficiency_curve = discharge_efficiency_curve or {3.6: 0.95, 7.2: 0.97, 22: 0.98, 50: 0.98}
-        self.efficiency = efficiency
         self.max_connected_cars = max_connected_cars
         self.connected_cars = []
 

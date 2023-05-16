@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from citylearn.base import Environment
 from citylearn.building import Building
+from citylearn.EV import EV
 from citylearn.cost_function import CostFunction
 from citylearn.data import DataSet, EnergySimulation, CarbonIntensity, Pricing, Weather
 from citylearn.utilities import read_json
@@ -18,7 +19,7 @@ logging.getLogger('matplotlib.pyplot').disabled = True
 
 class CityLearnEnv(Environment, Env):
     def __init__(self, 
-        schema: Union[str, Path, Mapping[str, Any]], root_directory: Union[str, Path] = None, buildings: List[Building] = None, simulation_start_time_step: int = None, simulation_end_time_step: int = None, 
+        schema: Union[str, Path, Mapping[str, Any]], root_directory: Union[str, Path] = None, buildings: List[Building] = None, evs: List[EV] = None, simulation_start_time_step: int = None, simulation_end_time_step: int = None,
         reward_function: 'citylearn.reward_function.RewardFunction' = None, central_agent: bool = None, shared_observations: List[str] = None, **kwargs
     ):
         r"""Initialize `CityLearnEnv`.
@@ -32,6 +33,8 @@ class CityLearnEnv(Environment, Env):
             Absolute path to directory that contains the data files including the schema. If provided, will override :code:`root_directory` definition in schema.
         buildings: List[Building], optional
             Buildings in CityLearn environment. If provided, will override :code:`buildings` definition in schema.
+        evs: List[EV], optional
+            Electric Vehicles in CityLearn environment. If provided, will override :code:`evs` definition in schema.
         simulation_start_time_step: int, optional
             Time step to start reading from data files. If provided, will override :code:`simulation_start_time_step` definition in schema.
         end_time_step: int, optional
@@ -52,10 +55,11 @@ class CityLearnEnv(Environment, Env):
 
         self.schema = schema
         self.__rewards = None
-        self.root_directory, self.buildings, self.simulation_start_time_step, self.simulation_end_time_step, self.seconds_per_time_step,\
+        self.root_directory, self.buildings, self.evs, self.simulation_start_time_step, self.simulation_end_time_step, self.seconds_per_time_step,\
             self.reward_function, self.central_agent, self.shared_observations = self.__load(
                 root_directory=root_directory,
                 buildings=buildings,
+                evs=evs,
                 simulation_start_time_step=simulation_start_time_step,
                 simulation_end_time_step=simulation_end_time_step,
                 reward_function=reward_function,
@@ -81,6 +85,13 @@ class CityLearnEnv(Environment, Env):
         """Buildings in CityLearn environment."""
 
         return self.__buildings
+
+    @property
+    def evs(self) -> List[EV]:
+        """Electric Vehicles in CityLearn environment."""
+
+        return self.__buildings
+
 
     @property
     def simulation_start_time_step(self) -> int:
@@ -123,7 +134,7 @@ class CityLearnEnv(Environment, Env):
         """Names of common observations across all buildings i.e. observations that have the same value irrespective of the building."""
 
         return self.__shared_observations
-fayaz test
+
     @property
     def done(self) -> bool:
         """Check if simulation has reached completion."""
@@ -421,6 +432,10 @@ fayaz test
     def buildings(self, buildings: List[Building]):
         self.__buildings = buildings
 
+    @evs.setter
+    def evs(self, evs: List[EV]):
+        self.__evs = evs
+
     @simulation_start_time_step.setter
     def simulation_start_time_step(self, simulation_start_time_step: int):
         assert simulation_start_time_step >= 0, 'simulation_start_time_step must be >= 0'
@@ -715,13 +730,15 @@ fayaz test
         agent = agent_constructor(**agent_attributes)
         return agent
 
-    def __load(self, **kwargs) -> Tuple[List[Building], int, float, 'citylearn.reward_function.RewardFunction', bool, List[str]]:
+    def __load(self, **kwargs) -> Tuple[List[Building], List[EV], int, float, 'citylearn.reward_function.RewardFunction', bool, List[str]]:
         """Return `CityLearnEnv` and `Controller` objects as defined by the `schema`.
         
         Returns
         -------
         buildings : List[Building]
             Buildings in CityLearn environment.
+        evs : List[EV]
+            Electric Vehicles in CityLearn environment.
         time_steps : int
             Number of simulation time steps.
         seconds_per_time_step: float
@@ -818,7 +835,8 @@ fayaz test
                         'cooling_device': {'autosizer': building.autosize_cooling_device}, 
                         'heating_device': {'autosizer': building.autosize_heating_device}, 
                         'dhw_device': {'autosizer': building.autosize_dhw_device}, 
-                        'pv': {'autosizer': building.autosize_pv}
+                        'pv': {'autosizer': building.autosize_pv},
+                        'ev_charger': {'autosizer': building.autosize_pv} #TODO
                     }
 
                     for name in device_metadata:
@@ -851,6 +869,50 @@ fayaz test
         
         buildings = list(buildings)
 
+        if kwargs.get('evs') is not None and len(kwargs['evs']) > 0:
+            evs = kwargs['evs']
+
+        else:
+            evs = ()
+
+            for ev_name, ev_schema in self.schema['evs'].items():
+                if ev_schema['include']:
+                    # data
+                    ev_energy_simulation = pd.read_csv(
+                        os.path.join(root_directory, ev_schema['energy_simulation'])).iloc[
+                                        simulation_start_time_step:simulation_end_time_step + 1].copy()
+                    ev_energy_simulation = EnergySimulation(*ev_energy_simulation.values.T) #TODO
+
+                    # observation and action metadata
+                    #inactive_observations = [] if building_schema.get('inactive_observations', None) is None else \
+                    #building_schema['inactive_observations']
+                    #inactive_actions = [] if building_schema.get('inactive_actions', None) is None else building_schema[
+                    #    'inactive_actions']
+                    #observation_metadata = {s: False if s in inactive_observations else True for s in observations}
+                    #action_metadata = {a: False if a in inactive_actions else True for a in actions}
+
+                    # construct building
+                    ev_type = 'citylearn.citylearn.EV' if building_schema.get('type', None) is None else \
+                    ev_schema['type']
+                    ev_type_module = '.'.join(ev_type.split('.')[0:-1])
+                    ev_type_name = ev_type.split('.')[-1]
+                    ev_constructor = getattr(importlib.import_module(ev_type_module), ev_type_name)
+
+                    ev: EV = ev_constructor(
+                        energy_simulation=ev_energy_simulation,
+                        #observation_metadata=observation_metadata,
+                        #action_metadata=action_metadata,
+                        #carbon_intensity=carbon_intensity,
+                        #pricing=pricing,
+                        name=ev_name,
+                        seconds_per_time_step=seconds_per_time_step,
+                    )
+
+                else:
+                    continue
+
+        evs = list(evs)
+
         if kwargs.get('reward_function') is not None:
             reward_function = kwargs['reward_function']
         else:
@@ -862,7 +924,7 @@ fayaz test
             reward_function_constructor = getattr(importlib.import_module(reward_function_module), reward_function_name)
             reward_function = reward_function_constructor(self,**reward_function_attributes)
 
-        return root_directory, buildings, simulation_start_time_step, simulation_end_time_step, seconds_per_time_step, reward_function, central_agent, shared_observations
+        return root_directory, buildings, evs, simulation_start_time_step, simulation_end_time_step, seconds_per_time_step, reward_function, central_agent, shared_observations
         
 class Error(Exception):
     """Base class for other exceptions."""
