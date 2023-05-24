@@ -44,6 +44,7 @@
       <change beforePath="$PROJECT_DIR$/citylearn/energy_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/energy_model.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/examples/load_environment.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/examples/load_environment.ipynb" afterDir="false" />
     </list>
+    <list default="true" id="606c8733-6e18-48ca-8547-eb551df70d64" name="Changes" comment="Added EVs and chargers to the Environment. Still work to do" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -172,6 +173,7 @@
       <workItem from="1684922327473" duration="677000" />
       <workItem from="1684925753297" duration="1028000" />
       <workItem from="1684954821540" duration="10058000" />
+      <workItem from="1684954821540" duration="10614000" />
     </task>
     <task id="LOCAL-00001" summary="Added Charger and EVCar Class to energy_model.py">
       <created>1683211433859</created>
@@ -223,6 +225,7 @@
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/citylearn/building.py</url>
           <line>65</line>
+          <line>66</line>
           <option name="timeStamp" value="2" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
