@@ -180,3 +180,6 @@ examples/*
 # test files
 .vscode/settings.json
 TiagoData/Test_API_VPS.py
+reward_exploration_simulation_output/
+reward_exploration.sh
+test_notebooks/
