@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 from citylearn.agents.rlc import RLC
 import numpy as np
-from citylearn.rl import Actor, Critic, OUNoise, ReplayBuffer
+from citylearn.rl import Actor, Critic, OUNoise
 
 class MADDPG(RLC):
     def __init__(self, *args, **kwargs):

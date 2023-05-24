@@ -64,6 +64,7 @@ class Building(Environment):
         self.pricing = pricing
         self.dhw_storage = dhw_storage
         self.cooling_storage = cooling_storage
+        print(cooling_storage)
         self.heating_storage = heating_storage
         self.electrical_storage = electrical_storage
         self.dhw_device = dhw_device
@@ -953,6 +954,11 @@ class Building(Environment):
         """
 
         self.pv.autosize(self.pv.get_generation(self.energy_simulation.solar_generation), **kwargs)
+
+    def autosize_charger(self):
+        """Autosize `Charger` properties to the typical EV charger properties."""
+
+        self.charger.autosize()
 
     def next_time_step(self):
         r"""Advance all energy storage and electric devices and, PV to next `time_step`."""

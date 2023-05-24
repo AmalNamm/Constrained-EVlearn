@@ -185,6 +185,62 @@
     "type": "citylearn.reward_function.RewardFunction",
     "attributes": null
   },
+  "evs": {
+    "EV_1": {
+      "include": true,
+      "energy_simulation": "EV_1.csv",
+      "inactive_observations": [],
+      "inactive_actions": [],
+      "location": "parked_not_charged",
+      "battery": {
+        "type": "citylearn.energy_model.Battery",
+        "autosize": false,
+        "attributes": {
+          "capacity": 100,
+          "nominal_power": 50,
+          "capacity_loss_coefficient": 50,
+          "power_efficiency_curve": 50,
+          "capacity_power_curve": 50
+        }
+      }
+    },
+    "EV_2": {
+      "include": true,
+      "energy_simulation": "EV_2.csv",
+      "inactive_observations": [],
+      "inactive_actions": [],
+      "location": "parked_not_charged",
+      "battery": {
+        "type": "citylearn.energy_model.Battery",
+        "autosize": false,
+        "attributes": {
+          "capacity": 50,
+          "nominal_power": 50,
+          "capacity_loss_coefficient": 50,
+          "power_efficiency_curve": 50,
+          "capacity_power_curve":50
+        }
+      }
+    },
+    "PHEV_3": {
+      "include": true,
+      "energy_simulation": "EV_3.csv",
+      "inactive_observations": [],
+      "inactive_actions": [],
+      "location": "parked_not_charged",
+      "battery": {
+        "type": "citylearn.energy_model.Battery",
+        "autosize": false,
+        "attributes": {
+          "capacity": 13,
+          "nominal_power": 50,
+          "capacity_loss_coefficient": 50,
+          "power_efficiency_curve": 50,
+          "capacity_power_curve":50
+        }
+      }
+    }
+  },
   "buildings": {
     "Building_1": {
       "include": true,
@@ -194,22 +250,22 @@
       "pricing": "pricing.csv",
       "inactive_observations": [],
       "inactive_actions": [],
-      "electrical_storage": {
-        "type": "citylearn.energy_model.Battery",
-        "autosize": false,
-        "attributes": {
-          "capacity": 6.4,
-          "efficiency": 0.9,
-          "capacity_loss_coefficient": 1e-05,
-          "loss_coefficient": 0.0,
-          "nominal_power": 5.0
-        }
-      },
       "pv": {
         "type": "citylearn.energy_model.PV",
         "autosize": false,
         "attributes": {
           "nominal_power": 4.0
+        }
+      },
+      "charger": {
+        "type": "citylearn.energy_model.Charger",
+        "autosize": false,
+        "attributes": {
+          "max_charging_power": 50.0,
+          "min_charging_power": 0.0,
+          "max_discharging_power": 50.0,
+          "min_discharging_power": 0.0,
+          "max_connected_cars": 1
         }
       }
     },
@@ -492,7 +548,7 @@
       "inactive_observations": [],
       "inactive_actions": [],
       "electrical_storage": {
-        "type": "citylearn.energy_model.Battery",
+        "type": "citylearn.energy_model.HeatPump",
         "autosize": false,
         "attributes": {
           "capacity": 6.4,

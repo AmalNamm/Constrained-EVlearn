@@ -6,38 +6,40 @@ import numpy as np
 
 from citylearn.utilities import read_json
 
+
 class DataSet:
-    __ROOT_DIRECTORY = os.path.join(os.path.dirname(__file__),'data')
+    __ROOT_DIRECTORY = os.path.join(os.path.dirname(__file__), 'data')
 
     @staticmethod
     def get_names() -> List[str]:
         return sorted([
-            d for d in os.listdir(DataSet.__ROOT_DIRECTORY) 
-            if os.path.isdir(os.path.join(DataSet.__ROOT_DIRECTORY,d))
+            d for d in os.listdir(DataSet.__ROOT_DIRECTORY)
+            if os.path.isdir(os.path.join(DataSet.__ROOT_DIRECTORY, d))
         ])
 
     @staticmethod
     def copy(name: str, destination_directory: Union[Path, str] = None):
-        source_directory = os.path.join(DataSet.__ROOT_DIRECTORY,name)
+        source_directory = os.path.join(DataSet.__ROOT_DIRECTORY, name)
         destination_directory = '' if destination_directory is None else destination_directory
-        destination_directory = os.path.join(destination_directory,name)
-        os.makedirs(destination_directory,exist_ok=True)
+        destination_directory = os.path.join(destination_directory, name)
+        os.makedirs(destination_directory, exist_ok=True)
 
         for f in os.listdir(source_directory):
             if f.endswith('.csv') or f.endswith('.json'):
-                source_filepath = os.path.join(source_directory,f)
-                destination_filepath = os.path.join(destination_directory,f)
-                shutil.copy(source_filepath,destination_filepath)
+                source_filepath = os.path.join(source_directory, f)
+                destination_filepath = os.path.join(destination_directory, f)
+                shutil.copy(source_filepath, destination_filepath)
             else:
                 continue
 
     @staticmethod
     def get_schema(name: str):
-        root_directory = os.path.join(DataSet.__ROOT_DIRECTORY,name)
-        filepath = os.path.join(root_directory,'schema.json')
+        root_directory = os.path.join(DataSet.__ROOT_DIRECTORY, name)
+        filepath = os.path.join(root_directory, 'schema.json')
         schema = read_json(filepath)
         schema['root_directory'] = root_directory
         return schema
+
 
 class EnergySimulation:
     """`Building` `energy_simulation` data class.
@@ -71,25 +73,29 @@ class EnergySimulation:
     """
 
     def __init__(
-        self, month: Iterable[int], hour: Iterable[int], day_type: Iterable[int],
-        daylight_savings_status: Iterable[int], indoor_dry_bulb_temperature: Iterable[float], average_unmet_cooling_setpoint_difference: Iterable[float], indoor_relative_humidity: Iterable[float], 
-        non_shiftable_load: Iterable[float], dhw_demand: Iterable[float], cooling_demand: Iterable[float], heating_demand: Iterable[float],
-        solar_generation: Iterable[float]
+            self, month: Iterable[int], hour: Iterable[int], day_type: Iterable[int],
+            daylight_savings_status: Iterable[int], indoor_dry_bulb_temperature: Iterable[float],
+            average_unmet_cooling_setpoint_difference: Iterable[float], indoor_relative_humidity: Iterable[float],
+            non_shiftable_load: Iterable[float], dhw_demand: Iterable[float], cooling_demand: Iterable[float],
+            heating_demand: Iterable[float],
+            solar_generation: Iterable[float]
     ):
         r"""Initialize `EnergySimulation`."""
 
-        self.month = np.array(month, dtype = int)
-        self.hour = np.array(hour, dtype = int)
-        self.day_type = np.array(day_type, dtype = int)
-        self.daylight_savings_status = np.array(daylight_savings_status, dtype = int)
-        self.indoor_dry_bulb_temperature = np.array(indoor_dry_bulb_temperature, dtype = float)
-        self.average_unmet_cooling_setpoint_difference = np.array(average_unmet_cooling_setpoint_difference, dtype = float)
-        self.indoor_relative_humidity = np.array(indoor_relative_humidity, dtype = float)
-        self.non_shiftable_load = np.array(non_shiftable_load, dtype = float)
-        self.dhw_demand = np.array(dhw_demand, dtype = float)
-        self.cooling_demand = np.array(cooling_demand, dtype = float)
-        self.heating_demand = np.array(heating_demand, dtype = float)
-        self.solar_generation = np.array(solar_generation, dtype = float)
+        self.month = np.array(month, dtype=int)
+        self.hour = np.array(hour, dtype=int)
+        self.day_type = np.array(day_type, dtype=int)
+        self.daylight_savings_status = np.array(daylight_savings_status, dtype=int)
+        self.indoor_dry_bulb_temperature = np.array(indoor_dry_bulb_temperature, dtype=float)
+        self.average_unmet_cooling_setpoint_difference = np.array(average_unmet_cooling_setpoint_difference,
+                                                                  dtype=float)
+        self.indoor_relative_humidity = np.array(indoor_relative_humidity, dtype=float)
+        self.non_shiftable_load = np.array(non_shiftable_load, dtype=float)
+        self.dhw_demand = np.array(dhw_demand, dtype=float)
+        self.cooling_demand = np.array(cooling_demand, dtype=float)
+        self.heating_demand = np.array(heating_demand, dtype=float)
+        self.solar_generation = np.array(solar_generation, dtype=float)
+
 
 class Weather:
     """`Building` `weather` data class.
@@ -131,30 +137,43 @@ class Weather:
     """
 
     def __init__(
-        self, outdoor_dry_bulb_temperature: Iterable[float], outdoor_relative_humidity: Iterable[float], diffuse_solar_irradiance: Iterable[float], direct_solar_irradiance: Iterable[float], 
-        outdoor_dry_bulb_temperature_predicted_6h: Iterable[float], outdoor_dry_bulb_temperature_predicted_12h: Iterable[float], outdoor_dry_bulb_temperature_predicted_24h: Iterable[float],
-        outdoor_relative_humidity_predicted_6h: Iterable[float], outdoor_relative_humidity_predicted_12h: Iterable[float], outdoor_relative_humidity_predicted_24h: Iterable[float],
-        diffuse_solar_irradiance_predicted_6h: Iterable[float], diffuse_solar_irradiance_predicted_12h: Iterable[float], diffuse_solar_irradiance_predicted_24h: Iterable[float],
-        direct_solar_irradiance_predicted_6h: Iterable[float], direct_solar_irradiance_predicted_12h: Iterable[float], direct_solar_irradiance_predicted_24h: Iterable[float],
+            self, outdoor_dry_bulb_temperature: Iterable[float], outdoor_relative_humidity: Iterable[float],
+            diffuse_solar_irradiance: Iterable[float], direct_solar_irradiance: Iterable[float],
+            outdoor_dry_bulb_temperature_predicted_6h: Iterable[float],
+            outdoor_dry_bulb_temperature_predicted_12h: Iterable[float],
+            outdoor_dry_bulb_temperature_predicted_24h: Iterable[float],
+            outdoor_relative_humidity_predicted_6h: Iterable[float],
+            outdoor_relative_humidity_predicted_12h: Iterable[float],
+            outdoor_relative_humidity_predicted_24h: Iterable[float],
+            diffuse_solar_irradiance_predicted_6h: Iterable[float],
+            diffuse_solar_irradiance_predicted_12h: Iterable[float],
+            diffuse_solar_irradiance_predicted_24h: Iterable[float],
+            direct_solar_irradiance_predicted_6h: Iterable[float],
+            direct_solar_irradiance_predicted_12h: Iterable[float],
+            direct_solar_irradiance_predicted_24h: Iterable[float],
     ):
         r"""Initialize `Weather`."""
 
-        self.outdoor_dry_bulb_temperature = np.array(outdoor_dry_bulb_temperature, dtype = float)
-        self.outdoor_relative_humidity = np.array(outdoor_relative_humidity, dtype = float)
-        self.diffuse_solar_irradiance = np.array(diffuse_solar_irradiance, dtype = float)
-        self.direct_solar_irradiance = np.array(direct_solar_irradiance, dtype = float)
-        self.outdoor_dry_bulb_temperature_predicted_6h = np.array(outdoor_dry_bulb_temperature_predicted_6h, dtype = float)
-        self.outdoor_dry_bulb_temperature_predicted_12h = np.array(outdoor_dry_bulb_temperature_predicted_12h, dtype = float)
-        self.outdoor_dry_bulb_temperature_predicted_24h = np.array(outdoor_dry_bulb_temperature_predicted_24h, dtype = float)
-        self.outdoor_relative_humidity_predicted_6h = np.array(outdoor_relative_humidity_predicted_6h, dtype = float)
-        self.outdoor_relative_humidity_predicted_12h = np.array(outdoor_relative_humidity_predicted_12h, dtype = float)
-        self.outdoor_relative_humidity_predicted_24h = np.array(outdoor_relative_humidity_predicted_24h, dtype = float)
-        self.diffuse_solar_irradiance_predicted_6h = np.array(diffuse_solar_irradiance_predicted_6h, dtype = float)
-        self.diffuse_solar_irradiance_predicted_12h = np.array(diffuse_solar_irradiance_predicted_12h, dtype = float)
-        self.diffuse_solar_irradiance_predicted_24h = np.array(diffuse_solar_irradiance_predicted_24h, dtype = float)
-        self.direct_solar_irradiance_predicted_6h = np.array(direct_solar_irradiance_predicted_6h, dtype = float)
-        self.direct_solar_irradiance_predicted_12h = np.array(direct_solar_irradiance_predicted_12h, dtype = float)
-        self.direct_solar_irradiance_predicted_24h = np.array(direct_solar_irradiance_predicted_24h, dtype = float)
+        self.outdoor_dry_bulb_temperature = np.array(outdoor_dry_bulb_temperature, dtype=float)
+        self.outdoor_relative_humidity = np.array(outdoor_relative_humidity, dtype=float)
+        self.diffuse_solar_irradiance = np.array(diffuse_solar_irradiance, dtype=float)
+        self.direct_solar_irradiance = np.array(direct_solar_irradiance, dtype=float)
+        self.outdoor_dry_bulb_temperature_predicted_6h = np.array(outdoor_dry_bulb_temperature_predicted_6h,
+                                                                  dtype=float)
+        self.outdoor_dry_bulb_temperature_predicted_12h = np.array(outdoor_dry_bulb_temperature_predicted_12h,
+                                                                   dtype=float)
+        self.outdoor_dry_bulb_temperature_predicted_24h = np.array(outdoor_dry_bulb_temperature_predicted_24h,
+                                                                   dtype=float)
+        self.outdoor_relative_humidity_predicted_6h = np.array(outdoor_relative_humidity_predicted_6h, dtype=float)
+        self.outdoor_relative_humidity_predicted_12h = np.array(outdoor_relative_humidity_predicted_12h, dtype=float)
+        self.outdoor_relative_humidity_predicted_24h = np.array(outdoor_relative_humidity_predicted_24h, dtype=float)
+        self.diffuse_solar_irradiance_predicted_6h = np.array(diffuse_solar_irradiance_predicted_6h, dtype=float)
+        self.diffuse_solar_irradiance_predicted_12h = np.array(diffuse_solar_irradiance_predicted_12h, dtype=float)
+        self.diffuse_solar_irradiance_predicted_24h = np.array(diffuse_solar_irradiance_predicted_24h, dtype=float)
+        self.direct_solar_irradiance_predicted_6h = np.array(direct_solar_irradiance_predicted_6h, dtype=float)
+        self.direct_solar_irradiance_predicted_12h = np.array(direct_solar_irradiance_predicted_12h, dtype=float)
+        self.direct_solar_irradiance_predicted_24h = np.array(direct_solar_irradiance_predicted_24h, dtype=float)
+
 
 class Pricing:
     """`Building` `pricing` data class.
@@ -172,15 +191,16 @@ class Pricing:
     """
 
     def __init__(
-        self, electricity_pricing: Iterable[float], electricity_pricing_predicted_6h: Iterable[float], 
-        electricity_pricing_predicted_12h: Iterable[float], electricity_pricing_predicted_24h: Iterable[float]
+            self, electricity_pricing: Iterable[float], electricity_pricing_predicted_6h: Iterable[float],
+            electricity_pricing_predicted_12h: Iterable[float], electricity_pricing_predicted_24h: Iterable[float]
     ):
         r"""Initialize `Pricing`."""
 
-        self.electricity_pricing = np.array(electricity_pricing, dtype = float)
-        self.electricity_pricing_predicted_6h = np.array(electricity_pricing_predicted_6h, dtype = float)
-        self.electricity_pricing_predicted_12h = np.array(electricity_pricing_predicted_12h, dtype = float)
-        self.electricity_pricing_predicted_24h = np.array(electricity_pricing_predicted_24h, dtype = float)
+        self.electricity_pricing = np.array(electricity_pricing, dtype=float)
+        self.electricity_pricing_predicted_6h = np.array(electricity_pricing_predicted_6h, dtype=float)
+        self.electricity_pricing_predicted_12h = np.array(electricity_pricing_predicted_12h, dtype=float)
+        self.electricity_pricing_predicted_24h = np.array(electricity_pricing_predicted_24h, dtype=float)
+
 
 class CarbonIntensity:
     """`Building` `carbon_intensity` data class.
@@ -194,4 +214,55 @@ class CarbonIntensity:
     def __init__(self, carbon_intensity: Iterable[float]):
         r"""Initialize `CarbonIntensity`."""
 
-        self.carbon_intensity = np.array(carbon_intensity, dtype = float)
+        self.carbon_intensity = np.array(carbon_intensity, dtype=float)
+
+
+class EVSimulation:
+    """`EV` `ev_simulation` data class.
+
+    Month,Hour,Day Type,Location,Estimated Departure Time,Required Soc At Departure
+
+    Attributes
+    ----------
+    month : np.array
+        Month time series value ranging from 1 - 12.
+    hour : np.array
+        Hour time series value ranging from 1 - 24.
+    day_type : np.array
+        Numeric day of week time series ranging from 1 - 8 where 1 - 7 is Monday - Sunday and 8 is reserved for special days e.g. holiday.
+    state : np.array
+        State of the EV indicating whether it is 'parked not plugged in', 'parked plugged in' or 'in transit'.
+    location : np.array
+        Location of the EV indicating the charger to where it is plugged in when in state 'parked plugged in'
+    estimated_departure_time : np.array
+        Number of time steps  expected until the vehicle departs (available only for 'parked plugged in' location)
+    required_soc_departure : np.array
+        Estimated SOC percentage required for the EV at departure time. (available only for 'parked plugged in' location)
+    estimated_arrival_time : np.array
+        Number of time steps  expected until the vehicle arrives at the charger
+    estimated_soc_arrival : np.array
+        Estimated SOC percentage for the EV at arrival time.
+
+    """
+
+    def __init__(
+            self, month: Iterable[int], hour: Iterable[int], day_type: Iterable[int], state: Iterable[str],
+            location: Iterable[str], estimated_departure_time: Iterable[int], required_soc_departure: Iterable[float],
+            estimated_arrival_time: Iterable[int], estimated_soc_arrival: Iterable[float]
+    ):
+        r"""Initialize `EnergySimulation`."""
+
+        self.month = np.array(month, dtype=int)
+        self.hour = np.array(hour, dtype=int)
+        self.day_type = np.array(day_type, dtype=int)
+        self.state = np.array(state, dtype=str)
+        self.location = np.array(location, dtype=str)
+        # NaNs are considered and filled as -1
+        default_value = -1
+        self.estimated_departure_time = np.nan_to_num(np.array(estimated_departure_time, dtype=float),
+                                                      nan=default_value).astype(int)
+        self.required_soc_departure = np.nan_to_num(np.array(required_soc_departure, dtype=float), nan=default_value)
+        self.estimated_arrival_time = np.nan_to_num(np.array(estimated_arrival_time, dtype=float),
+                                                    nan=default_value).astype(int)
+        self.estimated_soc_arrival = np.nan_to_num(np.array(estimated_soc_arrival, dtype=float), nan=default_value)
+

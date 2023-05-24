@@ -1,0 +1,26 @@
+Month,Hour,Day Type,State,Location,Estimated Departure Time,Required Soc At Departure, Estimated Arrival Time, Estimated SOC at Arrival
+7.0,24.0,7.0,parked not plugged in,,,,2,20
+8.0,1.0,1.0,parked plugged in,B3,11,80,,
+8.0,2.0,1.0,parked plugged in,B3,10,80,,
+8.0,3.0,1.0,parked plugged in,B3,9,80,,
+8.0,4.0,1.0,parked plugged in,B3,8,80,,
+8.0,5.0,1.0,parked plugged in,B3,7,80,,
+8.0,6.0,1.0,parked plugged in,B3,6,80,,
+8.0,7.0,1.0,parked plugged in,B3,5,80,,
+8.0,8.0,1.0,parked plugged in,B3,4,80,,
+8.0,9.0,1.0,parked plugged in,B3,3,80,,
+8.0,10.0,1.0,parked plugged in,B3,2,80,,
+8.0,11.0,1.0,parked plugged in,B3,1,80,,
+8.0,12.0,1.0,in transit,,,,7,35
+8.0,13.0,1.0,in transit,,,,6,35
+8.0,14.0,1.0,in transit,,,,5,35
+8.0,15.0,1.0,parked not plugged in,,,,4,40
+8.0,16.0,1.0,in transit,,,,3,40
+8.0,17.0,1.0,in transit,,,,2,40
+8.0,18.0,1.0,in transit,,,,1,40
+8.0,19.0,1.0,parked plugged in,B3,2,60,,
+8.0,20.0,1.0,parked plugged in,B3,1,60,,
+8.0,21.0,1.0,in transit,,,,4,70
+8.0,22.0,1.0,parked not plugged in,,,,3,70
+8.0,23.0,1.0,in transit,,,,2,70
+8.0,24.0,1.0,parked plugged in,B3,10,80,,

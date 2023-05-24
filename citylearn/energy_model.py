@@ -672,7 +672,7 @@ class StorageTank(StorageDevice):
         super().charge(energy)
 
 class Battery(ElectricDevice, StorageDevice):
-    def __init__(self, capacity: float, nominal_power: float, capacity_loss_coefficient: float = None, power_efficiency_curve: List[List[float]] = None, capacity_power_curve: List[List[float]] = None, **kwargs):
+    def __init__(self, capacity: float, nominal_power: float = None, capacity_loss_coefficient: float = None, power_efficiency_curve: List[List[float]] = None, capacity_power_curve: List[List[float]] = None, **kwargs):
         r"""Initialize `Battery`.
 
         Parameters
@@ -696,7 +696,7 @@ class Battery(ElectricDevice, StorageDevice):
 
         self.__efficiency_history = []
         self.__capacity_history = []
-        super().__init__(capacity = capacity, nominal_power = nominal_power, **kwargs)
+        super().__init__(capacity = capacity, nominal_power = nominal_power or 0.00001, **kwargs)
         self.capacity_loss_coefficient = capacity_loss_coefficient
         self.power_efficiency_curve = power_efficiency_curve
         self.capacity_power_curve = capacity_power_curve
@@ -787,6 +787,13 @@ class Battery(ElectricDevice, StorageDevice):
             pass
 
         self.__capacity_power_curve = np.array(capacity_power_curve).T
+
+    def autosize_for_EV(self):
+        r"""Autosize `capacity` for an EV battery.
+        """
+
+        self.capacity = 60
+
 
     def charge(self, energy: float):
         """Charges or discharges storage with respect to specified energy while considering `capacity` degradation and `soc_init` limitations, losses to the environment quantified by `efficiency`, `power_efficiency_curve` and `capacity_power_curve`.
@@ -889,9 +896,6 @@ class Battery(ElectricDevice, StorageDevice):
         super().reset()
         self.__efficiency_history = self.__efficiency_history[0:1]
         self.__capacity_history = self.__capacity_history[0:1]
-
-
-###########################################################################################################################
 
 class Charger(Device):
     def __init__(
@@ -1080,96 +1084,12 @@ class Charger(Device):
         """
         self.connected_cars = []
 
-
-class EVCar:
-    def __init__(self, battery: Battery, energy_consumption_rate: float, time_step: float = 15):
+    def autosize(self):
+        r"""Autosize charger for an EV.
         """
-        Initialize the EVCar class.
-
-        Parameters
-        ----------
-        battery : Battery
-            An instance of the Battery class.
-        energy_consumption_rate : float
-            Energy consumption rate of the car while driving in kWh per distance unit (e.g., kWh/k).
-        time_step : float, default: 15
-            Time step duration in minutes.
-        """
-        self.battery = battery
-        self.energy_consumption_rate = energy_consumption_rate
-        self.location = "parked_not_charging"
-        self.time_step = time_step
-        self.distance_travelled = 0
-
-    def travel(self, speed: float):
-        """
-        Update the car's location to 'travelling', calculate the energy consumption based on the
-        provided speed, and update the battery's state of charge.
-
-        Parameters
-        ----------
-        speed : float
-            The car's speed in distance units per hour (e.g., km/h or miles/h).
-        """
-        self.location = "travelling"
-        distance = speed * (self.time_step / 60)  # Convert speed to distance based on the time step.
-        self.distance_travelled += distance
-        energy_consumption = distance * self.energy_consumption_rate
-        self.battery.charge(-energy_consumption)  # Discharge the battery to account for energy consumption while driving.
-
-    def park(self):
-        """Update the car's location to 'parked_not_charging'."""
-        self.location = "parked_not_charging"
-
-    def charge(self, energy: float):
-        """
-        Charge or discharge the battery with the specified amount of energy.
-
-        Parameters
-        ----------
-        energy : float
-            Energy to charge if (+) or discharge if (-) in kWh.
-        """
-        self.battery.charge(energy)
-
-    @property
-    def location(self) -> str:
-        """Return the car's location status."""
-        return self._location
-
-    @location.setter
-    def location(self, location: str):
-        if location not in ["charging", "parked_not_charging", "travelling"]:
-            raise ValueError("Invalid location status.")
-        self._location = location
-
-    @property
-    def energy_consumption_rate(self) -> float:
-        """Return the energy consumption rate of the car while driving."""
-        return self._energy_consumption_rate
-
-    @energy_consumption_rate.setter
-    def energy_consumption_rate(self, energy_consumption_rate: float):
-        if energy_consumption_rate < 0:
-            raise ValueError("Energy consumption rate must be non-negative.")
-        self._energy_consumption_rate = energy_consumption_rate
-
-    @property
-    def time_step(self) -> float:
-        """Return the time step duration."""
-        return self._time_step
-
-    @time_step.setter
-    def time_step(self, time_step: float):
-        if time_step <= 0:
-            raise ValueError("Time step duration must be greater than zero.")
-        self._time_step = time_step
-
-    def reset(self):
-        """
-        Reset the EVCar to its initial state.
-        """
-        self.location = "parked_not_charging"
-        self.distance_travelled = 0
-        self.battery.reset()
-
+        self.max_charging_power = 50.0,
+        self.min_charging_power = 0.0,
+        self.max_discharging_power = 50.0,
+        self.min_discharging_power = 0.0,
+        self.charge_efficiency_curve = {3.6: 0.95, 7.2: 0.97, 22: 0.98, 50: 0.98}
+        self.discharge_efficiency_curve = {3.6: 0.95, 7.2: 0.97, 22: 0.98, 50: 0.98}
