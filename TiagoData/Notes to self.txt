@@ -49,3 +49,16 @@ Keep in mind that these steps are just a high-level overview. The specific imple
 
 
 
+update key == new observations and give them values
+In the case of some observations such as the location it is not an observation, or in fact, it will get to the
+charger observations
+
+if in transit and arriving, charging X will have observation arriving in X, with soc x
+if plugged in, charger Y will have observation leaving in X with needed 70 soc
+
+What happens when the observations dont exist ? They are at zero or minus one ? Not getting it by now
+
+
+So put all obsevrations in the ev
+
+and observations in the charger as its power and availability

@@ -1,9 +1,12 @@
 from typing import Any, Iterable, List, Union, Dict
 import numpy as np
+
 from citylearn.base import Environment
+
 np.seterr(divide='ignore', invalid='ignore')
 ZERO_DIVISION_CAPACITY = 0.00001
-#fayaz test
+
+
 class Device(Environment):
     r"""Base device class.
 
@@ -17,7 +20,7 @@ class Device(Environment):
     **kwargs : dict
         Other keyword arguments used to initialize super class.
     """
-    
+
     def __init__(self, efficiency: float = None, **kwargs):
         super().__init__(**kwargs)
         self.efficiency = efficiency
@@ -36,6 +39,7 @@ class Device(Environment):
             assert efficiency > 0, 'efficiency must be > 0.'
             self.__efficiency = efficiency
 
+
 class ElectricDevice(Device):
     r"""Base electric device class.
 
@@ -49,7 +53,7 @@ class ElectricDevice(Device):
     **kwargs : Any
         Other keyword arguments used to initialize super class.
     """
-    
+
     def __init__(self, nominal_power: float, **kwargs: Any):
         super().__init__(**kwargs)
         self.nominal_power = nominal_power
@@ -104,6 +108,7 @@ class ElectricDevice(Device):
         super().reset()
         self.__electricity_consumption = [0.0]
 
+
 class HeatPump(ElectricDevice):
     r"""Base heat pump class.
 
@@ -123,9 +128,10 @@ class HeatPump(ElectricDevice):
     **kwargs : Any
         Other keyword arguments used to initialize super class.
     """
-    
-    def __init__(self, nominal_power: float, efficiency: float = None, target_heating_temperature: float = None, target_cooling_temperature: float = None, **kwargs: Any):
-        super().__init__(nominal_power = nominal_power, efficiency = efficiency, **kwargs)
+
+    def __init__(self, nominal_power: float, efficiency: float = None, target_heating_temperature: float = None,
+                 target_cooling_temperature: float = None, **kwargs: Any):
+        super().__init__(nominal_power=nominal_power, efficiency=efficiency, **kwargs)
         self.target_heating_temperature = target_heating_temperature
         self.target_cooling_temperature = target_cooling_temperature
 
@@ -160,7 +166,8 @@ class HeatPump(ElectricDevice):
         efficiency = 0.2 if efficiency is None else efficiency
         ElectricDevice.efficiency.fset(self, efficiency)
 
-    def get_cop(self, outdoor_dry_bulb_temperature: Union[float, Iterable[float]], heating: bool) -> Union[float, Iterable[float]]:
+    def get_cop(self, outdoor_dry_bulb_temperature: Union[float, Iterable[float]], heating: bool) -> Union[
+        float, Iterable[float]]:
         r"""Return coefficient of performance.
 
         Calculate the Carnot cycle COP for heating or cooling mode. COP is set to 20 if < 0 or > 20.
@@ -187,16 +194,19 @@ class HeatPump(ElectricDevice):
         outdoor_dry_bulb_temperature = np.array(outdoor_dry_bulb_temperature)
 
         if heating:
-            cop = self.efficiency*c_to_k(self.target_heating_temperature)/(self.target_heating_temperature - outdoor_dry_bulb_temperature)
+            cop = self.efficiency * c_to_k(self.target_heating_temperature) / (
+                        self.target_heating_temperature - outdoor_dry_bulb_temperature)
         else:
-            cop = self.efficiency*c_to_k(self.target_cooling_temperature)/(outdoor_dry_bulb_temperature - self.target_cooling_temperature)
-        
+            cop = self.efficiency * c_to_k(self.target_cooling_temperature) / (
+                        outdoor_dry_bulb_temperature - self.target_cooling_temperature)
+
         cop = np.array(cop)
         cop[cop < 0] = 20
         cop[cop > 20] = 20
         return cop
 
-    def get_max_output_power(self, outdoor_dry_bulb_temperature: Union[float, Iterable[float]], heating: bool, max_electric_power: Union[float, Iterable[float]] = None) -> Union[float, Iterable[float]]:
+    def get_max_output_power(self, outdoor_dry_bulb_temperature: Union[float, Iterable[float]], heating: bool,
+                             max_electric_power: Union[float, Iterable[float]] = None) -> Union[float, Iterable[float]]:
         r"""Return maximum output power.
 
         Calculate maximum output power from heat pump given `cop`, `available_nominal_power` and `max_electric_power` limitations.
@@ -222,12 +232,14 @@ class HeatPump(ElectricDevice):
 
         cop = self.get_cop(outdoor_dry_bulb_temperature, heating)
 
-        if max_electric_power is None: 
-            return self.available_nominal_power*cop  
+        if max_electric_power is None:
+            return self.available_nominal_power * cop
         else:
-            return np.minimum(max_electric_power, self.available_nominal_power)*cop
+            return np.minimum(max_electric_power, self.available_nominal_power) * cop
 
-    def get_input_power(self, output_power: Union[float, Iterable[float]], outdoor_dry_bulb_temperature: Union[float, Iterable[float]], heating: bool) -> Union[float, Iterable[float]]:
+    def get_input_power(self, output_power: Union[float, Iterable[float]],
+                        outdoor_dry_bulb_temperature: Union[float, Iterable[float]], heating: bool) -> Union[
+        float, Iterable[float]]:
         r"""Return input power.
 
         Calculate power needed to meet `output_power` given `cop` limitations.
@@ -251,9 +263,10 @@ class HeatPump(ElectricDevice):
         input_power = output_power/cop
         """
 
-        return output_power/self.get_cop(outdoor_dry_bulb_temperature, heating)
+        return output_power / self.get_cop(outdoor_dry_bulb_temperature, heating)
 
-    def autosize(self, outdoor_dry_bulb_temperature: Iterable[float], cooling_demand: Iterable[float] = None, heating_demand: Iterable[float] = None, safety_factor: float = None):
+    def autosize(self, outdoor_dry_bulb_temperature: Iterable[float], cooling_demand: Iterable[float] = None,
+                 heating_demand: Iterable[float] = None, safety_factor: float = None):
         r"""Autosize `nominal_power`.
 
         Set `nominal_power` to the minimum power needed to always meet `cooling_demand` + `heating_demand`.
@@ -273,20 +286,21 @@ class HeatPump(ElectricDevice):
         -----
         `nominal_power` = max((cooling_demand/cooling_cop) + (heating_demand/heating_cop))*safety_factor
         """
-        
+
         safety_factor = 1.0 if safety_factor is None else safety_factor
 
         if cooling_demand is not None:
-            cooling_nominal_power = np.array(cooling_demand)/self.get_cop(outdoor_dry_bulb_temperature, False)
+            cooling_nominal_power = np.array(cooling_demand) / self.get_cop(outdoor_dry_bulb_temperature, False)
         else:
             cooling_nominal_power = 0
-        
+
         if heating_demand is not None:
-            heating_nominal_power = np.array(heating_demand)/self.get_cop(outdoor_dry_bulb_temperature, True)
+            heating_nominal_power = np.array(heating_demand) / self.get_cop(outdoor_dry_bulb_temperature, True)
         else:
             heating_nominal_power = 0
 
-        self.nominal_power = np.nanmax(cooling_nominal_power + heating_nominal_power)*safety_factor
+        self.nominal_power = np.nanmax(cooling_nominal_power + heating_nominal_power) * safety_factor
+
 
 class ElectricHeater(ElectricDevice):
     r"""Base electric heater class.
@@ -303,16 +317,17 @@ class ElectricHeater(ElectricDevice):
     **kwargs : Any
         Other keyword arguments used to initialize super class.
     """
-    
+
     def __init__(self, nominal_power: float, efficiency: float = None, **kwargs: Any):
-        super().__init__(nominal_power = nominal_power, efficiency = efficiency, **kwargs)
+        super().__init__(nominal_power=nominal_power, efficiency=efficiency, **kwargs)
 
     @ElectricDevice.efficiency.setter
     def efficiency(self, efficiency: float):
-        efficiency = 0.9 if efficiency is None else efficiency   
+        efficiency = 0.9 if efficiency is None else efficiency
         ElectricDevice.efficiency.fset(self, efficiency)
 
-    def get_max_output_power(self, max_electric_power: Union[float, Iterable[float]] = None) -> Union[float, Iterable[float]]:
+    def get_max_output_power(self, max_electric_power: Union[float, Iterable[float]] = None) -> Union[
+        float, Iterable[float]]:
         r"""Return maximum output power.
 
         Calculate maximum output power from heat pump given `max_electric_power` limitations.
@@ -333,9 +348,9 @@ class ElectricHeater(ElectricDevice):
         """
 
         if max_electric_power is None:
-            return self.available_nominal_power*self.efficiency
+            return self.available_nominal_power * self.efficiency
         else:
-            return np.min(max_electric_power, self.available_nominal_power)*self.efficiency
+            return np.min(max_electric_power, self.available_nominal_power) * self.efficiency
 
     def get_input_power(self, output_power: Union[float, Iterable[float]]) -> Union[float, Iterable[float]]:
         r"""Return input power.
@@ -357,7 +372,7 @@ class ElectricHeater(ElectricDevice):
         input_power = output_power/`efficiency`
         """
 
-        return np.array(output_power)/self.efficiency
+        return np.array(output_power) / self.efficiency
 
     def autosize(self, demand: Iterable[float], safety_factor: float = None):
         r"""Autosize `nominal_power`.
@@ -377,7 +392,8 @@ class ElectricHeater(ElectricDevice):
         """
 
         safety_factor = 1.0 if safety_factor is None else safety_factor
-        self.nominal_power = np.nanmax(np.array(demand)/self.efficiency)*safety_factor
+        self.nominal_power = np.nanmax(np.array(demand) / self.efficiency) * safety_factor
+
 
 class PV(ElectricDevice):
     r"""Base photovoltaic array class.
@@ -392,10 +408,9 @@ class PV(ElectricDevice):
     **kwargs : Any
         Other keyword arguments used to initialize super class.
     """
-    
-    def __init__(self, nominal_power: float, **kwargs: Any):
-        super().__init__(nominal_power=nominal_power,**kwargs)
 
+    def __init__(self, nominal_power: float, **kwargs: Any):
+        super().__init__(nominal_power=nominal_power, **kwargs)
 
     def get_generation(self, inverter_ac_power_per_kw: Union[float, Iterable[float]]) -> Union[float, Iterable[float]]:
         r"""Get solar generation output.
@@ -416,7 +431,7 @@ class PV(ElectricDevice):
             \textrm{generation} = \frac{\textrm{capacity} \times \textrm{inverter_ac_power_per_w}}{1000}
         """
 
-        return self.nominal_power*np.array(inverter_ac_power_per_kw)/1000
+        return self.nominal_power * np.array(inverter_ac_power_per_kw) / 1000
 
     def autosize(self, demand: Iterable[float], safety_factor: float = None):
         r"""Autosize `nominal_power`.
@@ -436,7 +451,8 @@ class PV(ElectricDevice):
         """
 
         safety_factor = 1.0 if safety_factor is None else safety_factor
-        self.nominal_power = np.nanmax(np.array(demand)/self.efficiency)*safety_factor
+        self.nominal_power = np.nanmax(np.array(demand) / self.efficiency) * safety_factor
+
 
 class StorageDevice(Device):
     r"""Base storage device class.
@@ -457,12 +473,13 @@ class StorageDevice(Device):
     **kwargs : Any
         Other keyword arguments used to initialize super class.
     """
-    
-    def __init__(self, capacity: float, efficiency: float = None, loss_coefficient: float = None, initial_soc: float = None, **kwargs: Any):
+
+    def __init__(self, capacity: float, efficiency: float = None, loss_coefficient: float = None,
+                 initial_soc: float = None, **kwargs: Any):
         self.capacity = capacity
         self.loss_coefficient = loss_coefficient
         self.initial_soc = initial_soc
-        super().__init__(efficiency = efficiency, **kwargs)
+        super().__init__(efficiency=efficiency, **kwargs)
 
     @property
     def capacity(self) -> float:
@@ -492,19 +509,19 @@ class StorageDevice(Device):
     def soc_init(self) -> float:
         r"""Latest state of charge after accounting for standby hourly lossses."""
 
-        return self.__soc[-1]*(1 - self.loss_coefficient)
+        return self.__soc[-1] * (1 - self.loss_coefficient)
 
     @property
     def energy_balance(self) -> List[float]:
         r"""Charged/discharged energy time series in [kWh]."""
 
         return self.__energy_balance
-    
+
     @property
     def round_trip_efficiency(self) -> float:
         """Efficiency square root."""
 
-        return self.efficiency**0.5
+        return self.efficiency ** 0.5
 
     @capacity.setter
     def capacity(self, capacity: float):
@@ -543,9 +560,10 @@ class StorageDevice(Device):
         If charging, soc = min(`soc_init` + energy*`round_trip_efficiency`, `capacity`)
         If discharging, soc = max(0, `soc_init` + energy/`round_trip_efficiency`)
         """
-        
+
         # The initial State Of Charge (SOC) is the previous SOC minus the energy losses
-        soc = min(self.soc_init + energy*self.round_trip_efficiency, self.capacity) if energy >= 0 else max(0, self.soc_init + energy/self.round_trip_efficiency)
+        soc = min(self.soc_init + energy * self.round_trip_efficiency, self.capacity) if energy >= 0 else max(0,
+                                                                                                              self.soc_init + energy / self.round_trip_efficiency)
         self.__soc.append(soc)
         self.__energy_balance.append(self.set_energy_balance())
 
@@ -559,8 +577,8 @@ class StorageDevice(Device):
         # actual energy charged/discharged irrespective of what is determined in the step function after 
         # taking into account storage design limits e.g. maximum power input/output, capacity
         previous_soc = self.initial_soc if self.time_step == 0 else self.soc[-2]
-        energy_balance = self.soc[-1] - previous_soc*(1.0 - self.loss_coefficient)
-        energy_balance = energy_balance/self.round_trip_efficiency if energy_balance >= 0 else energy_balance*self.round_trip_efficiency
+        energy_balance = self.soc[-1] - previous_soc * (1.0 - self.loss_coefficient)
+        energy_balance = energy_balance / self.round_trip_efficiency if energy_balance >= 0 else energy_balance * self.round_trip_efficiency
         return energy_balance
 
     def autosize(self, demand: Iterable[float], safety_factor: float = None):
@@ -581,7 +599,7 @@ class StorageDevice(Device):
         """
 
         safety_factor = 1.0 if safety_factor is None else safety_factor
-        self.capacity = np.nanmax(demand)*safety_factor
+        self.capacity = np.nanmax(demand) * safety_factor
 
     def reset(self):
         r"""Reset `StorageDevice` to initial state."""
@@ -589,6 +607,7 @@ class StorageDevice(Device):
         super().reset()
         self.__soc = [self.initial_soc]
         self.__energy_balance = [0.0]
+
 
 class StorageTank(StorageDevice):
     r"""Base thermal energy storage class.
@@ -607,9 +626,9 @@ class StorageTank(StorageDevice):
     **kwargs : Any
         Other keyword arguments used to initialize super class.
     """
-    
+
     def __init__(self, capacity: float, max_output_power: float = None, max_input_power: float = None, **kwargs: Any):
-        super().__init__(capacity = capacity, **kwargs)
+        super().__init__(capacity=capacity, **kwargs)
         self.max_output_power = max_output_power
         self.max_input_power = max_input_power
 
@@ -649,45 +668,49 @@ class StorageTank(StorageDevice):
         If discharging, soc = max(0, `soc_init` + energy/`efficiency`, `max_output_power`)
         """
 
-        if energy >= 0:    
+        if energy >= 0:
             energy = energy if self.max_input_power is None else np.nanmin([energy, self.max_input_power])
         else:
             energy = energy if self.max_output_power is None else np.nanmax([-self.max_output_power, energy])
-        
+
         super().charge(energy)
 
+
 class Battery(ElectricDevice, StorageDevice):
-    def __init__(self, capacity: float, nominal_power: float = None, capacity_loss_coefficient: float = None, power_efficiency_curve: List[List[float]] = None, capacity_power_curve: List[List[float]] = None, **kwargs):
+
+    def __init__(self, capacity: float, nominal_power: float = None, capacity_loss_coefficient: float = None,
+                 power_efficiency_curve: List[List[float]] = None, capacity_power_curve: List[List[float]] = None,
+                 **kwargs: Any):
 
         r"""Base electricity storage class.
 
-    Parameters
-    ----------
-    capacity : float
-        Maximum amount of energy the storage device can store in [kWh]. Must be >= 0 and if == 0 or None, set to 0.00001 to avoid `ZeroDivisionError`.
-    nominal_power: float
-        Maximum amount of electric power that the battery can use to charge or discharge.
-    capacity_loss_coefficient : float, default: 0.00001
-        Battery degradation; storage capacity lost in each charge and discharge cycle (as a fraction of the total capacity).
-    power_efficiency_curve: list, default: [[0, 0.83],[0.3, 0.83],[0.7, 0.9],[0.8, 0.9],[1, 0.85]]
-        Charging/Discharging efficiency as a function of the power released or consumed.
-    capacity_power_curve: list, default: [[0.0, 1],[0.8, 1],[1.0, 0.2]]   
-        Maximum power of the battery as a function of its current state of charge.
+            Parameters
+            ----------
+            capacity : float
+                Maximum amount of energy the storage device can store in [kWh]. Must be >= 0 and if == 0 or None, set to 0.00001 to avoid `ZeroDivisionError`.
+            nominal_power: float
+                Maximum amount of electric power that the battery can use to charge or discharge.
+            capacity_loss_coefficient : float, default: 0.00001
+                Battery degradation; storage capacity lost in each charge and discharge cycle (as a fraction of the total capacity).
+            power_efficiency_curve: list, default: [[0, 0.83],[0.3, 0.83],[0.7, 0.9],[0.8, 0.9],[1, 0.85]]
+                Charging/Discharging efficiency as a function of the power released or consumed.
+            capacity_power_curve: list, default: [[0.0, 1],[0.8, 1],[1.0, 0.2]]
+                Maximum power of the battery as a function of its current state of charge.
 
-    Other Parameters
-    ----------------
-    **kwargs : Any
-        Other keyword arguments used to initialize super classes.
-    """
-    
-    def __init__(self, capacity: float, nominal_power: float, capacity_loss_coefficient: float = None, power_efficiency_curve: List[List[float]] = None, capacity_power_curve: List[List[float]] = None, **kwargs: Any):
+            Other Parameters
+            ----------------
+            **kwargs : Any
+                Other keyword arguments used to initialize super classes.
+            """
+
         self.__efficiency_history = []
         self.__capacity_history = []
-        super().__init__(capacity = capacity, nominal_power = nominal_power or 0.00001, **kwargs)
-        self.capacity_loss_coefficient = capacity_loss_coefficient
-        self.power_efficiency_curve = power_efficiency_curve
-        self.capacity_power_curve = capacity_power_curve
-        
+        super().__init__(capacity=capacity, nominal_power=nominal_power or 0.00001, **kwargs)
+        self.capacity_loss_coefficient = capacity_loss_coefficient or 0.00001
+        self.power_efficiency_curve = power_efficiency_curve or [[0, 0.83], [0.3, 0.83], [0.7, 0.9], [0.8, 0.9],
+                                                                 [1, 0.85]]
+        self.capacity_power_curve = capacity_power_curve or [[0.0, 1], [0.8, 1], [1.0, 0.2]]
+
     @StorageDevice.capacity.getter
     def capacity(self) -> float:
         r"""Current time step maximum amount of energy the storage device can store in [kWh]"""
@@ -760,7 +783,7 @@ class Battery(ElectricDevice, StorageDevice):
     @power_efficiency_curve.setter
     def power_efficiency_curve(self, power_efficiency_curve: List[List[float]]):
         if power_efficiency_curve is None:
-            power_efficiency_curve = [[0, 0.83],[0.3, 0.83],[0.7, 0.9],[0.8, 0.9],[1, 0.85]]
+            power_efficiency_curve = [[0, 0.83], [0.3, 0.83], [0.7, 0.9], [0.8, 0.9], [1, 0.85]]
         else:
             pass
 
@@ -769,7 +792,7 @@ class Battery(ElectricDevice, StorageDevice):
     @capacity_power_curve.setter
     def capacity_power_curve(self, capacity_power_curve: List[List[float]]):
         if capacity_power_curve is None:
-            capacity_power_curve = [[0.0, 1],[0.8, 1],[1.0, 0.2]]
+            capacity_power_curve = [[0.0, 1], [0.8, 1], [1.0, 0.2]]
         else:
             pass
 
@@ -780,7 +803,6 @@ class Battery(ElectricDevice, StorageDevice):
         """
 
         self.capacity = 60
-
 
     def charge(self, energy: float):
         """Charges or discharges storage with respect to specified energy while considering `capacity` degradation and `soc_init` limitations, losses to the environment quantified by `efficiency`, `power_efficiency_curve` and `capacity_power_curve`.
@@ -821,20 +843,21 @@ class Battery(ElectricDevice, StorageDevice):
             Maximum amount of power that the storage unit can use to charge [kW].
         """
 
-        #The initial State Of Charge (SOC) is the previous SOC minus the energy losses
+        # The initial State Of Charge (SOC) is the previous SOC minus the energy losses
         if self.capacity_power_curve is not None:
             capacity = self.capacity_history[-2] if len(self.capacity_history) > 1 else self.capacity
-            soc_normalized = self.soc_init/capacity
+            soc_normalized = self.soc_init / capacity
             # Calculating the maximum power rate at which the battery can be charged or discharged
             idx = max(0, np.argmax(soc_normalized <= self.capacity_power_curve[0]) - 1)
-            max_output_power = self.nominal_power*(
-                self.capacity_power_curve[1][idx] 
-                + (self.capacity_power_curve[1][idx+1] - self.capacity_power_curve[1][idx])*(soc_normalized - self.capacity_power_curve[0][idx])
-                /(self.capacity_power_curve[0][idx+1] - self.capacity_power_curve[0][idx])
+            max_output_power = self.nominal_power * (
+                    self.capacity_power_curve[1][idx]
+                    + (self.capacity_power_curve[1][idx + 1] - self.capacity_power_curve[1][idx]) * (
+                                soc_normalized - self.capacity_power_curve[0][idx])
+                    / (self.capacity_power_curve[0][idx + 1] - self.capacity_power_curve[0][idx])
             )
         else:
             max_output_power = self.nominal_power
-        
+
         return max_output_power
 
     def get_current_efficiency(self, energy: float) -> float:
@@ -848,12 +871,12 @@ class Battery(ElectricDevice, StorageDevice):
 
         if self.power_efficiency_curve is not None:
             # Calculating the maximum power rate at which the battery can be charged or discharged
-            energy_normalized = np.abs(energy)/self.nominal_power
+            energy_normalized = np.abs(energy) / self.nominal_power
             idx = max(0, np.argmax(energy_normalized <= self.power_efficiency_curve[0]) - 1)
-            efficiency = self.power_efficiency_curve[1][idx]\
-                + (energy_normalized - self.power_efficiency_curve[0][idx]
-                )*(self.power_efficiency_curve[1][idx + 1] - self.power_efficiency_curve[1][idx]
-                )/(self.power_efficiency_curve[0][idx + 1] - self.power_efficiency_curve[0][idx])
+            efficiency = self.power_efficiency_curve[1][idx] \
+                         + (energy_normalized - self.power_efficiency_curve[0][idx]
+                            ) * (self.power_efficiency_curve[1][idx + 1] - self.power_efficiency_curve[1][idx]
+                                 ) / (self.power_efficiency_curve[0][idx + 1] - self.power_efficiency_curve[0][idx])
         else:
             efficiency = self.efficiency
 
@@ -873,7 +896,8 @@ class Battery(ElectricDevice, StorageDevice):
         """
 
         # Calculating the degradation of the battery: new max. capacity of the battery after charge/discharge
-        capacity_degrade = self.capacity_loss_coefficient*self.capacity_history[0]*np.abs(self.energy_balance[-1])/(2*self.capacity)
+        capacity_degrade = self.capacity_loss_coefficient * self.capacity_history[0] * np.abs(
+            self.energy_balance[-1]) / (2 * self.capacity)
         return capacity_degrade
 
     def reset(self):
@@ -883,22 +907,33 @@ class Battery(ElectricDevice, StorageDevice):
         self.__efficiency_history = self.__efficiency_history[0:1]
         self.__capacity_history = self.__capacity_history[0:1]
 
-class Charger(Device):
+    def __str__(self):
+        return (f"SOC: {self.soc_init} ")
+
+
+class Charger(ElectricDevice):
     def __init__(
-        self,
-        max_charging_power: float = 50.0,
-        min_charging_power: float = 0.0,
-        max_discharging_power: float = 50.0,
-        min_discharging_power: float = 0.0,
-        charge_efficiency_curve: Dict[float, float] = None,
-        discharge_efficiency_curve: Dict[float, float] = None,
-        max_connected_cars: int = 1,
-        **kwargs
+            self,
+            nominal_power: float,
+            efficiency: float = None,
+            charger_id: str = None,
+            charger_type: int = None,
+            max_charging_power: float = 50.0,
+            min_charging_power: float = 0.0,
+            max_discharging_power: float = 50.0,
+            min_discharging_power: float = 0.0,
+            charge_efficiency_curve: Dict[float, float] = None,
+            discharge_efficiency_curve: Dict[float, float] = None,
+            **kwargs: Any
     ):
         r"""Initializes the `Electric Vehicle Charger` class with the given attributes.
 
         Parameters
         ----------
+        charger_id: str
+            Id through which the charger is uniquely identified in the system
+        charger_type: int
+            Either private (0) or public (1) charger
         max_charging_power : float, default 50
             Maximum charging power in kW.
         min_charging_power : float, default 0
@@ -920,88 +955,99 @@ class Charger(Device):
             Other keyword arguments used to initialize super classes.
         """
 
+        super().__init__(nominal_power=nominal_power, efficiency=efficiency, **kwargs)
+        self.charger_id = charger_id
+        self.charger_type = charger_type
         self.max_charging_power = max_charging_power
         self.min_charging_power = min_charging_power
         self.max_discharging_power = max_discharging_power
         self.min_discharging_power = min_discharging_power
         self.charge_efficiency_curve = charge_efficiency_curve or {3.6: 0.95, 7.2: 0.97, 22: 0.98, 50: 0.98}
         self.discharge_efficiency_curve = discharge_efficiency_curve or {3.6: 0.95, 7.2: 0.97, 22: 0.98, 50: 0.98}
-        self.max_connected_cars = max_connected_cars
-        self.connected_cars = []
+        self.occupied = False
+
+    @property
+    def charger_id(self) -> str:
+        """ID of the charger."""
+        return self.__charger_id
+
+    @property
+    def charger_type(self) -> int:
+        """Type of the charger."""
+        return self.__charger_type
 
     @property
     def max_charging_power(self) -> float:
         """Maximum charging power in kW."""
-        return self._max_charging_power
+        return self.__max_charging_power
 
     @property
     def min_charging_power(self) -> float:
         """Minimum charging power in kW."""
-        return self._min_charging_power
+        return self.__min_charging_power
 
     @property
     def max_discharging_power(self) -> float:
         """Maximum discharging power in kW."""
-        return self._max_discharging_power
+        return self.__max_discharging_power
 
     @property
     def min_discharging_power(self) -> float:
         """Minimum discharging power in kW."""
-        return self._min_discharging_power
+        return self.__min_discharging_power
 
     @property
     def charge_efficiency_curve(self) -> dict:
         """Efficiency curve for charging containing power levels and corresponding efficiency values."""
-        return self._charge_efficiency_curve
+        return self.__charge_efficiency_curve
 
     @property
     def discharge_efficiency_curve(self) -> dict:
         """Efficiency curve for discharging containing power levels and corresponding efficiency values."""
-        return self._discharge_efficiency_curve
+        return self.__discharge_efficiency_curve
 
     @property
-    def max_connected_cars(self) -> int:
-        """Maximum number of cars that can be connected to the charger simultaneously."""
-        return self._max_connected_cars
+    def occupied(self) -> bool:
+        """Bool value indicating wheater the charger is occupied or not"""
+        return self.__occupied
 
-    @property
-    def connected_cars(self) -> list:
-        """List of connected cars to the charger."""
-        return self._connected_cars
+    @charger_id.setter
+    def charger_id(self, charger_id: str):
+        self.__charger_id = charger_id
+
+    @charger_type.setter
+    def charger_type(self, charger_type: str):
+        self.__charger_type = charger_type
 
     @max_charging_power.setter
     def max_charging_power(self, max_charging_power: float):
-        self._max_charging_power = max_charging_power
+        self.__max_charging_power = max_charging_power
 
     @min_charging_power.setter
     def min_charging_power(self, min_charging_power: float):
-        self._min_charging_power = min_charging_power
+        self.__min_charging_power = min_charging_power
 
     @max_discharging_power.setter
     def max_discharging_power(self, max_discharging_power: float):
-        self._max_discharging_power = max_discharging_power
+        self.__max_discharging_power = max_discharging_power
 
     @min_discharging_power.setter
     def min_discharging_power(self, min_discharging_power: float):
-        self._min_discharging_power = min_discharging_power
+        self.__min_discharging_power = min_discharging_power
 
     @charge_efficiency_curve.setter
     def charge_efficiency_curve(self, charge_efficiency_curve: dict):
-        self._charge_efficiency_curve = charge_efficiency_curve
+        self.__charge_efficiency_curve = charge_efficiency_curve
 
     @discharge_efficiency_curve.setter
     def discharge_efficiency_curve(self, discharge_efficiency_curve: dict):
-        self._discharge_efficiency_curve = discharge_efficiency_curve
+        self.__discharge_efficiency_curve = discharge_efficiency_curve
 
-    @max_connected_cars.setter
-    def max_connected_cars(self, max_connected_cars: int):
-        self._max_connected_cars = max_connected_cars
+    @occupied.setter
+    def occupied(self, occupied: bool):
+        self.__occupied = occupied
 
-    @connected_cars.setter
-    def connected_cars(self, connected_cars: list):
-        self._connected_cars = connected_cars
-
-    def connect_car(self, car):
+    def plug_car(self, car):
         """
         Connects a car to the charger.
 
@@ -1020,7 +1066,7 @@ class Charger(Device):
         else:
             raise ValueError("Charger has reached its maximum connected cars capacity")
 
-    def disconnect_car(self, car):
+    def unplug_car(self, car):
         """
         Disconnects a car from the charger.
 
@@ -1053,29 +1099,43 @@ class Charger(Device):
             lower_efficiency = efficiency_curve[lower_power_level]
             upper_efficiency = efficiency_curve[upper_power_level]
             charge_discharge_efficiency = lower_efficiency + (current_power_level - lower_power_level) * (
-                        upper_efficiency - lower_efficiency) / (upper_power_level - lower_power_level)
+                    upper_efficiency - lower_efficiency) / (upper_power_level - lower_power_level)
 
         car = self.connected_cars[0]
         energy_kwh = current_power_level * charge_discharge_efficiency * (
-                    15 / 60)  # Convert the power to energy by multiplying by the time step (15 minutes)
+                15 / 60)  # Convert the power to energy by multiplying by the time step (15 minutes)
 
-        if charging:
-            car.soc = min(car.soc + energy_kwh, car.capacity)
-        else:
-            car.soc = max(0, car.soc - energy_kwh)
+        # Here we call the car's battery's charge method directly, passing the energy (positive for charging, negative for discharging)
+        car.battery.charge(energy_kwh if charging else -energy_kwh)
 
     def reset(self):
         """
         Resets the Charger to its initial state by disconnecting all cars.
         """
-        self.connected_cars = []
+        self.occupied = False
 
-    def autosize(self):
+    def autosize(self):  # TODO values
         r"""Autosize charger for an EV.
         """
-        self.max_charging_power = 50.0,
-        self.min_charging_power = 0.0,
-        self.max_discharging_power = 50.0,
+        self.nominal_power = 7.2
+        self.efficiency = 0.95
+        self.max_charging_power = 7.2,
+        self.min_charging_power = 1.4,
+        self.max_discharging_power = 7.2,
         self.min_discharging_power = 0.0,
         self.charge_efficiency_curve = {3.6: 0.95, 7.2: 0.97, 22: 0.98, 50: 0.98}
         self.discharge_efficiency_curve = {3.6: 0.95, 7.2: 0.97, 22: 0.98, 50: 0.98}
+
+    def __str__(self):
+        return (
+            f"Charger ID: {self.charger_id}\n"
+            f"Max Charging Power: {self.max_charging_power} kW\n"
+            f"Min Charging Power: {self.min_charging_power} kW\n"
+            f"Max Discharging Power: {self.max_discharging_power} kW\n"
+            f"Min Discharging Power: {self.min_discharging_power} kW\n"
+            f"Charge Efficiency Curve: {self.charge_efficiency_curve}\n"
+            f"Discharge Efficiency Curve: {self.discharge_efficiency_curve}\n"
+            f"Max Connected Cars: {self.max_connected_cars}\n"
+            f"Currently Connected Cars: {len(self.connected_cars)}\n"
+            f"Connected Cars IDs: {[car.id for car in self.connected_cars]}"
+        )

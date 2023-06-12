@@ -280,33 +280,35 @@ class EVSimulation:
         Hour time series value ranging from 1 - 24.
     day_type : np.array
         Numeric day of week time series ranging from 1 - 8 where 1 - 7 is Monday - Sunday and 8 is reserved for special days e.g. holiday.
-    state : np.array
-        State of the EV indicating whether it is 'parked not plugged in', 'parked plugged in' or 'in transit'.
-    location : np.array
-        Location of the EV indicating the charger to where it is plugged in when in state 'parked plugged in'
+    ev_state : np.array
+        State of the EV indicating whether it is 'parked ready to charge' represented as 0, 'in transit', represented as 1.
+    destination_charger : np.array
+        (available only for 'in transit' state) Charger where the EV will plug in the next "parked ready to charge" state.
+        It can be nan if no destination charger is specified or the charger id in the format "Charger_X_Y", where X is
+        the number of the building and Y the number of the charger within that building.
     estimated_departure_time : np.array
-        Number of time steps  expected until the vehicle departs (available only for 'parked plugged in' location)
+        Number of time steps  expected until the vehicle departs (available only for 'parked ready to charge' state)
     required_soc_departure : np.array
-        Estimated SOC percentage required for the EV at departure time. (available only for 'parked plugged in' location)
+        Estimated SOC percentage required for the EV at departure time. (available only for 'parked ready to charge' state)
     estimated_arrival_time : np.array
-        Number of time steps  expected until the vehicle arrives at the charger
+        Number of time steps  expected until the vehicle arrives at the charger (available only for 'in transit' state)
     estimated_soc_arrival : np.array
-        Estimated SOC percentage for the EV at arrival time.
+        Estimated SOC percentage for the EV at arrival time. (available only for 'in transit' state)
 
     """
 
     def __init__(
             self, month: Iterable[int], hour: Iterable[int], day_type: Iterable[int], state: Iterable[str],
-            location: Iterable[str], estimated_departure_time: Iterable[int], required_soc_departure: Iterable[float],
+            destination_charger: Iterable[str], estimated_departure_time: Iterable[int], required_soc_departure: Iterable[float],
             estimated_arrival_time: Iterable[int], estimated_soc_arrival: Iterable[float]
     ):
-        r"""Initialize `EnergySimulation`."""
+        r"""Initialize `EVSimulation`."""
 
         self.month = np.array(month, dtype=int)
         self.hour = np.array(hour, dtype=int)
         self.day_type = np.array(day_type, dtype=int)
-        self.state = np.array(state, dtype=str)
-        self.location = np.array(location, dtype=str)
+        self.ev_state = np.array(state, dtype=int)
+        self.destination_charger = np.array(destination_charger, dtype=str)
         # NaNs are considered and filled as -1
         default_value = -1
         self.estimated_departure_time = np.nan_to_num(np.array(estimated_departure_time, dtype=float),
