@@ -3,10 +3,11 @@ import importlib
 import logging
 import os
 from pathlib import Path
-from typing import Any, List, Mapping, Tuple, Union
+from typing import Any, List, Mapping, Tuple, Union, Optional
 from gym import Env, spaces
 import numpy as np
 import pandas as pd
+from gym.core import RenderFrame
 from citylearn import __version__ as citylearn_version
 from citylearn.base import Environment
 from citylearn.building import Building
@@ -14,9 +15,12 @@ from citylearn.EV import EV
 from citylearn.cost_function import CostFunction
 from citylearn.data import DataSet, EnergySimulation, CarbonIntensity, Pricing, Weather, EVSimulation
 from citylearn.utilities import read_json
-import random
-import copy
+from typing import Optional, Union, List
+import time
+import os
 import folium
+import random
+
 
 LOGGER = logging.getLogger()
 logging.getLogger('matplotlib.font_manager').disabled = True
@@ -93,8 +97,20 @@ class CityLearnEnv(Environment, Env):
         )
 
         super().__init__(**kwargs)
+        # Start the timer
+        start_time = time.time()
 
+        # Call the method to be timed
         self.render()
+
+        # Stop the timer
+        end_time = time.time()
+
+        # Calculate the elapsed time
+        elapsed_time = end_time - start_time
+
+        print(f"The method took {elapsed_time} seconds to execute.")
+
 
     @property
     def schema(self) -> Union[str, Path, Mapping[str, Any]]:
@@ -1355,46 +1371,92 @@ class CityLearnEnv(Environment, Env):
 
         return root_directory, buildings, evs, simulation_start_time_step, simulation_end_time_step, seconds_per_time_step, reward_function, central_agent, shared_observations
 
-    def render(self, mode='human', timestep=0):
+    def random_location(self, lat, lon, radius, az = None):
+        """
+        Generate random location within `radius` meters from the (lat, lon) point.
+        """
+        # Use the Vincenty's formula for generating a new point given a starting point, bearing, and distance.
+        # This method assumes a spherical Earth, it should be sufficient for this purpose.
+
+        radius_earth = 6371  # in kilometers
+        radius /= 1000  # convert radius to km
+
+        # Convert latitude and longitude from degrees to radians
+        lat, lon = map(np.radians, [lat, lon])
+
+        # Randomly generate distance and azimuth angle
+        d = radius / radius_earth
+        if az is None:
+            az = np.random.uniform(0, 2 * np.pi)
+
+        # Calculate coordinates of the random point
+        new_lat = np.arcsin(np.sin(lat) * np.cos(d) + np.cos(lat) * np.sin(d) * np.cos(az))
+        new_lon = lon + np.arctan2(np.sin(az) * np.sin(d) * np.cos(lat), np.cos(d) - np.sin(lat) * np.sin(new_lat))
+
+        # Convert the latitude and longitude from radians back to degrees
+        new_lat, new_lon = map(np.degrees, [new_lat, new_lon])
+
+        return new_lat, new_lon
+
+    def render(self) -> Optional[Union[RenderFrame, List[RenderFrame]]]:
         # Average lat/lon for map centering
         avg_lat = sum(building.lat for building in self.buildings) / len(self.buildings)
         avg_lon = sum(building.lon for building in self.buildings) / len(self.buildings)
 
         # Initialize map with a different style
         map_simulation = folium.Map(location=[avg_lat, avg_lon], zoom_start=14,
-                                    tiles='https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                                    tiles='https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png',
                                     attr='My Data Attribution')
+
+        # Creating a dictionary to store charger locations by charger_id
+        charger_locations = {}
 
         # Add markers for buildings
         for building in self.buildings:
+            building_icon = folium.features.CustomIcon('building.png', icon_size=(50, 50))  # adjust the size as needed
             folium.Marker([building.lat, building.lon],
                           popup=f"Building: {building.name}",
-                          icon=folium.Icon(color="blue", icon="industrial")).add_to(map_simulation)
+                          icon=building_icon).add_to(map_simulation)
 
             # Chargers for each building
-            i = 0
             if building.chargers is not None:
-                for charger in building.chargers:
-                    charger_location = [building.lat + 0.001 + i, building.lon + 0.001 + i]
+                # Calculate the angle between each charger in radians
+                angle = (2 * np.pi / len(building.chargers))/2
+                for i, charger in enumerate(building.chargers):
+                    # Calculate the azimuth for this charger based on its position
+                    az = i * angle
+                    # Generate the charger location
+                    charger_location = self.random_location(building.lat, building.lon, 200, az)  # 200 meters radius
+                    charger_locations[charger.charger_id] = charger_location  # Save location by charger_id
+                    charger_icon = folium.features.CustomIcon('charger.png',
+                                                              icon_size=(30, 30))  # adjust the size as needed
                     folium.Marker(charger_location,
                                   popup=f"Charger: {charger.charger_id}",
-                                  icon=folium.Icon(color="green", icon="plug")).add_to(map_simulation)
+                                  icon=charger_icon).add_to(map_simulation)
 
                     # Draw line from charger to building
-                    folium.PolyLine([charger_location, [building.lat, building.lon]], color="green", weight=2.5,
+                    folium.PolyLine([charger_location, [building.lat, building.lon]], color="green", weight=4,
                                     opacity=1).add_to(map_simulation)
-                    i = i + 0.005
 
         # Add markers for EVs
-        i = 0
         for ev in self.evs:
-            folium.Marker([avg_lat + 0.01 + i, avg_lon + 0.01 + i],
-                          popup=f"EV: {ev.name}, SOC: {ev.battery.soc[0]}, Energy Consumption Rate: {ev.energy_consumption_rate}",
-                          icon=folium.Icon(color="red", icon="car")).add_to(map_simulation)
-            i = i - 0.005
+            if ev.connected_charger:
+                ev_location = charger_locations.get(ev.connected_charger,
+                                                    [avg_lat, avg_lon])  # Get charger location if available
+            else:
+                ev_location = self.random_location(avg_lat, avg_lon, 2000)  # 2km radius
+            ev_icon = folium.features.CustomIcon('ev.png', icon_size=(40, 40))  # adjust the size as needed
+            folium.Marker(ev_location,
+                          popup=f"EV: {ev.name}, SOC: {ev.battery.soc[self.time_step] / ev.battery.capacity}, Energy Consumption Rate: {ev.energy_consumption_rate}",
+                          icon=ev_icon).add_to(map_simulation)
+
+            # Draw line from EV to its connected charger if it's charging
+            if ev.connected_charger:
+                folium.PolyLine([ev_location, charger_locations[ev.connected_charger]], color="red", weight=4,
+                                opacity=1).add_to(map_simulation)
 
         # Save the map as an HTML file for this timestep
-        map_simulation.save(f'gif/simulation_map_{timestep}.html')
+        map_simulation.save(f'gif/simulation_map_{self.time_step}.html')
 
 
 class Error(Exception):
