@@ -5,30 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="606c8733-6e18-48ca-8547-eb551df70d64" name="Changes" comment="Added EVs and chargers to the Environment. Still work to do">
-      <change afterPath="$PROJECT_DIR$/TiagoData/TestViz.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TiagoData/templates/index.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/TiagoData/templates/test.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/visualization/VisualizationServer.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/visualization/static/building.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/visualization/static/charger.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/visualization/static/ev.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/visualization/templates/index.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/visualization/templates/test.html" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/server_func.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/test.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TiagoData/Notes to self.txt" beforeDir="false" afterPath="$PROJECT_DIR$/TiagoData/Notes to self.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/EV.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/EV.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/building.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/building.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/citylearn/citylearn.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/citylearn.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_1.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_1.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_2.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_2.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_3.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_3.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/schema.json" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/schema.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/energy_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/energy_model.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/examples/EVsEnv.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/examples/EVsEnv.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/quickstart.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/examples/quickstart.ipynb" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -86,7 +65,7 @@
     "TODO_SCOPE": "All Places",
     "WebServerToolWindowFactoryState": "false",
     "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "C:/Users/Tiago Fonseca/Documents/GitHub/CityLearn/citylearn/visualization",
+    "last_opened_file_path": "C:/Users/Tiago Fonseca/Documents/GitHub/CityLearn/citylearn",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -98,15 +77,15 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\citylearn" />
       <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\citylearn\visualization" />
       <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\examples" />
       <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\citylearn\data\citylearn_challenge_2022_phase_all_with_EVs" />
       <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\citylearn\data" />
-      <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\citylearn\data\LivingLab\Hourly" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\examples\gif" />
       <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\examples" />
+      <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\examples\gif" />
       <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\citylearn" />
       <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\TiagoData\static" />
       <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\TiagoData\templates" />
@@ -142,6 +121,9 @@
       <module name="CityLearn" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
       <option name="SDK_HOME" value="" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/examples" />
       <option name="IS_MODULE_SDK" value="true" />
@@ -215,6 +197,7 @@
       <workItem from="1686298741407" duration="8170000" />
       <workItem from="1686529181874" duration="3783000" />
       <workItem from="1686553956996" duration="34983000" />
+      <workItem from="1686661256328" duration="6217000" />
     </task>
     <task id="LOCAL-00001" summary="Added Charger and EVCar Class to energy_model.py">
       <created>1683211433859</created>
