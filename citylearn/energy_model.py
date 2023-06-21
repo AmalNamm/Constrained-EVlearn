@@ -195,10 +195,10 @@ class HeatPump(ElectricDevice):
 
         if heating:
             cop = self.efficiency * c_to_k(self.target_heating_temperature) / (
-                        self.target_heating_temperature - outdoor_dry_bulb_temperature)
+                    self.target_heating_temperature - outdoor_dry_bulb_temperature)
         else:
             cop = self.efficiency * c_to_k(self.target_cooling_temperature) / (
-                        outdoor_dry_bulb_temperature - self.target_cooling_temperature)
+                    outdoor_dry_bulb_temperature - self.target_cooling_temperature)
 
         cop = np.array(cop)
         cop[cop < 0] = 20
@@ -852,7 +852,7 @@ class Battery(ElectricDevice, StorageDevice):
             max_output_power = self.nominal_power * (
                     self.capacity_power_curve[1][idx]
                     + (self.capacity_power_curve[1][idx + 1] - self.capacity_power_curve[1][idx]) * (
-                                soc_normalized - self.capacity_power_curve[0][idx])
+                            soc_normalized - self.capacity_power_curve[0][idx])
                     / (self.capacity_power_curve[0][idx + 1] - self.capacity_power_curve[0][idx])
             )
         else:
@@ -908,234 +908,11 @@ class Battery(ElectricDevice, StorageDevice):
         self.__capacity_history = self.__capacity_history[0:1]
 
     def __str__(self):
-        return (f"SOC: {self.soc_init} ")
-
-
-class Charger(ElectricDevice):
-    def __init__(
-            self,
-            nominal_power: float,
-            efficiency: float = None,
-            charger_id: str = None,
-            charger_type: int = None,
-            max_charging_power: float = 50.0,
-            min_charging_power: float = 0.0,
-            max_discharging_power: float = 50.0,
-            min_discharging_power: float = 0.0,
-            charge_efficiency_curve: Dict[float, float] = None,
-            discharge_efficiency_curve: Dict[float, float] = None,
-            **kwargs: Any
-    ):
-        r"""Initializes the `Electric Vehicle Charger` class with the given attributes.
-
-        Parameters
-        ----------
-        charger_id: str
-            Id through which the charger is uniquely identified in the system
-        charger_type: int
-            Either private (0) or public (1) charger
-        max_charging_power : float, default 50
-            Maximum charging power in kW.
-        min_charging_power : float, default 0
-            Minimum charging power in kW.
-        max_discharging_power : float, default 50
-            Maximum discharging power in kW.
-        min_discharging_power : float, default 0
-            Minimum discharging power in kW.
-        charge_efficiency_curve : dict, default {3.6: 0.95, 7.2: 0.97, 22: 0.98, 50: 0.98}
-            Efficiency curve for charging containing power levels and corresponding efficiency values.
-        discharge_efficiency_curve : dict, default {3.6: 0.95, 7.2: 0.97, 22: 0.98, 50: 0.98}
-            Efficiency curve for discharging containing power levels and corresponding efficiency values.
-        max_connected_cars : int, default 1
-            Maximum number of cars that can be connected to the charger simultaneously.
-
-        Other Parameters
-        ----------------
-        **kwargs : dict
-            Other keyword arguments used to initialize super classes.
-        """
-
-        super().__init__(nominal_power=nominal_power, efficiency=efficiency, **kwargs)
-        self.charger_id = charger_id
-        self.charger_type = charger_type
-        self.max_charging_power = max_charging_power
-        self.min_charging_power = min_charging_power
-        self.max_discharging_power = max_discharging_power
-        self.min_discharging_power = min_discharging_power
-        self.charge_efficiency_curve = charge_efficiency_curve or {3.6: 0.95, 7.2: 0.97, 22: 0.98, 50: 0.98}
-        self.discharge_efficiency_curve = discharge_efficiency_curve or {3.6: 0.95, 7.2: 0.97, 22: 0.98, 50: 0.98}
-        self.occupied = False
-
-    @property
-    def charger_id(self) -> str:
-        """ID of the charger."""
-        return self.__charger_id
-
-    @property
-    def charger_type(self) -> int:
-        """Type of the charger."""
-        return self.__charger_type
-
-    @property
-    def max_charging_power(self) -> float:
-        """Maximum charging power in kW."""
-        return self.__max_charging_power
-
-    @property
-    def min_charging_power(self) -> float:
-        """Minimum charging power in kW."""
-        return self.__min_charging_power
-
-    @property
-    def max_discharging_power(self) -> float:
-        """Maximum discharging power in kW."""
-        return self.__max_discharging_power
-
-    @property
-    def min_discharging_power(self) -> float:
-        """Minimum discharging power in kW."""
-        return self.__min_discharging_power
-
-    @property
-    def charge_efficiency_curve(self) -> dict:
-        """Efficiency curve for charging containing power levels and corresponding efficiency values."""
-        return self.__charge_efficiency_curve
-
-    @property
-    def discharge_efficiency_curve(self) -> dict:
-        """Efficiency curve for discharging containing power levels and corresponding efficiency values."""
-        return self.__discharge_efficiency_curve
-
-    @property
-    def occupied(self) -> bool:
-        """Bool value indicating wheater the charger is occupied or not"""
-        return self.__occupied
-
-    @charger_id.setter
-    def charger_id(self, charger_id: str):
-        self.__charger_id = charger_id
-
-    @charger_type.setter
-    def charger_type(self, charger_type: str):
-        self.__charger_type = charger_type
-
-    @max_charging_power.setter
-    def max_charging_power(self, max_charging_power: float):
-        self.__max_charging_power = max_charging_power
-
-    @min_charging_power.setter
-    def min_charging_power(self, min_charging_power: float):
-        self.__min_charging_power = min_charging_power
-
-    @max_discharging_power.setter
-    def max_discharging_power(self, max_discharging_power: float):
-        self.__max_discharging_power = max_discharging_power
-
-    @min_discharging_power.setter
-    def min_discharging_power(self, min_discharging_power: float):
-        self.__min_discharging_power = min_discharging_power
-
-    @charge_efficiency_curve.setter
-    def charge_efficiency_curve(self, charge_efficiency_curve: dict):
-        self.__charge_efficiency_curve = charge_efficiency_curve
-
-    @discharge_efficiency_curve.setter
-    def discharge_efficiency_curve(self, discharge_efficiency_curve: dict):
-        self.__discharge_efficiency_curve = discharge_efficiency_curve
-
-    @occupied.setter
-    def occupied(self, occupied: bool):
-        self.__occupied = occupied
-
-    def plug_car(self, car):
-        """
-        Connects a car to the charger.
-
-        Parameters
-        ----------
-        car : object
-            Car instance to be connected to the charger.
-
-        Raises
-        ------
-        ValueError
-            If the charger has reached its maximum connected cars' capacity.
-        """
-        if len(self.connected_cars) < self.max_connected_cars:
-            self.connected_cars.append(car)
-        else:
-            raise ValueError("Charger has reached its maximum connected cars capacity")
-
-    def unplug_car(self, car):
-        """
-        Disconnects a car from the charger.
-
-        Parameters
-        ----------
-        car : object
-            Car instance to be disconnected from the charger.
-        """
-        self.connected_cars.remove(car)
-
-    def update_evs_soc(self, energy: float):
-        charging = energy >= 0
-
-        if charging:
-            current_power_level = min(max(abs(energy), self.min_charging_power), self.max_charging_power)
-        else:
-            current_power_level = min(max(abs(energy), self.min_discharging_power), self.max_discharging_power)
-
-        if charging:
-            efficiency_curve = self.charge_efficiency_curve
-        else:
-            efficiency_curve = self.discharge_efficiency_curve
-
-        lower_power_level = max([power for power in efficiency_curve if power <= current_power_level])
-        upper_power_level = min([power for power in efficiency_curve if power >= current_power_level])
-
-        if lower_power_level == upper_power_level:
-            charge_discharge_efficiency = efficiency_curve[lower_power_level]
-        else:
-            lower_efficiency = efficiency_curve[lower_power_level]
-            upper_efficiency = efficiency_curve[upper_power_level]
-            charge_discharge_efficiency = lower_efficiency + (current_power_level - lower_power_level) * (
-                    upper_efficiency - lower_efficiency) / (upper_power_level - lower_power_level)
-
-        car = self.connected_cars[0]
-        energy_kwh = current_power_level * charge_discharge_efficiency * (
-                15 / 60)  # Convert the power to energy by multiplying by the time step (15 minutes)
-
-        # Here we call the car's battery's charge method directly, passing the energy (positive for charging, negative for discharging)
-        car.battery.charge(energy_kwh if charging else -energy_kwh)
-
-    def reset(self):
-        """
-        Resets the Charger to its initial state by disconnecting all cars.
-        """
-        self.occupied = False
-
-    def autosize(self):  # TODO values
-        r"""Autosize charger for an EV.
-        """
-        self.nominal_power = 7.2
-        self.efficiency = 0.95
-        self.max_charging_power = 7.2,
-        self.min_charging_power = 1.4,
-        self.max_discharging_power = 7.2,
-        self.min_discharging_power = 0.0,
-        self.charge_efficiency_curve = {3.6: 0.95, 7.2: 0.97, 22: 0.98, 50: 0.98}
-        self.discharge_efficiency_curve = {3.6: 0.95, 7.2: 0.97, 22: 0.98, 50: 0.98}
-
-    def __str__(self):
-        return (
-            f"Charger ID: {self.charger_id}\n"
-            f"Max Charging Power: {self.max_charging_power} kW\n"
-            f"Min Charging Power: {self.min_charging_power} kW\n"
-            f"Max Discharging Power: {self.max_discharging_power} kW\n"
-            f"Min Discharging Power: {self.min_discharging_power} kW\n"
-            f"Charge Efficiency Curve: {self.charge_efficiency_curve}\n"
-            f"Discharge Efficiency Curve: {self.discharge_efficiency_curve}\n"
-            f"Max Connected Cars: {self.max_connected_cars}\n"
-            f"Currently Connected Cars: {len(self.connected_cars)}\n"
-            f"Connected Cars IDs: {[car.id for car in self.connected_cars]}"
-        )
+        return (f"Battery Specifications: \n"
+                f"State of Charge (SOC): {self.soc_init} kWh\n"
+                f"Nominal Power: {self.nominal_power} kW\n"
+                f"Efficiency: {self.efficiency} \n"
+                f"Capacity: {self.capacity} kWh\n"
+                f"Capacity Loss Coefficient: {self.capacity_loss_coefficient}\n"
+                f"Power Efficiency Curve: {self.power_efficiency_curve}\n"
+                f"Capacity Power Curve: {self.capacity_power_curve}")

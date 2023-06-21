@@ -282,7 +282,7 @@ class EVSimulation:
         Numeric day of week time series ranging from 1 - 8 where 1 - 7 is Monday - Sunday and 8 is reserved for special days e.g. holiday.
     ev_state : np.array
         State of the EV indicating whether it is 'parked ready to charge' represented as 0, 'in transit', represented as 1.
-    destination_charger : np.array
+    charger : np.array
         (available only for 'in transit' state) Charger where the EV will plug in the next "parked ready to charge" state.
         It can be nan if no destination charger is specified or the charger id in the format "Charger_X_Y", where X is
         the number of the building and Y the number of the charger within that building.
@@ -299,7 +299,7 @@ class EVSimulation:
 
     def __init__(
             self, month: Iterable[int], hour: Iterable[int], day_type: Iterable[int], state: Iterable[str],
-            destination_charger: Iterable[str], estimated_departure_time: Iterable[int], required_soc_departure: Iterable[float],
+            charger: Iterable[str], estimated_departure_time: Iterable[int], required_soc_departure: Iterable[float],
             estimated_arrival_time: Iterable[int], estimated_soc_arrival: Iterable[float]
     ):
         r"""Initialize `EVSimulation`."""
@@ -308,7 +308,7 @@ class EVSimulation:
         self.hour = np.array(hour, dtype=int)
         self.day_type = np.array(day_type, dtype=int)
         self.ev_state = np.array(state, dtype=int)
-        self.destination_charger = np.array(destination_charger, dtype=str)
+        self.charger = np.array(charger, dtype=str)
         # NaNs are considered and filled as -1
         default_value = -1
         self.estimated_departure_time = np.nan_to_num(np.array(estimated_departure_time, dtype=float),

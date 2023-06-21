@@ -7,9 +7,10 @@ import pandas as pd
 import torch
 from citylearn.base import Environment
 from citylearn.data import EnergySimulation, CarbonIntensity, Pricing, Weather
-from citylearn.energy_model import Battery, ElectricHeater, HeatPump, PV, StorageTank, Charger
+from citylearn.energy_model import Battery, ElectricHeater, HeatPump, PV, StorageTank
 from citylearn.dynamics import Dynamics, LSTMDynamics
 from citylearn.preprocessing import Normalize, PeriodicNormalization
+from citylearn.charger import Charger
 
 
 class Building(Environment):
@@ -61,7 +62,7 @@ class Building(Environment):
             heating_storage: StorageTank = None, electrical_storage: Battery = None,
             dhw_device: Union[HeatPump, ElectricHeater] = None, cooling_device: HeatPump = None,
             heating_device: Union[HeatPump, ElectricHeater] = None, pv: PV = None, chargers: List[Charger] = None,
-            name: str = None, lat: float = None, lon : float = None, **kwargs: Any
+            image_path: str = None, name: str = None, lat: float = None, lon : float = None, **kwargs: Any
     ):
         r"""Initialize `Building`.
 
@@ -135,6 +136,7 @@ class Building(Environment):
         self.periodic_normalized_observation_space_limits = None
         self.observation_space = self.estimate_observation_space()
         self.action_space = self.estimate_action_space()
+        self.image_path = image_path
         self.__set_without_partial_load_variables()
 
         arg_spec = inspect.getfullargspec(super().__init__)
@@ -620,6 +622,16 @@ class Building(Environment):
 
         return (previous_mode <= 1 and current_mode == 2) or (previous_mode == 2 and current_mode <= 1)
 
+    @property
+    def image_path(self) -> str:
+        """Unique building name."""
+
+        return self.__image_path
+
+    @image_path.setter
+    def image_path(self, image_path: str):
+        self.__image_path = image_path
+
     @energy_simulation.setter
     def energy_simulation(self, energy_simulation: EnergySimulation):
         self.__energy_simulation = energy_simulation
@@ -776,6 +788,33 @@ class Building(Environment):
             'occupant_count': self.energy_simulation.occupant_count[self.time_step],
         }
 
+        # Add chargers info to the observations
+        if self.chargers is not None:
+            for charger in self.chargers:
+                if charger.connected_ev:
+                    observations[f'charger_{charger.charger_id}_connected_state'] = 1
+                    obs = charger.connected_ev.observations(include_all, normalize, periodic_normalization)
+                    for k, v in obs.items():
+                        observations[f'charger_{charger.charger_id}_connected_{k}'] = v
+                else:
+                    observations[f'charger_{charger.charger_id}_connected_state'] = 0
+                    for o in self.observation_metadata:
+                        observations[f'charger_{charger.charger_id}_connected_{o}'] = -1
+
+                if charger.incoming_ev: #TODO add the ev_observation metadata to base, it should be in the load and agnostic of chargers
+                    #TODO add to the building observation metadata/space the charger_{charger.charger_id}_incoming_{o}'
+                    #Revise the limits
+
+                    observations[f'charger_{charger.charger_id}_incoming_state'] = 1
+                    obs = charger.incoming_ev.observations(include_all, normalize, periodic_normalization)
+                    for k, v in obs.items():
+                        observations[f'charger_{charger.charger_id}_incoming_{k}'] = v
+                else:
+                    observations[f'charger_{charger.charger_id}_incoming_state'] = 0
+                    for o in self.observation_metadata:
+                        if "charger" in o and != charger_{charger.charger_id}_incoming_state
+                        observations[f'charger_{charger.charger_id}_incoming_{o}'] = -1
+
         if include_all:
             valid_observations = list(self.observation_metadata.keys())
         else:
@@ -835,7 +874,8 @@ class Building(Environment):
     def apply_actions(self,
                       cooling_device_action: float = None, heating_device_action: float = None,
                       cooling_storage_action: float = None, heating_storage_action: float = None,
-                      dhw_storage_action: float = None, electrical_storage_action: float = None
+                      dhw_storage_action: float = None, electrical_storage_action: float = None,
+                      **kwargs
                       ):
         r"""Update cooling and heating demand for next timestep and charge/discharge storage devices.
 
@@ -853,6 +893,9 @@ class Building(Environment):
             Fraction of `dhw_storage` `capacity` to charge/discharge by.
         electrical_storage_action : float, default: 0.0
             Fraction of `electrical_storage` `capacity` to charge/discharge by.
+        ev_storage_action : List[float], default: 0.0
+            List in which each action corresponds to the order of chargers oer building and is a fraction of
+            connected_ev in each charger that the battery `capacity` to charge/discharge by.
         """
 
         cooling_storage_action = 0.0 if cooling_storage_action is None or math.isnan(
@@ -862,11 +905,29 @@ class Building(Environment):
         dhw_storage_action = 0.0 if dhw_storage_action is None or math.isnan(dhw_storage_action) else dhw_storage_action
         electrical_storage_action = 0.0 if electrical_storage_action is None or math.isnan(
             electrical_storage_action) else electrical_storage_action
+
         self.update_cooling(cooling_device_action, cooling_storage_action)
         self.update_heating(heating_device_action, heating_storage_action)
         self.update_dhw(dhw_storage_action)
         self.update_electrical_storage(electrical_storage_action)
-        # TODO self.update_EV_storage(EV_storage_action)
+
+        if "ev_storage_action" not in kwargs:
+            # for the actions of EVs per charger
+            if len(kwargs) != len(self.chargers):
+                raise Exception(
+                    "Something went wrong as the actions length is different from the chargers length available")
+            else:
+                for key, value in kwargs.items():
+                    for c in self.chargers:
+                        if f'ev_storage_{c.charger_id}_action' == key:
+                            if c.connected_ev is not None:
+                                c.connected_ev.battery.charge(value)
+                            else:
+                                pass
+                                #raise Exception(
+                                #    f"Trying to charge without any connected car in charger {c.charger_id}")
+        else:
+            pass #TODO apply non action maybe ???
 
     def update_dynamics(self):
         r"""Update building dynamics e.g. space indoor temperature, relative humidity, etc."""
@@ -1121,6 +1182,24 @@ class Building(Environment):
                 low_limit[key] = 0.0
                 high_limit[key] = max_demand * self.__thermal_load_factor
 
+            elif "charger" in key:
+                if self.chargers is not None:
+                    for charger in self.chargers:
+                        if key == f'charger_{charger.charger_id}_connected_state' or key == f'charger_{charger.charger_id}_incoming_state':
+                            low_limit[key] = 0
+                            high_limit[key] = 1
+                        elif 'ev_state' in key:
+                            low_limit[key] = 0
+                            high_limit[key] = 1
+                        elif any(value in key for value in
+                                 ["estimated_departure_time", "estimated_arrival_time"]):
+                            low_limit[key] = 0
+                            high_limit[key] = 24
+                        elif any(value in key for value in
+                                   ["required_soc_departure", "estimated_soc_arrival", "ev_soc"]):
+                            low_limit[key] = 0.0
+                            high_limit[key] = 1.0
+
             elif periodic_normalization and key in periodic_observations:
                 pn = PeriodicNormalization(max(periodic_observations[key]))
                 x_sin, x_cos = pn * np.array(list(periodic_observations[key]))
@@ -1166,10 +1245,13 @@ class Building(Environment):
                 low_limit.append(-limit)
                 high_limit.append(limit)
 
-            elif key == "ev_storage": #TODO Move to the EV
-                limit = 50 / 100
-                low_limit.append(-limit)
-                high_limit.append(limit)
+            elif "ev_storage" in key:
+                if self.chargers is not None:
+                    for c in self.chargers:
+                        if key == f"ev_storage_{c.charger_id}":
+                            limit = c.nominal_power
+                            low_limit.append(-limit)
+                            high_limit.append(limit)
 
             else:
                 if key == 'cooling_storage':
@@ -1317,7 +1399,10 @@ class Building(Environment):
         self.dhw_storage.next_time_step()
         self.electrical_storage.next_time_step()
         self.pv.next_time_step()
-        # self.charger.next_time_step() #TODO ERROR here
+        if self.chargers is not None:
+            for c in self.chargers:
+                pass
+                #c.next_time_step()
         super().next_time_step()
         self.update_variables()
 
@@ -1334,7 +1419,9 @@ class Building(Environment):
         self.heating_device.reset()
         self.dhw_device.reset()
         self.pv.reset()
-        # self.charger.reset() #TODO
+        if self.chargers is not None:
+            for c in self.chargers:
+                c.reset()
 
         # variable reset
         self.__cooling_electricity_consumption = []
@@ -1419,7 +1506,7 @@ class Building(Environment):
             f"\nCooling Device: {self.cooling_device}"
             f"\nHeating Device: {self.heating_device}"
             f"\nPV: {self.pv}"
-            f"\nCharger: {self.charger}"
+            f"\nCharger: {self.chargers}"
             f"\nObservation Metadata: {self.observation_metadata}"
             f"\nAction Metadata: {self.action_metadata}"
         )

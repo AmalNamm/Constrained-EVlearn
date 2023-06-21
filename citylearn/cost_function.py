@@ -211,17 +211,17 @@ class CostFunction:
             which occupant is assumed to be uncomfortable.
         occupant_cunt: List[float], optional
             Occupant count time series. If provided, the comfort cost is 
-            evaluated for occupied time steps only.
+            evaluated for associated_EV time steps only.
             
         Returns
         -------
         discomfort: List[float]
-            Rolling proportion of occupied timesteps where the condition 
+            Rolling proportion of associated_EV timesteps where the condition
             (dry_bulb_temperature_set_point - band) <= indoor_dry_bulb_temperature <= (dry_bulb_temperature_set_point + band) is not met.
         discomfort_too_cold: List[float]
-            Rolling proportion of occupied timesteps where the condition indoor_dry_bulb_temperature < (dry_bulb_temperature_set_point - band) is met.
+            Rolling proportion of associated_EV timesteps where the condition indoor_dry_bulb_temperature < (dry_bulb_temperature_set_point - band) is met.
         discomfort_too_hot: List[float]
-            Rolling proportion of occupied timesteps where the condition indoor_dry_bulb_temperature > (dry_bulb_temperature_set_point + band) is met.
+            Rolling proportion of associated_EV timesteps where the condition indoor_dry_bulb_temperature > (dry_bulb_temperature_set_point + band) is met.
         discomfort_delta_minimum: List[float]
             Rolling minimum of indoor_dry_bulb_temperature - dry_bulb_temperature_set_point.
         discomfort_delta_maximum: List[float]

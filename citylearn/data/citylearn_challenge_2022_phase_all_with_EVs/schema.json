@@ -147,14 +147,14 @@
       "electricity_pricing_predicted_24h": {
         "active": true,
         "shared_in_central_agent": false
+      },
+      "charger_state": {
+        "active": true,
+        "shared_in_central_agent": false
       }
     },
     "evs": {
       "ev_state": {
-        "active": true,
-        "shared_in_central_agent": false
-      },
-      "destination_charger": {
         "active": true,
         "shared_in_central_agent": false
       },
@@ -193,17 +193,17 @@
       },
       "electrical_storage": {
         "active": true
+      },
+      "ev_storage": {
+        "active": true
       }
     },
     "evs": {
       "ev_connection_action": {
-        "active": true
+        "active": false
       },
       "ev_disconnection_action": {
-        "active": true
-      },
-      "ev_storage": {
-        "active": true
+        "active": false
       }
     }
   },
@@ -237,6 +237,7 @@
       "energy_simulation": "EV_1.csv",
       "inactive_observations": [],
       "inactive_actions": [],
+      "image_path": "images/ev.png",
       "energy_consumption_rate": 20,
       "battery": {
         "type": "citylearn.energy_model.Battery",
@@ -252,6 +253,7 @@
       "energy_simulation": "EV_2.csv",
       "inactive_observations": [],
       "inactive_actions": [],
+      "image_path": "images/ev.png",
       "energy_consumption_rate": 20,
       "battery": {
         "type": "citylearn.energy_model.Battery",
@@ -267,7 +269,7 @@
       "energy_simulation": "EV_3.csv",
       "inactive_observations": [],
       "inactive_actions": [],
-      "location": "parked_not_charging",
+      "image_path": "images/ev.png",
       "energy_consumption_rate": 20,
       "battery": {
         "type": "citylearn.energy_model.Battery",
@@ -290,6 +292,7 @@
         "latitude": 41.195632,
         "longitude": -8.598365
       },
+      "image_path": "images/building.png",
       "inactive_observations": [],
       "inactive_actions": [],
       "electrical_storage": {
@@ -312,8 +315,9 @@
       },
       "chargers": {
         "charger_1_1": {
-          "type": "citylearn.energy_model.Charger",
+          "type": "citylearn.charger.Charger",
           "autosize": false,
+          "image_path": "images/charger.png",
           "attributes": {
             "nominal_power": 7.2,
             "efficiency": 0.95,
@@ -324,9 +328,10 @@
             "min_discharging_power": 0.0
           }
         },
-        "charger_12": {
-          "type": "citylearn.energy_model.Charger",
+        "charger_1_2": {
+          "type": "citylearn.charger.Charger",
           "autosize": false,
+          "image_path": "images/charger.png",
           "attributes": {
             "nominal_power": 11,
             "efficiency": 0.9,
@@ -349,6 +354,7 @@
         "latitude": 41.186919,
         "longitude": -8.627364
       },
+      "image_path": "images/building.png",
       "inactive_observations": [],
       "inactive_actions": [],
       "electrical_storage": {
@@ -371,8 +377,9 @@
       },
       "chargers": {
         "charger_2_1": {
-          "type": "citylearn.energy_model.Charger",
+          "type": "citylearn.charger.Charger",
           "autosize": false,
+          "image_path": "images/charger.png",
           "attributes": {
             "nominal_power": 7.2,
             "efficiency": 0.95,
@@ -395,6 +402,7 @@
         "latitude": 41.200128,
         "longitude": -8.609245
       },
+      "image_path": "images/building.png",
       "inactive_observations": [],
       "inactive_actions": [],
       "electrical_storage": {
@@ -419,6 +427,7 @@
         "latitude": 41.189875,
         "longitude": -8.612208
       },
+      "image_path": "images/building.png",
       "inactive_observations": [],
       "inactive_actions": [],
       "electrical_storage": {
@@ -450,6 +459,7 @@
         "latitude": 41.202139,
         "longitude": -8.644700
       },
+      "image_path": "images/building.png",
       "inactive_observations": [],
       "inactive_actions": [],
       "electrical_storage": {
@@ -472,8 +482,9 @@
       },
       "chargers": {
         "charger_5_1": {
-          "type": "citylearn.energy_model.Charger",
+          "type": "citylearn.charger.Charger",
           "autosize": false,
+          "image_path": "images/charger.png",
           "attributes": {
             "nominal_power": 22,
             "efficiency": 0.95,
@@ -485,8 +496,9 @@
           }
         },
         "charger_5_2": {
-          "type": "citylearn.energy_model.Charger",
+          "type": "citylearn.charger.Charger",
           "autosize": false,
+          "image_path": "images/charger.png",
           "attributes": {
             "nominal_power": 22,
             "efficiency": 0.95,
@@ -498,8 +510,9 @@
           }
         },
         "charger_5_3": {
-          "type": "citylearn.energy_model.Charger",
+          "type": "citylearn.charger.Charger",
           "autosize": false,
+          "image_path": "images/charger.png",
           "attributes": {
             "nominal_power": 50,
             "efficiency": 0.95,
@@ -511,8 +524,9 @@
           }
         },
         "charger_5_4": {
-          "type": "citylearn.energy_model.Charger",
+          "type": "citylearn.charger.Charger",
           "autosize": false,
+          "image_path": "images/charger.png",
           "attributes": {
             "nominal_power": 50,
             "efficiency": 0.95,
@@ -535,6 +549,7 @@
         "latitude": 41.209114,
         "longitude":  -8.632814
       },
+      "image_path": "images/building.png",
       "inactive_observations": [],
       "inactive_actions": [],
       "electrical_storage": {

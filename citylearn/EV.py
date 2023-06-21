@@ -5,7 +5,7 @@ from gym import spaces
 import numpy as np
 from citylearn.base import Environment
 from citylearn.data import EnergySimulation, CarbonIntensity, Pricing, Weather, EVSimulation
-from citylearn.energy_model import Battery, ElectricHeater, HeatPump, PV, StorageTank, Charger
+from citylearn.energy_model import Battery, ElectricHeater, HeatPump, PV, StorageTank
 from citylearn.preprocessing import Normalize, PeriodicNormalization
 import random
 
@@ -13,7 +13,8 @@ class EV(Environment):
 
     def __init__(self, ev_simulation: EVSimulation, energy_consumption_rate: float,
                  observation_metadata: Mapping[str, bool],
-                 action_metadata: Mapping[str, bool], battery: Battery = None, connected_charger: Charger = None, name: str = None, **kwargs):
+                 action_metadata: Mapping[str, bool], battery: Battery = None,
+                 image_path: str = None, name: str = None, **kwargs):
         """
         Initialize the EVCar class.
 
@@ -48,7 +49,7 @@ class EV(Environment):
         self.periodic_normalized_observation_space_limits = None
         self.observation_space = self.estimate_observation_space()
         self.action_space = self.estimate_action_space()
-        self.connected_charger = connected_charger or None
+        self.image_path = image_path
         self.__observation_epsilon = 0.0  # to avoid out of bound observations
 
 
@@ -59,154 +60,6 @@ class EV(Environment):
         }
         super().__init__(**kwargs)
 
-    import random
-
-    def travel(self):
-        print("The EV is now in transit ")
-        """
-        Calculate the energy consumption based on a randomly
-        generated speed, and update the battery's state of charge using the `charge` method.
-
-        """
-        # Generate a realistic speed randomly (between 30km/h to 120km/h seems realistic)
-        speed = random.uniform(30, 120)  # in km/hr
-
-        # Convert speed to distance based on the time step (assuming that self.seconds_per_time_step is in seconds)
-        distance = speed * (self.seconds_per_time_step / 3600)  # Convert km/hr to km/second
-
-        # Update the total distance travelled
-        self.distance_travelled += distance
-
-        # Calculate the energy consumption
-        energy_consumption = distance * self.energy_consumption_rate
-
-        # Introduce variability in energy consumption and charging
-        if random.random() < 0.9:  # 90% chance to discharge while in transit
-            # Discharge the battery to account for energy consumption while driving.
-            self.charge(-energy_consumption)
-        else:  # 10% chance to charge while at another location
-            # Generate a random charging speed in kWh (between 7-120 kWh seems realistic for 1 hour)
-            charging_speed = random.uniform(7, 120)  # in kWh per hour
-            # Calculate the amount of energy charged based on the time step
-            energy_charged = charging_speed * (self.seconds_per_time_step / 3600)  # Convert kWh/hr to kWh/second
-            # Charge the battery at another location while travelling
-            self.charge(energy_charged)
-
-    def park(self):
-        print("The EV is parking and it is not plugged in")
-        """Update the car's location to 'parked_not_charging'."""
-        # Simulate power usage while parked by decreasing the state of charge slightly
-        # Assume a small amount of power loss, e.g., between 0 and 0.05 kWh
-        power_loss_while_parked = random.uniform(0, 0.05)  # in kWh
-        self.charge(-power_loss_while_parked)
-
-    def charge(self, energy: float):
-        """
-        Charge or discharge the battery with the specified amount of energy.
-
-        Parameters
-        ----------
-        energy : float
-            Energy to charge if (+) or discharge if (-) in kWh.
-        """
-        self.battery.charge(energy)
-
-    def connect_EV_to_charger(self, charger_id): #TODO in main
-        """Connect the EV to a specific charger.
-
-        Parameters
-        ----------
-        charger_id : int
-            The ID of the charger to connect the EV to.
-        """
-        # Check if the charger ID is valid.
-        if charger_id not in self.chargers:
-            raise ValueError(f'Invalid charger ID: {charger_id}')
-
-        # Check if the EV is already connected to a charger.
-        if self.EV_connected_charger is not None:
-            print(f'EV is already connected to charger {self.EV_connected_charger}. Disconnecting.')
-            self.disconnect_EV_from_charger(self.EV_connected_charger)
-
-        # Connect the EV to the charger.
-        self.EV_connected_charger = charger_id
-        print(f'EV has been connected to charger {charger_id}.')
-
-    def disconnect_EV_from_charger(self, charger_id): #TODO in main
-        """Disconnect the EV from a specific charger.
-
-        Parameters
-        ----------
-        charger_id : int
-            The ID of the charger to disconnect the EV from.
-        """
-        # Check if the charger ID is valid.
-        if charger_id not in self.chargers:
-            raise ValueError(f'Invalid charger ID: {charger_id}')
-
-        # Check if the EV is connected to the charger.
-        if self.EV_connected_charger != charger_id:
-            print(f'EV is not connected to charger {charger_id}.')
-            return
-
-        # Disconnect the EV from the charger.
-        self.EV_connected_charger = None
-        print(f'EV has been disconnected from charger {charger_id}.')
-
-
-    def next_time_step(self) -> Mapping[int, str]:
-
-        """
-        Advance EV to the next `time_step`.
-        """
-
-        # Capture the EV's current location.
-        charger_before = self.ev_simulation.connected_charger[self.time_step]
-
-        # Advance the battery to the next time step.
-        # TODO: Verify if this advancement is made correctly.
-        self.battery.next_time_step()
-
-        # Advance the main simulation to the next time step and update variables.
-        super().next_time_step()
-        # self.update_variables()
-
-        # Capture the EV's location after the simulation step.
-        charger_after = self.ev_simulation.connected_charger[self.time_step]
-
-        return self.update_ev_status_location(charger_before, charger_after)
-
-    def update_ev_status_location(self, charger_before="nan", charger_after=np.nan):
-        """
-        Check whether the EV is connected or disconnected from the charger and update the EV's status and location accordingly.
-
-        If EV is connected, return {1: 'charger'}.
-        If EV is disconnected, return {-1: 'charger'}.
-        The return is used by the env to then connect or disconnect cars from the buildings
-        """
-
-        #
-        if self.ev_simulation.ev_state[self.time_step] == "parked plugged in":
-            if charger_before == 'nan' and charger_after != 'nan':
-                return {1: charger_after}  # EV is connected.
-            else:
-                return None
-        elif self.ev_simulation.ev_state[self.time_step] == "parked not plugged in":
-            self.park()
-            if charger_before != 'nan' and charger_after == 'nan':
-                return {-1: charger_before}  # EV is disconnected.
-            else:
-                return None
-        elif self.ev_simulation.ev_state[self.time_step] == "in transit":
-            self.travel()
-            if charger_before != 'nan' and charger_after == 'nan':
-                return {-1: charger_before}  # EV is disconnected.
-            else:
-                return None
-        else:
-            # Handle cases where the EV's state does not match any of the conditions.
-            raise ValueError(f"Invalid state: {self.ev_simulation.ev_state}. EV cannot be in this state.")
-
     @property
     def ev_simulation(self) -> EVSimulation:
         """Return the EV simulation data."""
@@ -215,15 +68,6 @@ class EV(Environment):
     @ev_simulation.setter
     def ev_simulation(self, ev_simulation: EVSimulation):
         self.__ev_simulation = ev_simulation
-
-    @property
-    def connected_charger(self) -> Charger:
-        """Return the car's location status."""
-        return self.__connected_charger
-
-    @connected_charger.setter
-    def connected_charger(self, charger: Charger):
-        self.__connected_charger = charger
 
     @property
     def energy_consumption_rate(self) -> float:
@@ -247,6 +91,16 @@ class EV(Environment):
         self.__name = name
 
     @property
+    def image_path(self) -> str:
+        """Unique building name."""
+
+        return self.__image_path
+
+    @image_path.setter
+    def image_path(self, image_path: str):
+        self.__image_path = image_path
+
+    @property
     def observation_metadata(self) -> Mapping[str, bool]:
         """Mapping of active and inactive observations."""
 
@@ -266,7 +120,7 @@ class EV(Environment):
     def action_metadata(self, action_metadata: Mapping[str, bool]):
         self.__action_metadata = action_metadata
 
-    @property
+    @property #TODO initilizar com soc init
     def battery(self) -> Battery:
         """Battery for EV."""
         return self.__battery
@@ -320,6 +174,60 @@ class EV(Environment):
 
         return np.array(self.cooling_storage.energy_balance, dtype=float).clip(min=0)
 
+
+    def travel(self):
+        print("The EV is now in transit ")
+        """
+        Calculate the energy consumption based on a randomly
+        generated speed, and update the battery's state of charge using the `charge` method.
+
+        """
+        # Generate a realistic speed randomly (between 30km/h to 120km/h seems realistic)
+        speed = random.uniform(30, 120)  # in km/hr
+
+        # Convert speed to distance based on the time step (assuming that self.seconds_per_time_step is in seconds)
+        distance = speed * (self.seconds_per_time_step / 3600)  # Convert km/hr to km/second
+
+        # Calculate the energy consumption
+        energy_consumption = distance * self.energy_consumption_rate
+
+        # Introduce variability in energy consumption and charging
+        if random.random() < 0.9:  # 90% chance to discharge while in transit
+            # Discharge the battery to account for energy consumption while driving.
+            self.battery.charge(-energy_consumption)
+        else:  # 10% chance to charge while at another location
+            # Generate a random charging speed in kWh (between 7-120 kWh seems realistic for 1 hour)
+            charging_speed = random.uniform(7, 120)  # in kWh per hour
+            # Calculate the amount of energy charged based on the time step
+            energy_charged = charging_speed * (self.seconds_per_time_step / 3600)  # Convert kWh/hr to kWh/second
+            # Charge the battery at another location while travelling
+            self.battery.charge(energy_charged)
+
+    def park(self):
+        print("The EV is parking and it is not plugged in")
+        """Update the car's location to 'parked_not_charging'."""
+        # Simulate power usage while parked by decreasing the state of charge slightly
+        # Assume a small amount of power loss, e.g., between 0 and 0.05 kWh
+        power_loss_while_parked = random.uniform(0, 0.005)  # in kWh
+        self.battery.charge(-power_loss_while_parked)
+
+    def next_time_step(self) -> Mapping[int, str]:
+
+        """
+        Advance EV to the next `time_step` by
+        """
+
+        self.battery.next_time_step()
+        super().next_time_step()
+        self.update_variables() #TODO Might need to go below the logic of charging
+
+        if self.ev_simulation.ev_state[self.time_step] == 0: #park
+            self.park()
+        elif self.ev_simulation.ev_state[self.time_step] == 1: #in transit
+            self.travel()
+
+        return
+
     def reset(self):
         """
         Reset the EVCar to its initial state.
@@ -328,68 +236,74 @@ class EV(Environment):
 
         #object reset
         self.battery.reset()
-        self.connected_charger = None
 
         # variable reset
-        #self.update_variables()
+        #self.__cooling_electricity_consumption = []
+        #self.__heating_electricity_consumption = []
+        #self.__dhw_electricity_consumption = []
+        #self.__solar_generation = self.pv.get_generation(self.energy_simulation.solar_generation) * -1
+        #self.__net_electricity_consumption = []
+        #self.__net_electricity_consumption_emission = []
+        #self.__net_electricity_consumption_cost = []
+        self.update_variables()
 
-        # reset controlled variables
+        ## reset controlled variables
         #self.energy_simulation.cooling_demand = self.__cooling_demand_without_partial_load.copy()
         #self.energy_simulation.heating_demand = self.__heating_demand_without_partial_load.copy()
         #self.energy_simulation.indoor_dry_bulb_temperature = self.__indoor_dry_bulb_temperature_without_partial_load.copy()
 
     def update_variables(self):
         """Update cooling, heating, dhw and net electricity consumption as well as net electricity consumption cost and carbon emissions."""
+        pass
+       ## cooling electricity consumption
+       #cooling_demand = self.energy_simulation.cooling_demand[self.time_step] + self.cooling_storage.energy_balance[
+       #    self.time_step]
+       #cooling_consumption = self.cooling_device.get_input_power(cooling_demand,
+       #                                                          self.weather.outdoor_dry_bulb_temperature[
+       #                                                              self.time_step], heating=False)
+       #self.__cooling_electricity_consumption.append(cooling_consumption)
 
-        # cooling electricity consumption
-        cooling_demand = self.energy_simulation.cooling_demand[self.time_step] + self.cooling_storage.energy_balance[
-            self.time_step]
-        cooling_consumption = self.cooling_device.get_input_power(cooling_demand,
-                                                                  self.weather.outdoor_dry_bulb_temperature[
-                                                                      self.time_step], heating=False)
-        self.__cooling_electricity_consumption.append(cooling_consumption)
+       ## heating electricity consumption
+       #heating_demand = self.energy_simulation.heating_demand[self.time_step] + self.heating_storage.energy_balance[
+       #    self.time_step]
 
-        # heating electricity consumption
-        heating_demand = self.energy_simulation.heating_demand[self.time_step] + self.heating_storage.energy_balance[
-            self.time_step]
+       #if isinstance(self.heating_device, HeatPump):
+       #    heating_consumption = self.heating_device.get_input_power(heating_demand,
+       #                                                              self.weather.outdoor_dry_bulb_temperature[
+       #                                                                  self.time_step], heating=True)
+       #else:
+       #    heating_consumption = self.dhw_device.get_input_power(heating_demand)
 
-        if isinstance(self.heating_device, HeatPump):
-            heating_consumption = self.heating_device.get_input_power(heating_demand,
-                                                                      self.weather.outdoor_dry_bulb_temperature[
-                                                                          self.time_step], heating=True)
-        else:
-            heating_consumption = self.dhw_device.get_input_power(heating_demand)
+       #self.__heating_electricity_consumption.append(heating_consumption)
 
-        self.__heating_electricity_consumption.append(heating_consumption)
+       ## dhw electricity consumption
+       #dhw_demand = self.energy_simulation.dhw_demand[self.time_step] + self.dhw_storage.energy_balance[self.time_step]
 
-        # dhw electricity consumption
-        dhw_demand = self.energy_simulation.dhw_demand[self.time_step] + self.dhw_storage.energy_balance[self.time_step]
+       #if isinstance(self.dhw_device, HeatPump):
+       #    dhw_consumption = self.dhw_device.get_input_power(dhw_demand,
+       #                                                      self.weather.outdoor_dry_bulb_temperature[self.time_step],
+       #                                                      heating=True)
+       #else:
+       #    dhw_consumption = self.dhw_device.get_input_power(dhw_demand)
 
-        if isinstance(self.dhw_device, HeatPump):
-            dhw_consumption = self.dhw_device.get_input_power(dhw_demand,
-                                                              self.weather.outdoor_dry_bulb_temperature[self.time_step],
-                                                              heating=True)
-        else:
-            dhw_consumption = self.dhw_device.get_input_power(dhw_demand)
+       #self.__dhw_electricity_consumption.append(dhw_consumption)
 
-        self.__dhw_electricity_consumption.append(dhw_consumption)
+       ## net electricity consumption
+       #net_electricity_consumption = cooling_consumption \
+       #                              + heating_consumption \
+       #                              + dhw_consumption \
+       #                              + self.electrical_storage.electricity_consumption[self.time_step] \
+       #                              + self.energy_simulation.non_shiftable_load[self.time_step] \
+       #                              + self.__solar_generation[self.time_step]
+       #self.__net_electricity_consumption.append(net_electricity_consumption)
 
-        # net electricity consumption
-        net_electricity_consumption = cooling_consumption \
-                                      + heating_consumption \
-                                      + dhw_consumption \
-                                      + self.electrical_storage.electricity_consumption[self.time_step] \
-                                      + self.energy_simulation.non_shiftable_load[self.time_step] \
-                                      + self.__solar_generation[self.time_step]
-        self.__net_electricity_consumption.append(net_electricity_consumption)
+       ## net electriciy consumption cost
+       #self.__net_electricity_consumption_cost.append(
+       #    net_electricity_consumption * self.pricing.electricity_pricing[self.time_step])
 
-        # net electriciy consumption cost
-        self.__net_electricity_consumption_cost.append(
-            net_electricity_consumption * self.pricing.electricity_pricing[self.time_step])
-
-        # net electriciy consumption emission
-        self.__net_electricity_consumption_emission.append(
-            max(0, net_electricity_consumption * self.carbon_intensity.carbon_intensity[self.time_step]))
+       ## net electriciy consumption emission
+       #self.__net_electricity_consumption_emission.append(
+       #    max(0, net_electricity_consumption * self.carbon_intensity.carbon_intensity[self.time_step]))
 
     def observations(self, include_all: bool = None, normalize: bool = None, periodic_normalization: bool = None) -> \
             Mapping[str, float]:
@@ -415,11 +329,11 @@ class EV(Environment):
         include_all = False if include_all is None else include_all
 
         ev_data = vars(self.ev_simulation)
-        unwanted_keys = ['month', 'hour', 'day_type']
+        unwanted_keys = ['month', 'hour', 'day_type', "charger"]
 
         data = {
             **{k: v[self.time_step] for k, v in ev_data.items() if k not in unwanted_keys},
-            'ev_soc': self.battery.soc[self.time_step] / self.battery.capacity
+            'ev_soc': self.battery.soc[self.time_step] / self.battery.capacity #TODO not working for some reason
         }
 
         if include_all:
@@ -579,7 +493,7 @@ class EV(Environment):
             if key == 'ev_state':
                 low_limit[key] = 0
                 high_limit[key] = 1
-            if key == 'destination_charger':
+            if key == 'charger':
                 low_limit[key] = 0
                 high_limit[key] = 7 #TODO update it automatically according to the number of chargers
             elif key in ["estimated_departure_time", "estimated_arrival_time"]:
@@ -641,6 +555,22 @@ class EV(Environment):
 
         self.battery.autosize_for_EV()
 
+    @staticmethod
+    def observations_length() -> Mapping[str, int]:
+        r"""Get periodic observation names and their minimum and maximum values for periodic/cyclic normalization.
+
+        Returns
+        -------
+        periodic_observation_metadata: Mapping[str, int]
+            Observation low and high limits.
+        """
+
+        return {
+            'hour': range(1, 25),
+            'day_type': range(1, 9),
+            'month': range(1, 13)
+        }
+
     def __str__(self):
         ev_simulation_attrs = [
             f"\nEV simulation (time_step={self.time_step}):",
@@ -648,7 +578,6 @@ class EV(Environment):
             f"\nHour: {self.ev_simulation.hour[self.time_step]}",
             f"\nDay Type: {self.ev_simulation.day_type[self.time_step]}",
             f"\nState: {self.ev_simulation.ev_state[self.time_step]}",
-            f"\nLocation: {self.ev_simulation.connected_charger[self.time_step]}",
             f"\nEstimated Departure Time: {self.ev_simulation.estimated_departure_time[self.time_step]}",
             f"\nRequired Soc At Departure: {self.ev_simulation.required_soc_departure[self.time_step]}",
             f"\nEstimated Arrival Time: {self.ev_simulation.estimated_arrival_time[self.time_step]}",
@@ -658,6 +587,4 @@ class EV(Environment):
         return (f"\n\nEV {self.name}:"
                 f"\nEnergy consumption rate: {self.energy_consumption_rate}"
                 f"\nBattery: {self.battery}"
-                #+ ''.join(ev_simulation_attrs) +
-                f"\nDistance travelled: {self.distance_travelled}"
                 f"\n\n")

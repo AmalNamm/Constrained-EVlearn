@@ -4,9 +4,19 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="606c8733-6e18-48ca-8547-eb551df70d64" name="Changes" comment="Added EVs and chargers to the Environment. Still work to do">
+    <list default="true" id="606c8733-6e18-48ca-8547-eb551df70d64" name="Changes" comment="Render method">
+      <change afterPath="$PROJECT_DIR$/citylearn/charger.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/citylearn/EV.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/EV.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/citylearn/building.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/building.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/citylearn/citylearn.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/citylearn.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/citylearn/cost_function.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/cost_function.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/citylearn/data.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_1.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_1.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_2.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_2.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_3.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_3.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/schema.json" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/schema.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/citylearn/energy_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/energy_model.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/examples/EVsEnv.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/examples/EVsEnv.ipynb" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -52,29 +62,33 @@
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
   <component name="ProjectId" id="2OdiLivBjfDdECxMNLsS3v6AdrP" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultHtmlFileTemplate": "HTML File",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "TODO_SCOPE": "All Places",
-    "WebServerToolWindowFactoryState": "false",
-    "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "C:/Users/Tiago Fonseca/Documents/GitHub/CityLearn/citylearn",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "reference.settingsdialog.IDE.editor.colors.Color Scheme Font",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;TODO_SCOPE&quot;: &quot;All Places&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;mastertest&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Tiago Fonseca/Documents/GitHub/OPEVA_V2GScheduling_Visualization&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settings.ide.settings.new.ui&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\citylearn" />
@@ -84,11 +98,11 @@
       <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\citylearn\data" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\examples\images" />
       <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\examples" />
       <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\examples\gif" />
       <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\citylearn" />
       <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\TiagoData\static" />
-      <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\TiagoData\templates" />
     </key>
   </component>
   <component name="RunManager" selected="Python.test">
@@ -197,7 +211,13 @@
       <workItem from="1686298741407" duration="8170000" />
       <workItem from="1686529181874" duration="3783000" />
       <workItem from="1686553956996" duration="34983000" />
-      <workItem from="1686661256328" duration="6217000" />
+      <workItem from="1686661256328" duration="6793000" />
+      <workItem from="1686686372955" duration="10810000" />
+      <workItem from="1686834147495" duration="11539000" />
+      <workItem from="1686909442892" duration="86000" />
+      <workItem from="1687185914619" duration="13944000" />
+      <workItem from="1687250799599" duration="7700000" />
+      <workItem from="1687355187721" duration="947000" />
     </task>
     <task id="LOCAL-00001" summary="Added Charger and EVCar Class to energy_model.py">
       <created>1683211433859</created>
@@ -220,7 +240,21 @@
       <option name="project" value="LOCAL" />
       <updated>1684272222322</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Render method">
+      <created>1686667596305</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1686667596305</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Render method">
+      <created>1686667600525</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1686667600525</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -241,9 +275,19 @@
     <MESSAGE value="Added Charger and EVCar Class to energy_model.py" />
     <MESSAGE value="Added a first implementation ideia for the RL MADDPG" />
     <MESSAGE value="Added EVs and chargers to the Environment. Still work to do" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added EVs and chargers to the Environment. Still work to do" />
+    <MESSAGE value="Render method" />
+    <option name="LAST_COMMIT_MESSAGE" value="Render method" />
   </component>
   <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/citylearn/building.py</url>
+          <line>921</line>
+          <option name="timeStamp" value="7" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
     <watches-manager>
       <configuration name="EVsEnv">
         <watch expression="self" />
