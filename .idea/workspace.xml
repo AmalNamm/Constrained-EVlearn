@@ -4,12 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="606c8733-6e18-48ca-8547-eb551df70d64" name="Changes" comment="Render method">
+    <list default="true" id="606c8733-6e18-48ca-8547-eb551df70d64" name="Changes" comment="Observations and actions finalized">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/citylearn/EV.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/EV.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/building.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/building.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/charger.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/charger.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/citylearn.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/citylearn.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/examples/EVsEnv.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/examples/EVsEnv.ipynb" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -212,7 +209,8 @@
       <workItem from="1687250799599" duration="7700000" />
       <workItem from="1687355187721" duration="1209000" />
       <workItem from="1687358798159" duration="4078000" />
-      <workItem from="1687428108791" duration="6133000" />
+      <workItem from="1687428108791" duration="6529000" />
+      <workItem from="1687442142849" duration="1531000" />
     </task>
     <task id="LOCAL-00001" summary="Added Charger and EVCar Class to energy_model.py">
       <created>1683211433859</created>
@@ -249,7 +247,14 @@
       <option name="project" value="LOCAL" />
       <updated>1686667600525</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Observations and actions finalized">
+      <created>1687434341161</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1687434341161</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -271,25 +276,21 @@
     <MESSAGE value="Added a first implementation ideia for the RL MADDPG" />
     <MESSAGE value="Added EVs and chargers to the Environment. Still work to do" />
     <MESSAGE value="Render method" />
-    <option name="LAST_COMMIT_MESSAGE" value="Render method" />
+    <MESSAGE value="Observations and actions finalized" />
+    <option name="LAST_COMMIT_MESSAGE" value="Observations and actions finalized" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/citylearn/building.py</url>
-          <line>925</line>
+          <line>934</line>
           <option name="timeStamp" value="7" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/citylearn/building.py</url>
-          <line>816</line>
+          <line>827</line>
           <option name="timeStamp" value="12" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/citylearn/building.py</url>
-          <line>803</line>
-          <option name="timeStamp" value="13" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
