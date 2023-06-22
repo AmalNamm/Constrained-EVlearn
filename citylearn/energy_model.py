@@ -684,33 +684,33 @@ class Battery(ElectricDevice, StorageDevice):
 
         r"""Base electricity storage class.
 
-            Parameters
-            ----------
-            capacity : float
-                Maximum amount of energy the storage device can store in [kWh]. Must be >= 0 and if == 0 or None, set to 0.00001 to avoid `ZeroDivisionError`.
-            nominal_power: float
-                Maximum amount of electric power that the battery can use to charge or discharge.
-            capacity_loss_coefficient : float, default: 0.00001
-                Battery degradation; storage capacity lost in each charge and discharge cycle (as a fraction of the total capacity).
-            power_efficiency_curve: list, default: [[0, 0.83],[0.3, 0.83],[0.7, 0.9],[0.8, 0.9],[1, 0.85]]
-                Charging/Discharging efficiency as a function of the power released or consumed.
-            capacity_power_curve: list, default: [[0.0, 1],[0.8, 1],[1.0, 0.2]]
-                Maximum power of the battery as a function of its current state of charge.
+    Parameters
+    ----------
+    capacity : float
+        Maximum amount of energy the storage device can store in [kWh]. Must be >= 0 and if == 0 or None, set to 0.00001 to avoid `ZeroDivisionError`.
+    nominal_power: float
+        Maximum amount of electric power that the battery can use to charge or discharge.
+    capacity_loss_coefficient : float, default: 0.00001
+        Battery degradation; storage capacity lost in each charge and discharge cycle (as a fraction of the total capacity).
+    power_efficiency_curve: list, default: [[0, 0.83],[0.3, 0.83],[0.7, 0.9],[0.8, 0.9],[1, 0.85]]
+        Charging/Discharging efficiency as a function of the power released or consumed.
+    capacity_power_curve: list, default: [[0.0, 1],[0.8, 1],[1.0, 0.2]]   
+        Maximum power of the battery as a function of its current state of charge.
 
-            Other Parameters
-            ----------------
-            **kwargs : Any
-                Other keyword arguments used to initialize super classes.
-            """
-
-        self.__efficiency_history = []
-        self.__capacity_history = []
-        super().__init__(capacity=capacity, nominal_power=nominal_power or 0.00001, **kwargs)
-        self.capacity_loss_coefficient = capacity_loss_coefficient or 0.00001
-        self.power_efficiency_curve = power_efficiency_curve or [[0, 0.83], [0.3, 0.83], [0.7, 0.9], [0.8, 0.9],
-                                                                 [1, 0.85]]
-        self.capacity_power_curve = capacity_power_curve or [[0.0, 1], [0.8, 1], [1.0, 0.2]]
-
+    Other Parameters
+    ----------------
+    **kwargs : Any
+        Other keyword arguments used to initialize super classes.
+    """
+    
+    def __init__(self, capacity: float, nominal_power: float, capacity_loss_coefficient: float = None, power_efficiency_curve: List[List[float]] = None, capacity_power_curve: List[List[float]] = None, **kwargs: Any):
+        self._efficiency_history = []
+        self._capacity_history = []
+        super().__init__(capacity = capacity, nominal_power = nominal_power, **kwargs)
+        self.capacity_loss_coefficient = capacity_loss_coefficient
+        self.power_efficiency_curve = power_efficiency_curve
+        self.capacity_power_curve = capacity_power_curve
+        
     @StorageDevice.capacity.getter
     def capacity(self) -> float:
         r"""Current time step maximum amount of energy the storage device can store in [kWh]"""
@@ -751,25 +751,25 @@ class Battery(ElectricDevice, StorageDevice):
     def efficiency_history(self) -> List[float]:
         """Time series of technical efficiency."""
 
-        return self.__efficiency_history
+        return self._efficiency_history
 
     @property
     def capacity_history(self) -> List[float]:
         """Time series of maximum amount of energy the storage device can store in [kWh]."""
 
-        return self.__capacity_history
+        return self._capacity_history
 
     @capacity.setter
     def capacity(self, capacity: float):
         capacity = ZERO_DIVISION_CAPACITY if capacity is None or capacity == 0 else capacity
         StorageDevice.capacity.fset(self, capacity)
-        self.__capacity_history.append(capacity)
+        self._capacity_history.append(capacity)
 
     @efficiency.setter
     def efficiency(self, efficiency: float):
         efficiency = 0.9 if efficiency is None else efficiency
         StorageDevice.efficiency.fset(self, efficiency)
-        self.__efficiency_history.append(efficiency)
+        self._efficiency_history.append(efficiency)
 
     @capacity_loss_coefficient.setter
     def capacity_loss_coefficient(self, capacity_loss_coefficient: float):
@@ -783,7 +783,7 @@ class Battery(ElectricDevice, StorageDevice):
     @power_efficiency_curve.setter
     def power_efficiency_curve(self, power_efficiency_curve: List[List[float]]):
         if power_efficiency_curve is None:
-            power_efficiency_curve = [[0, 0.83], [0.3, 0.83], [0.7, 0.9], [0.8, 0.9], [1, 0.85]]
+            power_efficiency_curve = [[0, 0.83],[0.3, 0.83],[0.7, 0.9],[0.8, 0.9],[1, 0.85]]
         else:
             pass
 
@@ -792,7 +792,7 @@ class Battery(ElectricDevice, StorageDevice):
     @capacity_power_curve.setter
     def capacity_power_curve(self, capacity_power_curve: List[List[float]]):
         if capacity_power_curve is None:
-            capacity_power_curve = [[0.0, 1], [0.8, 1], [1.0, 0.2]]
+            capacity_power_curve = [[0.0, 1],[0.8, 1],[1.0, 0.2]]
         else:
             pass
 
@@ -821,7 +821,7 @@ class Battery(ElectricDevice, StorageDevice):
         energy = min(energy, self.get_max_input_power()) if energy >= 0 else max(-self.get_max_output_power(), energy)
         self.efficiency = self.get_current_efficiency(energy)
         super().charge(energy)
-        self.capacity = self.capacity - self.degrade()
+        self.capacity = self.capacity - min(self.degrade(), self.capacity)
 
     def get_max_output_power(self) -> float:
         r"""Get maximum output power while considering `capacity_power_curve` limitations if defined otherwise, returns `nominal_power`.
@@ -904,8 +904,8 @@ class Battery(ElectricDevice, StorageDevice):
         r"""Reset `Battery` to initial state."""
 
         super().reset()
-        self.__efficiency_history = self.__efficiency_history[0:1]
-        self.__capacity_history = self.__capacity_history[0:1]
+        self._efficiency_history = self._efficiency_history[0:1]
+        self._capacity_history = self._capacity_history[0:1]
 
     def __str__(self):
         return (f"Battery Specifications: \n"

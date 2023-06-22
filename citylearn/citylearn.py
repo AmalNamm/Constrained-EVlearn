@@ -1288,7 +1288,8 @@ class CityLearnEnv(Environment, Env):
 
 
         if kwargs.get('reward_function') is not None:
-            reward_function = kwargs['reward_function']
+            reward_function_constructor = kwargs['reward_function']
+            reward_function = reward_function_constructor(self)
         else:
             reward_function_type = self.schema['reward_function']['type']
             reward_function_attributes = self.schema['reward_function'].get('attributes', None)
