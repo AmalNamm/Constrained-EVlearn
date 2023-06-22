@@ -788,39 +788,43 @@ class Building(Environment):
             'occupant_count': self.energy_simulation.occupant_count[self.time_step],
         }
 
-        # Add chargers info to the observations
-        if self.chargers is not None:
-            for charger in self.chargers:
-                if charger.connected_ev:
-                    observations[f'charger_{charger.charger_id}_connected_state'] = 1
-                    obs = charger.connected_ev.observations(include_all, normalize, periodic_normalization)
-                    for k, v in obs.items():
-                        observations[f'charger_{charger.charger_id}_connected_{k}'] = v
-                else:
-                    observations[f'charger_{charger.charger_id}_connected_state'] = 0
-                    for o in self.observation_metadata:
-                        observations[f'charger_{charger.charger_id}_connected_{o}'] = -1
-
-                if charger.incoming_ev: #TODO add the ev_observation metadata to base, it should be in the load and agnostic of chargers
-                    #TODO add to the building observation metadata/space the charger_{charger.charger_id}_incoming_{o}'
-                    #Revise the limits
-
-                    observations[f'charger_{charger.charger_id}_incoming_state'] = 1
-                    obs = charger.incoming_ev.observations(include_all, normalize, periodic_normalization)
-                    for k, v in obs.items():
-                        observations[f'charger_{charger.charger_id}_incoming_{k}'] = v
-                else:
-                    observations[f'charger_{charger.charger_id}_incoming_state'] = 0
-                    for o in self.observation_metadata:
-                        if "charger" in o and != charger_{charger.charger_id}_incoming_state
-                        observations[f'charger_{charger.charger_id}_incoming_{o}'] = -1
-
         if include_all:
             valid_observations = list(self.observation_metadata.keys())
         else:
             valid_observations = self.active_observations
 
         observations = {k: data[k] for k in valid_observations if k in data.keys()}
+
+        if self.chargers is not None:
+            for charger in self.chargers:
+                charger_id = charger.charger_id
+                charger_key_state = f'charger_{charger_id}_connected_state'
+                charger_key_incoming_state = f'charger_{charger_id}_incoming_state'
+
+                if charger.connected_ev:
+                    observations[charger_key_state] = 1
+                    obs = charger.connected_ev.observations(include_all, normalize, periodic_normalization)
+                    for k, v in obs.items():
+                        observations[f'charger_{charger_id}_connected_{k}'] = v
+                else:
+                    observations[charger_key_state] = 0
+                    for o in self.observation_metadata:
+                        if f"charger_{charger_id}_connected" in o and o != charger_key_state:
+                            observations[o] = -1
+
+                # Connected_state e incoming_state a -1 ?? no 11 e no 12 so esta assim o connected
+
+                if charger.incoming_ev:
+                    observations[charger_key_incoming_state] = 1
+                    obs = charger.incoming_ev.observations(include_all, normalize, periodic_normalization)
+                    for k, v in obs.items():
+                        observations[f'charger_{charger_id}_incoming_{k}'] = v
+                else:
+                    observations[charger_key_incoming_state] = 0
+                    for o in self.observation_metadata:
+                        if f"charger_{charger_id}_incoming" in o and o != charger_key_incoming_state:
+                            observations[o] = -1
+
         unknown_observations = list(set(valid_observations).difference(observations.keys()))
         assert len(unknown_observations) == 0, f'Unknown observations: {unknown_observations}'
 
@@ -917,11 +921,11 @@ class Building(Environment):
                 raise Exception(
                     "Something went wrong as the actions length is different from the chargers length available")
             else:
-                for key, value in kwargs.items():
+                for key, action_value in kwargs.items():
                     for c in self.chargers:
                         if f'ev_storage_{c.charger_id}_action' == key:
                             if c.connected_ev is not None:
-                                c.connected_ev.battery.charge(value)
+                                c.update_connected_ev_soc(action_value)
                             else:
                                 pass
                                 #raise Exception(
@@ -1040,18 +1044,6 @@ class Building(Environment):
 
         energy = action * self.electrical_storage.capacity
         self.electrical_storage.charge(energy)
-
-    def update_EV_storage(self, action: float):  # TODO CHANGE
-        r"""Charge/discharge EVs batteries.
-
-        Parameters
-        ----------
-        action : float
-            Fraction of `EV battery` `capacity` to charge/discharge by.
-        """
-
-        energy = action * self.charger.connected_cars[0].battery  # TODO
-        self.charger.update_evs_soc(energy)
 
     def estimate_observation_space(self, include_all: bool = None, normalize: bool = None,
                                    periodic_normalization: bool = None) -> spaces.Box:
@@ -1382,11 +1374,6 @@ class Building(Environment):
         """
 
         self.pv.autosize(self.pv.get_generation(self.energy_simulation.solar_generation), **kwargs)
-
-    def autosize_charger(self): #TODO CHECK
-        """Autosize `Charger` properties to the typical EV charger properties."""
-
-        self.charger.autosize()
 
     def next_time_step(self):
         r"""Advance all energy storage and electric devices and, PV to next `time_step`."""

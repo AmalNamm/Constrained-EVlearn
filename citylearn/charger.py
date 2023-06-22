@@ -3,6 +3,8 @@ from typing import List, Dict
 from citylearn import EV
 
 ZERO_DIVISION_CAPACITY = 0.00001
+
+
 class Charger():
     def __init__(
             self,
@@ -140,8 +142,6 @@ class Charger():
             assert efficiency > 0, 'efficiency must be > 0.'
             self.__efficiency = efficiency
 
-
-
     @property
     def nominal_power(self) -> float:
         r"""Nominal power."""
@@ -230,10 +230,10 @@ class Charger():
         ValueError
             If the charger has reached its maximum connected cars' capacity.
         """
-        #if self.connected_ev is None
+        # if self.connected_ev is None
         self.connected_ev = car
         print("A conectar car")
-        #else:
+        # else:
         #    raise ValueError("Charger has reached its maximum connected cars capacity")
 
     def unplug_car(self):
@@ -262,11 +262,11 @@ class Charger():
         ValueError
             If the charger has reached its maximum associated cars' capacity.
         """
-        #if self.incoming_ev_ev is None:
+        # if self.incoming_ev_ev is None:
         self.incoming_ev = car
         print("A cincoming car")
 
-        #else:
+        # else:
         #    raise ValueError("Charger has reached its maximum associated cars capacity")
 
     def disassociate_incoming_car(self):
@@ -281,37 +281,41 @@ class Charger():
         self.incoming_ev = None
         print("APAGUEI")
 
+    def update_connected_ev_soc(self, action_value: float):
+        if self.connected_ev and action_value != 0:
+            car = self.connected_ev
+            energy = action_value * car.battery.capacity
+            charging = energy >= 0
 
-    def update_evs_soc(self, energy: float):
-        charging = energy >= 0
+            if charging:
+                current_power_level = min(max(abs(energy), self.min_charging_power), self.max_charging_power)
+            else:
+                current_power_level = min(max(abs(energy), self.min_discharging_power), self.max_discharging_power)
 
-        if charging:
-            current_power_level = min(max(abs(energy), self.min_charging_power), self.max_charging_power)
+            if charging:
+                efficiency_curve = self.charge_efficiency_curve
+            else:
+                efficiency_curve = self.discharge_efficiency_curve
+
+            lower_power_level = max([power for power in efficiency_curve if power <= current_power_level])
+            upper_power_level = min([power for power in efficiency_curve if power >= current_power_level])
+
+            if lower_power_level == upper_power_level:
+                charge_discharge_efficiency = efficiency_curve[lower_power_level]
+            else:
+                lower_efficiency = efficiency_curve[lower_power_level]
+                upper_efficiency = efficiency_curve[upper_power_level]
+                charge_discharge_efficiency = lower_efficiency + (current_power_level - lower_power_level) * (
+                        upper_efficiency - lower_efficiency) / (upper_power_level - lower_power_level)
+
+            energy_kwh = current_power_level * charge_discharge_efficiency * (
+                    15 / 60)  # Convert the power to energy by multiplying by the time step (15 minutes)
+
+            # Here we call the car's battery's charge method directly, passing the energy (positive for charging,
+            # negative for discharging)
+            car.battery.charge(energy_kwh if charging else -energy_kwh)
         else:
-            current_power_level = min(max(abs(energy), self.min_discharging_power), self.max_discharging_power)
-
-        if charging:
-            efficiency_curve = self.charge_efficiency_curve
-        else:
-            efficiency_curve = self.discharge_efficiency_curve
-
-        lower_power_level = max([power for power in efficiency_curve if power <= current_power_level])
-        upper_power_level = min([power for power in efficiency_curve if power >= current_power_level])
-
-        if lower_power_level == upper_power_level:
-            charge_discharge_efficiency = efficiency_curve[lower_power_level]
-        else:
-            lower_efficiency = efficiency_curve[lower_power_level]
-            upper_efficiency = efficiency_curve[upper_power_level]
-            charge_discharge_efficiency = lower_efficiency + (current_power_level - lower_power_level) * (
-                    upper_efficiency - lower_efficiency) / (upper_power_level - lower_power_level)
-
-        car = self.connected_ev
-        energy_kwh = current_power_level * charge_discharge_efficiency * (
-                15 / 60)  # Convert the power to energy by multiplying by the time step (15 minutes)
-
-        # Here we call the car's battery's charge method directly, passing the energy (positive for charging, negative for discharging)
-        car.battery.charge(energy_kwh if charging else -energy_kwh)
+            raise Exception("ERROR no car is connected to charger so it can charge/discharge")
 
     def next_time_step(self):
         r"""Advance to next `time_step` and set `electricity_consumption` at new `time_step` to 0.0."""
@@ -328,19 +332,7 @@ class Charger():
         self.incoming_ev = None
         self.__electricity_consumption = [0.0]
 
-    def autosize(self):  # TODO values
-        r"""Autosize charger for an EV.
-        """
-        self.nominal_power = 7.2
-        self.efficiency = 0.95
-        self.max_charging_power = 7.2,
-        self.min_charging_power = 1.4,
-        self.max_discharging_power = 7.2,
-        self.min_discharging_power = 0.0,
-        self.charge_efficiency_curve = {3.6: 0.95, 7.2: 0.97, 22: 0.98, 50: 0.98}
-        self.discharge_efficiency_curve = {3.6: 0.95, 7.2: 0.97, 22: 0.98, 50: 0.98}
-
-    #def __str__(self):
+    # def __str__(self):
     #    return (
     #        f"Charger ID: {self.charger_id}\n"
     #        f"Max Charging Power: {self.max_charging_power} kW\n"

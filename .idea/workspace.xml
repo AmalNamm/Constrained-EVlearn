@@ -5,18 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="606c8733-6e18-48ca-8547-eb551df70d64" name="Changes" comment="Render method">
-      <change afterPath="$PROJECT_DIR$/citylearn/charger.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/citylearn/EV.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/EV.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/citylearn/building.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/building.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/citylearn/charger.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/charger.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/citylearn/citylearn.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/citylearn.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/cost_function.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/cost_function.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_1.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_1.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_2.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_2.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_3.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_3.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/schema.json" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/schema.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/energy_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/energy_model.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/examples/EVsEnv.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/examples/EVsEnv.ipynb" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -217,7 +210,9 @@
       <workItem from="1686909442892" duration="86000" />
       <workItem from="1687185914619" duration="13944000" />
       <workItem from="1687250799599" duration="7700000" />
-      <workItem from="1687355187721" duration="947000" />
+      <workItem from="1687355187721" duration="1209000" />
+      <workItem from="1687358798159" duration="4078000" />
+      <workItem from="1687428108791" duration="6133000" />
     </task>
     <task id="LOCAL-00001" summary="Added Charger and EVCar Class to energy_model.py">
       <created>1683211433859</created>
@@ -283,8 +278,18 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/citylearn/building.py</url>
-          <line>921</line>
+          <line>925</line>
           <option name="timeStamp" value="7" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/citylearn/building.py</url>
+          <line>816</line>
+          <option name="timeStamp" value="12" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/citylearn/building.py</url>
+          <line>803</line>
+          <option name="timeStamp" value="13" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

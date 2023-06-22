@@ -228,7 +228,7 @@ class EV(Environment):
 
         return
 
-    def reset(self):
+    def reset(self): #TODO
         """
         Reset the EVCar to its initial state.
         """
@@ -252,7 +252,7 @@ class EV(Environment):
         #self.energy_simulation.heating_demand = self.__heating_demand_without_partial_load.copy()
         #self.energy_simulation.indoor_dry_bulb_temperature = self.__indoor_dry_bulb_temperature_without_partial_load.copy()
 
-    def update_variables(self):
+    def update_variables(self): #TODO
         """Update cooling, heating, dhw and net electricity consumption as well as net electricity consumption cost and carbon emissions."""
         pass
        ## cooling electricity consumption
@@ -391,158 +391,6 @@ class EV(Environment):
             'day_type': range(1, 9),
             'month': range(1, 13)
         }
-
-    def apply_actions(self,
-                      connect_to_charger_action: int = None, disconnect_from_charger_action: int = None,
-                      charging_amount_action: float = None):
-        r"""Update EV connection and charging status for the next timestep.
-
-        Parameters
-        ----------
-        connect_to_charger_action : int, default: np.nan
-            ID of the charger to connect the EV to. Use np.nan or a negative number for no connection.
-        disconnect_from_charger_action : int, default: np.nan
-            ID of the charger to disconnect the EV from. Use np.nan or a negative number for no disconnection.
-        charging_amount_action : float, default: 0.0
-            Fraction of `EV_battery` `capacity` to charge by.
-        """
-
-        connect_to_charger_action = -1 if connect_to_charger_action is None or math.isnan(
-            connect_to_charger_action) else connect_to_charger_action
-        disconnect_from_charger_action = -1 if disconnect_from_charger_action is None or math.isnan(
-            disconnect_from_charger_action) else disconnect_from_charger_action
-        charging_amount_action = 0.0 if charging_amount_action is None or math.isnan(
-            charging_amount_action) else charging_amount_action
-
-        if connect_to_charger_action >= 0:
-            self.connect_EV_to_charger(connect_to_charger_action)
-        if disconnect_from_charger_action >= 0:
-            self.disconnect_EV_from_charger(disconnect_from_charger_action)
-
-        self.update_EV_charging(charging_amount_action)
-
-    def estimate_observation_space(self, include_all: bool = None, normalize: bool = None,
-                                   periodic_normalization: bool = None) -> spaces.Box: #TODO
-        r"""Get estimate of observation spaces.
-
-        Parameters
-        ----------
-        include_all: bool, default: False,
-            Whether to estimate for all observations as listed in `observation_metadata` or only those that are active.
-        normalize : bool, default: False
-            Whether to apply min-max normalization bounded between [0, 1].
-        periodic_normalization: bool, default: False
-            Whether to apply sine-cosine normalization to cyclic observations including hour, day_type and month.
-
-        Returns
-        -------
-        observation_space : spaces.Box
-            Observation low and high limits.
-        """
-
-        normalize = False if normalize is None else normalize
-        normalized_observation_space_limits = self.estimate_observation_space_limits(
-            include_all=include_all, periodic_normalization=True
-        )
-        unnormalized_observation_space_limits = self.estimate_observation_space_limits(
-            include_all=include_all, periodic_normalization=False
-        )
-
-        if normalize:
-            low_limit, high_limit = normalized_observation_space_limits
-            low_limit = [0.0] * len(low_limit)
-            high_limit = [1.0] * len(high_limit)
-        else:
-            low_limit, high_limit = unnormalized_observation_space_limits
-            low_limit = list(low_limit.values())
-            high_limit = list(high_limit.values())
-
-        return spaces.Box(low=np.array(low_limit, dtype='float32'), high=np.array(high_limit, dtype='float32'))
-
-    def estimate_observation_space_limits(self, include_all: bool = None, periodic_normalization: bool = None) -> Tuple[
-        Mapping[str, float], Mapping[str, float]]: #TODO
-        r"""Get estimate of observation space limits.
-
-        Find minimum and maximum possible values of all the observations, which can then be used by the RL agent to scale the observations and train any function approximators more effectively.
-
-        Parameters
-        ----------
-        include_all: bool, default: False,
-            Whether to estimate for all observations as listed in `observation_metadata` or only those that are active.
-        periodic_normalization: bool, default: False
-            Whether to apply sine-cosine normalization to cyclic observations including hour, day_type and month.
-
-        Returns
-        -------
-        observation_space_limits : Tuple[Mapping[str, float], Mapping[str, float]]
-            Observation low and high limits.
-
-        Notes
-        -----
-        Lower and upper bounds of net electricity consumption are rough estimates and may not be completely accurate hence,
-        scaling this observation-variable using these bounds may result in normalized values above 1 or below 0.
-        """
-
-        include_all = False if include_all is None else include_all
-        observation_names = list(self.observation_metadata.keys()) if include_all else self.active_observations
-        periodic_normalization = False if periodic_normalization is None else periodic_normalization
-        periodic_observations = self.get_periodic_observation_metadata()
-        low_limit, high_limit = {}, {}
-
-        for key in observation_names:
-            if key == 'ev_state':
-                low_limit[key] = 0
-                high_limit[key] = 1
-            if key == 'charger':
-                low_limit[key] = 0
-                high_limit[key] = 7 #TODO update it automatically according to the number of chargers
-            elif key in ["estimated_departure_time", "estimated_arrival_time"]:
-                low_limit[key] = 0
-                high_limit[key] = 24
-            elif key in ["required_soc_departure", "estimated_soc_arrival", "ev_soc"]:
-                low_limit[key] = 0.0
-                high_limit[key] = 1.0
-
-        low_limit = {k: v - 0.05  for k, v in low_limit.items()}
-        high_limit = {k: v + 0.05 for k, v in high_limit.items()}
-
-        return low_limit, high_limit
-
-    def estimate_action_space(self) -> spaces.Box:
-        r"""Get estimate of action spaces.
-
-        Find minimum and maximum possible values of all the actions, which can then be used by the RL agent to scale the selected actions.
-
-        Returns
-        -------
-        action_space : spaces.Box
-            Action low and high limits.
-
-        Notes
-        -----
-        The lower and upper bounds for the `cooling_storage`, `heating_storage` and `dhw_storage` actions are set to (+/-) 1/maximum_demand for each respective end use,
-        as the energy storage device can't provide the building with more energy than it will ever need for a given time step. .
-        For example, if `cooling_storage` capacity is 20 kWh and the maximum `cooling_demand` is 5 kWh, its actions will be bounded between -5/20 and 5/20.
-        These boundaries should speed up the learning process of the agents and make them more stable compared to setting them to -1 and 1.
-        """
-
-        low_limit, high_limit = [], []
-
-        for key in self.active_actions:
-            if key == 'ev_storage':
-                limit = self.battery.nominal_power / self.battery.capacity
-                low_limit.append(-limit)
-                high_limit.append(limit)
-
-            elif key == "ev_connection_action": #TODO might change
-                low_limit.append(0)
-                high_limit.append(7) #number of chargers
-
-            elif key == "ev_disconnection_action": #TODO might change
-                low_limit.append(0)
-                high_limit.append(3) #number of evs
-
-        return spaces.Box(low=np.array(low_limit, dtype='float32'), high=np.array(high_limit, dtype='float32'))
 
     def autosize_battery(self, **kwargs):
         """Autosize `Battery` for a typical EV.

@@ -170,7 +170,7 @@ class CityLearnEnv(Environment, Env):
         return self.time_step == self.time_steps - 1
 
     @property
-    def observation_space(self) -> List[spaces.Box]:  # TODO
+    def observation_space(self) -> List[spaces.Box]:
         """Controller(s) observation spaces.
 
         Returns
@@ -208,7 +208,7 @@ class CityLearnEnv(Environment, Env):
 
 
     @property
-    def action_space(self) -> List[spaces.Box]:  # TODO
+    def action_space(self) -> List[spaces.Box]:
         """Controller(s) action spaces.
 
         Returns
@@ -641,7 +641,7 @@ class CityLearnEnv(Environment, Env):
             building.apply_actions(**building_actions)
 
         self.next_time_step()
-        reward = self.reward_function.calculate() #>TODO Check if cononecting ev to charger befor ethis step does not affect it
+        reward = self.reward_function.calculate()
         self.__rewards.append(reward)
         return self.observations, reward, self.done, self.get_info()
 
@@ -1144,8 +1144,10 @@ class CityLearnEnv(Environment, Env):
                     del observation_metadata['charger_state']
                     building.observation_metadata = observation_metadata
 
-
                 building.chargers = chargers_list
+
+            if "charger_state" in observation_metadata: #For buildings that do not have chargers... it needs to be improved
+                del observation_metadata['charger_state']
 
             # update devices
             device_metadata = {
