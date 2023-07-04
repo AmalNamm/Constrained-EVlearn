@@ -4,10 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="606c8733-6e18-48ca-8547-eb551df70d64" name="Changes" comment="Observations and actions finalized">
+    <list default="true" id="606c8733-6e18-48ca-8547-eb551df70d64" name="Changes" comment="Merge corrections">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/EV.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/EV.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/citylearn/agents/EVs/maddpg.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/agents/EVs/maddpg.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/citylearn/building.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/building.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/citylearn/charger.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/charger.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/citylearn/citylearn.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/citylearn.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/examples/EVsEnv.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/examples/EVsEnv.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/quickstart.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/examples/quickstart.ipynb" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -210,7 +214,17 @@
       <workItem from="1687355187721" duration="1209000" />
       <workItem from="1687358798159" duration="4078000" />
       <workItem from="1687428108791" duration="6529000" />
-      <workItem from="1687442142849" duration="1531000" />
+      <workItem from="1687442142849" duration="9307000" />
+      <workItem from="1687525349325" duration="2436000" />
+      <workItem from="1687727124714" duration="664000" />
+      <workItem from="1687775258786" duration="7220000" />
+      <workItem from="1687872363612" duration="5000" />
+      <workItem from="1687973704642" duration="7753000" />
+      <workItem from="1688045918646" duration="1961000" />
+      <workItem from="1688048342839" duration="781000" />
+      <workItem from="1688375645895" duration="19000" />
+      <workItem from="1688386172407" duration="6721000" />
+      <workItem from="1688476816627" duration="3153000" />
     </task>
     <task id="LOCAL-00001" summary="Added Charger and EVCar Class to energy_model.py">
       <created>1683211433859</created>
@@ -254,7 +268,14 @@
       <option name="project" value="LOCAL" />
       <updated>1687434341161</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="Merge corrections">
+      <created>1687443731427</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1687443731427</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -277,20 +298,21 @@
     <MESSAGE value="Added EVs and chargers to the Environment. Still work to do" />
     <MESSAGE value="Render method" />
     <MESSAGE value="Observations and actions finalized" />
-    <option name="LAST_COMMIT_MESSAGE" value="Observations and actions finalized" />
+    <MESSAGE value="Merge corrections" />
+    <option name="LAST_COMMIT_MESSAGE" value="Merge corrections" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/citylearn/building.py</url>
-          <line>934</line>
-          <option name="timeStamp" value="7" />
+        <line-breakpoint suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/citylearn/agents/sac.py</url>
+          <line>226</line>
+          <option name="timeStamp" value="13" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/citylearn/building.py</url>
-          <line>827</line>
-          <option name="timeStamp" value="12" />
+        <line-breakpoint suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/citylearn/agents/rlc.py</url>
+          <line>77</line>
+          <option name="timeStamp" value="16" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

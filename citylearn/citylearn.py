@@ -862,8 +862,7 @@ class CityLearnEnv(Environment, Env):
     def next_time_step(self):
         r"""Advance the env to next `time_step`."""
 
-        print (f"\n\nNext time step:")
-
+        print(f"\n\nTime step {self.time_step}:")
         # Advance buildings to the next time step
         for building in self.buildings:
             building.next_time_step()
@@ -872,9 +871,9 @@ class CityLearnEnv(Environment, Env):
         for ev in self.evs:
             ev.next_time_step()
             self.associate_ev_2_charger(ev)
+            print(ev.battery.soc[self.time_step])
 
         super().next_time_step()
-
 
         self.update_variables()
 
@@ -1121,7 +1120,7 @@ class CityLearnEnv(Environment, Env):
                     charger_class = getattr(importlib.import_module(charger_module), charger_class_name)
                     charger_attributes = charger_config.get('attributes', {})
                     image_path = None if charger_config.get('image_path', None) is None else charger_config["image_path"]
-                    charger_object = charger_class(charger_id=charger_name, image_path=image_path, **charger_attributes)
+                    charger_object = charger_class(charger_id=charger_name, image_path=image_path, **charger_attributes, seconds_per_time_step=seconds_per_time_step,)
                     chargers_list.append(charger_object)
 
                     if 'ev_storage' not in inactive_actions:
@@ -1405,7 +1404,7 @@ class CityLearnEnv(Environment, Env):
             ev_icon = folium.features.CustomIcon((ev.image_path or 'images/ev.png'),
                                                  icon_size=(40, 40))  # adjust the size as needed
             folium.Marker(ev_location,
-                          popup=f"EV: {ev.name}, SOC: {ev.battery.initial_soc}, Energy Consumption Rate: {ev.energy_consumption_rate}",
+                          popup=f"EV: {ev.name}, SOC: {ev.battery.soc[self.time_step]}",
                           icon=ev_icon).add_to(map_simulation)
 
             help = connected_charger or incoming_charger

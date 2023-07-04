@@ -1,11 +1,13 @@
+import inspect
 from typing import List, Dict
+from citylearn.base import Environment
 
 from citylearn import EV
 
 ZERO_DIVISION_CAPACITY = 0.00001
 
 
-class Charger():
+class Charger(Environment):
     def __init__(
             self,
             nominal_power: float,
@@ -19,7 +21,8 @@ class Charger():
             charge_efficiency_curve: Dict[float, float] = None,
             discharge_efficiency_curve: Dict[float, float] = None,
             image_path: str = None,
-            connected_ev: EV = None, incoming_ev: EV = None
+            connected_ev: EV = None, incoming_ev: EV = None,
+            **kwargs
     ):
         r"""Initializes the `Electric Vehicle Charger` class with the given attributes.
 
@@ -63,6 +66,13 @@ class Charger():
         self.image_path = image_path
         self.connected_ev = connected_ev or None
         self.incoming_ev = incoming_ev or None
+
+        arg_spec = inspect.getfullargspec(super().__init__)
+        kwargs = {
+            key: value for (key, value) in kwargs.items()
+            if (key in arg_spec.args or (arg_spec.varkw is not None))
+        }
+        super().__init__(**kwargs)
 
     @property
     def charger_id(self) -> str:
@@ -288,28 +298,14 @@ class Charger():
             charging = energy >= 0
 
             if charging:
-                current_power_level = min(max(abs(energy), self.min_charging_power), self.max_charging_power)
+                # make sure we do not charge beyond the maximum capacity
+                energy = min(energy, car.battery.capacity - car.battery.soc[self.time_step] / car.battery.capacity)
             else:
-                current_power_level = min(max(abs(energy), self.min_discharging_power), self.max_discharging_power)
+                # make sure we do not discharge beyond the minimum level (assuming it's zero)
+                energy = max(energy, -car.battery.soc[self.time_step])
 
-            if charging:
-                efficiency_curve = self.charge_efficiency_curve
-            else:
-                efficiency_curve = self.discharge_efficiency_curve
-
-            lower_power_level = max([power for power in efficiency_curve if power <= current_power_level])
-            upper_power_level = min([power for power in efficiency_curve if power >= current_power_level])
-
-            if lower_power_level == upper_power_level:
-                charge_discharge_efficiency = efficiency_curve[lower_power_level]
-            else:
-                lower_efficiency = efficiency_curve[lower_power_level]
-                upper_efficiency = efficiency_curve[upper_power_level]
-                charge_discharge_efficiency = lower_efficiency + (current_power_level - lower_power_level) * (
-                        upper_efficiency - lower_efficiency) / (upper_power_level - lower_power_level)
-
-            energy_kwh = current_power_level * charge_discharge_efficiency * (
-                    15 / 60)  # Convert the power to energy by multiplying by the time step (15 minutes)
+            # Already have energy, no need to convert again
+            energy_kwh = energy * self.efficiency
 
             # Here we call the car's battery's charge method directly, passing the energy (positive for charging,
             # negative for discharging)
@@ -320,14 +316,15 @@ class Charger():
     def next_time_step(self):
         r"""Advance to next `time_step` and set `electricity_consumption` at new `time_step` to 0.0."""
 
-        self.disassociate_incoming_car()
-        self.unplug_car()
         self.__electricity_consumption.append(0.0)
+        super().next_time_step()
+        #self.update_variables()
 
     def reset(self):
         """
         Resets the Charger to its initial state by disconnecting all cars.
         """
+        super().reset()
         self.connected_ev = None
         self.incoming_ev = None
         self.__electricity_consumption = [0.0]

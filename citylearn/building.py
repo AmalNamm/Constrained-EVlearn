@@ -1241,7 +1241,7 @@ class Building(Environment):
                 if self.chargers is not None:
                     for c in self.chargers:
                         if key == f"ev_storage_{c.charger_id}":
-                            limit = c.nominal_power
+                            limit = c.max_charging_power #later change to incorporate ev powers
                             low_limit.append(-limit)
                             high_limit.append(limit)
 
@@ -1389,7 +1389,7 @@ class Building(Environment):
         if self.chargers is not None:
             for c in self.chargers:
                 pass
-                #c.next_time_step()
+                c.next_time_step()
         super().next_time_step()
         self.update_variables()
 
