@@ -1,6 +1,6 @@
 Month,Hour,Day Type,State,Destination Charger,Estimated Departure Time,Required Soc At Departure, Estimated Arrival Time, Estimated SOC at Arrival
-7.0,24.0,7.0,0,,,,2,20
-8.0,1.0,1.0,1,charger_1_1,11,80,,
+7.0,24.0,7.0,1,,,,2,20
+8.0,1.0,1.0,1,charger_1_1,,,1,20
 8.0,2.0,1.0,0,charger_1_1,10,80,,
 8.0,3.0,1.0,0,charger_1_1,9,80,,
 8.0,4.0,1.0,0,charger_1_1,8,80,,

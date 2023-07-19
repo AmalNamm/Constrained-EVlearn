@@ -175,41 +175,94 @@ class EV(Environment):
         return np.array(self.cooling_storage.energy_balance, dtype=float).clip(min=0)
 
 
-    def travel(self):
-        print("The EV is now in transit ")
+    #def travel(self):
+    #    print("The EV is now in transit ")
+    #    """
+    #    Calculate the energy consumption based on a randomly
+    #    generated speed, and update the battery's state of charge using the `charge` method.
+#
+    #    """
+    #    # Generate a realistic speed randomly (between 30km/h to 120km/h seems realistic)
+    #    speed = random.uniform(30, 120)  # in km/hr
+#
+    #    # Convert speed to distance based on the time step (assuming that self.seconds_per_time_step is in seconds)
+    #    distance = speed * (self.seconds_per_time_step / 3600)  # Convert km/hr to km/second
+#
+    #    # Calculate the energy consumption
+    #    energy_consumption = distance * self.energy_consumption_rate
+#
+    #    # Introduce variability in energy consumption and charging
+    #    if random.random() < 0.9:  # 90% chance to discharge while in transit
+    #        # Discharge the battery to account for energy consumption while driving.
+    #        print("Discharging in transit")
+    #        self.battery.charge(-energy_consumption)
+    #    else:  # 10% chance to charge while at another location
+    #        # Generate a random charging speed in kWh (between 7-120 kWh seems realistic for 1 hour)
+    #        charging_speed = random.uniform(7, 120)  # in kWh per hour
+    #        # Calculate the amount of energy charged based on the time step
+    #        energy_charged = charging_speed * (self.seconds_per_time_step / 3600)  # Convert kWh/hr to kWh/second
+    #        # Charge the battery at another location while travelling
+    #        print(f"Charging in transit {energy_charged}")
+    #        self.battery.charge(energy_charged)
+
+    #def park(self):
+    #    print("The EV is parking and it is not plugged in")
+    #    """Update the car's location to 'parked_not_charging'."""
+    #    # Simulate power usage while parked by decreasing the state of charge slightly
+    #    # Assume a small amount of power loss, e.g., between 0 and 0.05 kWh
+    #    power_loss_while_parked = random.uniform(0, 0.005)  # in kWh
+    #    self.battery.charge(-power_loss_while_parked)
+
+
+    def adjust_ev_soc_on_system_connection(self, soc_system_connection):
         """
-        Calculate the energy consumption based on a randomly
-        generated speed, and update the battery's state of charge using the `charge` method.
+        Adjusts the state of charge (SoC) of an electric vehicle's (EV's) battery upon connection to the system.
 
+        When an EV is in transit, the system "loses" the connection and does not know how much battery
+        has been used during travel. As such, when an EV enters an incoming or connected state, its battery
+        SoC is updated to be close to the predicted SoC at arrival present in the EV dataset.
+
+        However, predictions sometimes fail, so this method introduces variability for the simulation by
+        randomly creating a discrepancy between the predicted value and a "real-world inspired" value. This discrepancy
+        is generated using a normal (Gaussian) distribution, which is more likely to produce values near 0 and less
+        likely to produce extreme values.
+
+        The range of potential variation is between -30% to +30% of the predicted SoC, with most of the values
+        being close to 0 (i.e., the prediction). The exact amount of variation is calculated by taking a random
+        value from the normal distribution and scaling it by the predicted SoC. This value is then added to the
+        predicted SoC to get the actual SoC, which can be higher or lower than the prediction.
+
+        The difference between the actual SoC and the initial SoC (before the adjustment) is passed to the
+        battery's charge method. If the difference is positive, the battery is charged; if the difference is negative,
+        the battery is discharged.
+
+        For example, if the EV dataset has a predicted SoC at arrival of 20% (of the battery's total capacity),
+        this method can randomly adjust the EV's battery to 22% or 19%, or even by a larger margin such as 40%.
+
+        Args:
+        soc_system_connection (float): The predicted SoC at system connection, expressed as a percentage of the
+        battery's total capacity.
         """
-        # Generate a realistic speed randomly (between 30km/h to 120km/h seems realistic)
-        speed = random.uniform(30, 120)  # in km/hr
 
-        # Convert speed to distance based on the time step (assuming that self.seconds_per_time_step is in seconds)
-        distance = speed * (self.seconds_per_time_step / 3600)  # Convert km/hr to km/second
+        # Get the initial SoC in kWh from the battery
+        soc_init_kwh = self.battery.soc_init
 
-        # Calculate the energy consumption
-        energy_consumption = distance * self.energy_consumption_rate
+        # Calculate the system connection SoC in kWh
+        soc_system_connection_kwh = self.battery.capacity * (soc_system_connection / 100)
 
-        # Introduce variability in energy consumption and charging
-        if random.random() < 0.9:  # 90% chance to discharge while in transit
-            # Discharge the battery to account for energy consumption while driving.
-            self.battery.charge(-energy_consumption)
-        else:  # 10% chance to charge while at another location
-            # Generate a random charging speed in kWh (between 7-120 kWh seems realistic for 1 hour)
-            charging_speed = random.uniform(7, 120)  # in kWh per hour
-            # Calculate the amount of energy charged based on the time step
-            energy_charged = charging_speed * (self.seconds_per_time_step / 3600)  # Convert kWh/hr to kWh/second
-            # Charge the battery at another location while travelling
-            self.battery.charge(energy_charged)
+        # Determine the range for random variation.
+        # Here we use a normal distribution centered at 0 and a standard deviation of 0.1.
+        # We also make sure that the values are truncated at -30% and +30%.
+        variation_percentage = np.clip(np.random.normal(0, 0.1), -0.3, 0.3)
 
-    def park(self):
-        print("The EV is parking and it is not plugged in")
-        """Update the car's location to 'parked_not_charging'."""
-        # Simulate power usage while parked by decreasing the state of charge slightly
-        # Assume a small amount of power loss, e.g., between 0 and 0.05 kWh
-        power_loss_while_parked = random.uniform(0, 0.005)  # in kWh
-        self.battery.charge(-power_loss_while_parked)
+        # Apply the variation
+        variation_kwh = variation_percentage * soc_system_connection_kwh
+
+        # Calculate the final SoC in kWh
+        soc_final_kwh = soc_system_connection_kwh + variation_kwh
+
+        # Charge or discharge the battery to the new SoC.
+        self.battery.charge(soc_final_kwh - soc_init_kwh)
 
     def next_time_step(self) -> Mapping[int, str]:
 
@@ -221,12 +274,8 @@ class EV(Environment):
         super().next_time_step()
         self.update_variables() #TODO Might need to go below the logic of charging
 
-        if self.ev_simulation.ev_state[self.time_step] == 0: #park
-            self.park()
-        elif self.ev_simulation.ev_state[self.time_step] == 1: #in transit
-            self.travel()
-
-        return
+        if self.ev_simulation.ev_state[self.time_step] == 1 or self.ev_simulation.ev_state[self.time_step] == 2: #connected or incoming
+            self.adjust_ev_soc_on_system_connection(self.ev_simulation.estimated_soc_arrival[self.time_step])
 
     def reset(self): #TODO
         """
@@ -548,18 +597,24 @@ class EV(Environment):
 
     def __str__(self):
         ev_simulation_attrs = [
-            f"\nEV simulation (time_step={self.time_step}):",
-            f"\nMonth: {self.ev_simulation.month[self.time_step]}",
-            f"\nHour: {self.ev_simulation.hour[self.time_step]}",
-            f"\nDay Type: {self.ev_simulation.day_type[self.time_step]}",
-            f"\nState: {self.ev_simulation.ev_state[self.time_step]}",
-            f"\nEstimated Departure Time: {self.ev_simulation.estimated_departure_time[self.time_step]}",
-            f"\nRequired Soc At Departure: {self.ev_simulation.required_soc_departure[self.time_step]}",
-            f"\nEstimated Arrival Time: {self.ev_simulation.estimated_arrival_time[self.time_step]}",
-            f"\nEstimated Soc Arrival: {self.ev_simulation.estimated_soc_arrival[self.time_step]}"
+            f"EV simulation (time_step={self.time_step}):",
+            f"Month: {self.ev_simulation.month[self.time_step]}",
+            f"Hour: {self.ev_simulation.hour[self.time_step]}",
+            f"Day Type: {self.ev_simulation.day_type[self.time_step]}",
+            f"State: {self.ev_simulation.ev_state[self.time_step]}",
+            f"Estimated Departure Time: {self.ev_simulation.estimated_departure_time[self.time_step]}",
+            f"Required Soc At Departure: {self.ev_simulation.required_soc_departure[self.time_step]}",
+            f"Estimated Arrival Time: {self.ev_simulation.estimated_arrival_time[self.time_step]}",
+            f"Estimated Soc Arrival: {self.ev_simulation.estimated_soc_arrival[self.time_step]}"
         ]
 
-        return (f"\n\nEV {self.name}:"
-                f"\nEnergy consumption rate: {self.energy_consumption_rate}"
-                f"\nBattery: {self.battery}"
-                f"\n\n")
+        ev_simulation_str = '\n'.join(ev_simulation_attrs)
+
+        return (
+            f"EV {self.name}:\n"
+            f"  Energy consumption rate: {self.energy_consumption_rate}\n"
+            f"  Battery: {self.battery}\n\n"
+            f"Simulation details:\n"
+            f"  {ev_simulation_str}"
+        )
+

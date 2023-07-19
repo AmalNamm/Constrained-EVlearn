@@ -914,5 +914,8 @@ class Battery(ElectricDevice, StorageDevice):
                 f"Efficiency: {self.efficiency} \n"
                 f"Capacity: {self.capacity} kWh\n"
                 f"Capacity Loss Coefficient: {self.capacity_loss_coefficient}\n"
+                f"Efficiency history: {self._efficiency_history}\n"
+                f"Capacity history: {self._capacity_history}\n"
                 f"Power Efficiency Curve: {self.power_efficiency_curve}\n"
-                f"Capacity Power Curve: {self.capacity_power_curve}")
+                f"Capacity Power Curve: {self.capacity_power_curve}\n"
+                f"Soc History: {self.soc}")

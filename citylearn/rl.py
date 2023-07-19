@@ -1,5 +1,7 @@
-import random
 import numpy as np
+import random
+from collections import namedtuple, deque
+import copy
 
 # conditional imports
 try:
@@ -92,6 +94,7 @@ class ReplayBuffer:
     
     def __len__(self):
         return len(self.buffer)
+
         
 class RegressionBuffer:
     def __init__(self, capacity):
@@ -131,14 +134,6 @@ class SoftQNetwork(nn.Module):
         x = self.ln2(F.relu(self.linear2(x)))
         x = self.linear3(x)
         return x
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import numpy as np
-import random
-from collections import namedtuple, deque
-import copy
 
 class Actor(nn.Module):
     """Actor (Policy) Model."""
@@ -214,3 +209,46 @@ class OUNoise:
         dx = self.theta * (self.mu - x) + self.sigma * np.array([random.random() for _ in range(len(x))])
         self.state = x + dx
         return self.state
+
+class ReplayBuffer1:
+    """Fixed-size buffer to store experience tuples."""
+
+    def __init__(self, action_size, buffer_size, batch_size, seed, device):
+        """Initialize a ReplayBuffer object.
+
+        Params
+        ======
+            buffer_size (int): maximum size of buffer
+            batch_size (int): size of each training batch
+        """
+        self.action_size = action_size
+        self.memory = deque(maxlen=buffer_size)  # internal memory (deque)
+        self.batch_size = batch_size
+        self.experience = namedtuple("Experience", field_names=["state", "action", "reward", "next_state", "done"])
+        self.seed = random.seed(seed)
+        self.device = device
+
+    def add(self, state, action, reward, next_state, done):
+        """Add a new experience to memory."""
+        e = self.experience(state, action, reward, next_state, done)
+        self.memory.append(e)
+
+    def sample(self):
+        """Randomly sample a batch of experiences from memory."""
+        experiences = random.sample(self.memory, k=self.batch_size)
+
+        print(e.state for e in experiences if e is not None)
+
+        states = torch.from_numpy(np.vstack([e.state for e in experiences if e is not None])).float().to(self.device)
+        actions = torch.from_numpy(np.vstack([e.action for e in experiences if e is not None])).float().to(self.device)
+        rewards = torch.from_numpy(np.vstack([e.reward for e in experiences if e is not None])).float().to(self.device)
+        next_states = torch.from_numpy(np.vstack([e.next_state for e in experiences if e is not None])).float().to(
+            self.device)
+        dones = torch.from_numpy(np.vstack([e.done for e in experiences if e is not None]).astype(np.uint8)).float().to(
+            self.device)
+
+        return (states, actions, rewards, next_states, dones)
+
+    def __len__(self):
+        """Return the current size of internal memory."""
+        return len(self.memory)

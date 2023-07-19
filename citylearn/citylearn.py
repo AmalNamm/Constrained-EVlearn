@@ -862,7 +862,6 @@ class CityLearnEnv(Environment, Env):
     def next_time_step(self):
         r"""Advance the env to next `time_step`."""
 
-        print(f"\n\nTime step {self.time_step}:")
         # Advance buildings to the next time step
         for building in self.buildings:
             building.next_time_step()
@@ -871,7 +870,6 @@ class CityLearnEnv(Environment, Env):
         for ev in self.evs:
             ev.next_time_step()
             self.associate_ev_2_charger(ev)
-            print(ev.battery.soc[self.time_step])
 
         super().next_time_step()
 
@@ -880,17 +878,17 @@ class CityLearnEnv(Environment, Env):
     def associate_ev_2_charger(self, ev: EV, charger=None, state=None):
         r"""Associate EV to its destination charger for observations."""
 
-        charger = charger or ev.ev_simulation.charger[self.time_step]
-        state = state or ev.ev_simulation.ev_state[self.time_step]
+        charger = charger or ev.ev_simulation.charger[self.time_step+1]
+        state = state or ev.ev_simulation.ev_state[self.time_step+1]
 
         if charger != "" and charger != "nan": #EV changed to wanting a charger
             for b in self.buildings:
                 if b.chargers is not None:
                     for c in b.chargers:
                         if c.charger_id == charger:
-                            if state == 0:  # ev connected to charger
+                            if state == 1:  # ev connected to charger
                                 c.plug_car(ev)
-                            if state == 1:
+                            if state == 2:
                                 c.associate_incoming_car(ev)
 
     def reset(self) -> List[List[float]]:

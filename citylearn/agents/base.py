@@ -138,10 +138,33 @@ class Agent(Environment):
             observations = self.env.reset()
 
             while not self.env.done:
+                print("\n \n ------TIME STEP------")
+                print(self.env.time_step)
+
+                print("------Electric vehicles------")
+                for e in self.env.evs:
+                    print(e)
+                    print()
+                print("------Buildings------")
+                for b in self.env.buildings:
+                    print(b)
+                    print()
+
+                print("------Observations------")
+                print(observations)
+
+
+                print("------Predict------")
                 actions = self.predict(observations, deterministic=deterministic)
+
+                print("------Actions------")
+                print(actions)
 
                 # apply actions to citylearn_env
                 next_observations, rewards, _, _ = self.env.step(actions)
+
+                print("------Rewards------")
+                print(rewards)
 
                 # update
                 if not deterministic:

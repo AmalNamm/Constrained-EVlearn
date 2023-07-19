@@ -317,6 +317,8 @@ class Charger(Environment):
         r"""Advance to next `time_step` and set `electricity_consumption` at new `time_step` to 0.0."""
 
         self.__electricity_consumption.append(0.0)
+        self.connected_ev = None
+        self.incoming_ev = None
         super().next_time_step()
         #self.update_variables()
 
@@ -329,16 +331,16 @@ class Charger(Environment):
         self.incoming_ev = None
         self.__electricity_consumption = [0.0]
 
-    # def __str__(self):
-    #    return (
-    #        f"Charger ID: {self.charger_id}\n"
-    #        f"Max Charging Power: {self.max_charging_power} kW\n"
-    #        f"Min Charging Power: {self.min_charging_power} kW\n"
-    #        f"Max Discharging Power: {self.max_discharging_power} kW\n"
-    #        f"Min Discharging Power: {self.min_discharging_power} kW\n"
-    #        f"Charge Efficiency Curve: {self.charge_efficiency_curve}\n"
-    #        f"Discharge Efficiency Curve: {self.discharge_efficiency_curve}\n"
-    #        f"Currently Connected Cars: {len(self.connected_cars)}\n"
-    #        f"Connected Cars IDs: {[car.id for car in self.connected_cars]}"
-    #    )
+    def __str__(self):
+       return (
+            f"Charger ID: {self.charger_id}\n"
+            f"Max Charging Power: {self.max_charging_power} kW\n"
+            f"Min Charging Power: {self.min_charging_power} kW\n"
+            f"Max Discharging Power: {self.max_discharging_power} kW\n"
+            f"Min Discharging Power: {self.min_discharging_power} kW\n"
+            f"Charge Efficiency Curve: {self.charge_efficiency_curve}\n"
+            f"Discharge Efficiency Curve: {self.discharge_efficiency_curve}\n"
+            f"Currently Connected Car: {self.connected_ev}\n"
+            f"Incoming EV: {self.incoming_ev}"
+       )
 #

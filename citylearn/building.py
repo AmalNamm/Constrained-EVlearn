@@ -795,6 +795,8 @@ class Building(Environment):
 
         observations = {k: data[k] for k in valid_observations if k in data.keys()}
 
+        #Connected is 1 and disconnected is 0
+
         if self.chargers is not None:
             for charger in self.chargers:
                 charger_id = charger.charger_id
@@ -811,8 +813,6 @@ class Building(Environment):
                     for o in self.observation_metadata:
                         if f"charger_{charger_id}_connected" in o and o != charger_key_state:
                             observations[o] = -1
-
-                # Connected_state e incoming_state a -1 ?? no 11 e no 12 so esta assim o connected
 
                 if charger.incoming_ev:
                     observations[charger_key_incoming_state] = 1
@@ -1479,23 +1479,27 @@ class Building(Environment):
             max(0, net_electricity_consumption * self.carbon_intensity.carbon_intensity[self.time_step]))
 
     def __str__(self):
+        if self.chargers is not None:
+            chargers_str = ', '.join([str(charger) for charger in self.chargers])
+        else:
+            chargers_str = ""
         return (
             f"\n\nBuilding {self.name}:"
-            f"\nEnergy Simulation: {self.energy_simulation}"
-            f"\nWeather: {self.weather}"
-            f"\nCarbon Intensity: {self.carbon_intensity}"
-            f"\nPricing: {self.pricing}"
-            f"\nDomestic Hot Water Storage: {self.dhw_storage}"
-            f"\nCooling Storage: {self.cooling_storage}"
-            f"\nHeating Storage: {self.heating_storage}"
-            f"\nElectrical Storage: {self.electrical_storage}"
-            f"\nDomestic Hot Water Device: {self.dhw_device}"
-            f"\nCooling Device: {self.cooling_device}"
-            f"\nHeating Device: {self.heating_device}"
-            f"\nPV: {self.pv}"
-            f"\nCharger: {self.chargers}"
-            f"\nObservation Metadata: {self.observation_metadata}"
-            f"\nAction Metadata: {self.action_metadata}"
+            f"\n  Energy Simulation: {self.energy_simulation}"
+            f"\n  Weather: {self.weather}"
+            f"\n  Carbon Intensity: {self.carbon_intensity}"
+            f"\n  Pricing: {self.pricing}"
+            f"\n  Domestic Hot Water Storage: {self.dhw_storage}"
+            f"\n  Cooling Storage: {self.cooling_storage}"
+            f"\n  Heating Storage: {self.heating_storage}"
+            f"\n  Electrical Storage: {self.electrical_storage}"
+            f"\n  Domestic Hot Water Device: {self.dhw_device}"
+            f"\n  Cooling Device: {self.cooling_device}"
+            f"\n  Heating Device: {self.heating_device}"
+            f"\n  PV: {self.pv}"
+            f"\n  Charger: {chargers_str}"
+            f"\n  Observation Metadata: {self.observation_metadata}"
+            f"\n  Action Metadata: {self.action_metadata}"
         )
 
 

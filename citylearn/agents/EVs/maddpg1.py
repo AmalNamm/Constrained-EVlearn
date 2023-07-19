@@ -1,22 +1,20 @@
-from typing import List
-
 import numpy as np
 import torch
 import torch.nn.functional as F
 from citylearn.agents.rlc import RLC
 from citylearn.citylearn import CityLearnEnv
 from citylearn.rl import Actor, Critic, OUNoise
+from citylearn.rl import ReplayBuffer1 as ReplayBuffer
 import random
 import numpy.typing as npt
+
 
 class MADDPG(RLC):
     def __init__(self, env: CityLearnEnv, actor_units: tuple = (256, 128), critic_units: tuple = (256, 128), *args, **kwargs):
 
         super().__init__(env, **kwargs)
 
-        # Determine device
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        print(self.device)
 
         self.seed = random.randint(0, 100_000_000)
         self.actor_units = actor_units
@@ -24,7 +22,7 @@ class MADDPG(RLC):
 
         self.actors = [
             Actor(self.observation_dimension[i], self.action_space[i].shape[0], self.seed, *self.actor_units).to(
-                self.device) for i in range(len(self.action_space))] #basicly for each building it creates an actor network
+                self.device) for i in range(len(self.action_space))]
         self.critics = [
             Critic(sum(self.observation_dimension), sum(self.action_dimension), self.seed, *self.critic_units).to(
                 self.device) for _ in range(len(self.action_space))]
@@ -43,44 +41,51 @@ class MADDPG(RLC):
 
         self.noise = [OUNoise(self.action_space[i].shape[0], self.seed) for i in range(len(self.action_space))]
 
-    def update(self, observations, actions, reward, next_observations, done):
-        obs_tensors = [torch.FloatTensor(self.get_encoded_observations(i, obs)).to(self.device) for i, obs in
-                       enumerate(observations)]
-        next_obs_tensors = [torch.FloatTensor(self.get_encoded_observations(i, next_obs)).to(self.device) for
-                            i, next_obs in enumerate(next_observations)]
+        self.batch_size = 64
+        self.buffer_size = int(1e6)
+        self.memory = ReplayBuffer(action_size=sum(self.action_dimension), buffer_size=self.buffer_size, batch_size=self.batch_size, seed=self.seed, device=self.device)
 
-        actions_tensors = [torch.FloatTensor(act).to(self.device) for act in actions]
-        reward_tensor = torch.FloatTensor(reward).to(self.device)
-        done_tensor = torch.tensor([done], dtype=torch.bool).to(self.device)
+    def update(self, observations, actions, reward, next_observations, done):
+        # Save experience in replay memory
+        for i in range(len(self.action_space)):
+            self.memory.add(observations[i], actions[i], reward[i], next_observations[i], done)
+
+        # If enough samples are available in memory, get random subset and learn
+        if len(self.memory) > self.batch_size:
+            experiences = self.memory.sample()
+            self.learn1(experiences)
+
+    def learn1(self, experiences):
+        states, actions, rewards, next_states, dones = experiences
 
         for agent_num, (actor, critic, actor_target, critic_target, actor_optim, critic_optim) in enumerate(
                 zip(self.actors, self.critics, self.actors_target, self.critics_target, self.actors_optimizer,
                     self.critics_optimizer)):
             actor_optim.zero_grad()
-            pred_actions = actor(obs_tensors[agent_num])
-            all_obs = torch.cat(obs_tensors, dim=-1).view(1, -1)
-            all_actions = torch.cat(actions_tensors, dim=-1).view(1, -1)  # Concatenate all actions
+            pred_actions = actor(states)
+            all_obs = torch.cat(states, dim=-1).view(1, -1)
+            all_actions = torch.cat(actions, dim=-1).view(1, -1)
 
-            pred_actions = pred_actions.unsqueeze(0)  # add an extra dimension
+            pred_actions = pred_actions.unsqueeze(0)
             actions_other_agents = torch.cat(
-                [actions_tensors[i] for i in range(len(actions_tensors)) if i != agent_num], dim=-1).unsqueeze(0)
+                [actions[i] for i in range(len(actions)) if i != agent_num], dim=-1).unsqueeze(0)
 
             actor_loss = -critic(all_obs, torch.cat([pred_actions, actions_other_agents], dim=-1)).mean()
             actor_loss.backward()
             actor_optim.step()
 
             critic_optim.zero_grad()
-            all_next_obs = torch.cat(next_obs_tensors, dim=-1).view(1, -1)
-            target_actions = actor_target(next_obs_tensors[agent_num]).unsqueeze(0)
+            all_next_obs = torch.cat(next_states, dim=-1).view(1, -1)
+            target_actions = actor_target(next_states).unsqueeze(0)
 
             target_actions_other_agents = torch.cat(
-                [self.actors_target[i](next_obs_tensors[i]) for i in range(len(next_obs_tensors)) if i != agent_num],
+                [self.actors_target[i](next_states[i]) for i in range(len(next_states)) if i != agent_num],
                 dim=-1).unsqueeze(0)
             all_target_actions = torch.cat([target_actions, target_actions_other_agents],
-                                           dim=-1).detach()  # Concatenate all target actions
+                                           dim=-1).detach()
 
             next_Q = critic_target(all_next_obs, all_target_actions)
-            expected_Q = reward_tensor[agent_num] + self.discount * next_Q * (~done_tensor)
+            expected_Q = rewards + self.discount * next_Q * (~dones)
             current_Q = critic(all_obs, all_actions)
             critic_loss = F.mse_loss(current_Q, expected_Q.detach())
             critic_loss.backward()
@@ -93,14 +98,11 @@ class MADDPG(RLC):
                 target_param.data.copy_(self.tau * param.data + (1.0 - self.tau) * target_param.data)
 
     def predict(self, observations, deterministic=False):
+        """Return actions for given state as per current policy."""
         with torch.no_grad():
-            encoded_observations = [self.get_encoded_observations(i, obs) for i, obs in enumerate(observations)]
             if deterministic:
-                return [actor(torch.FloatTensor(obs).to(self.device)).cpu().numpy()
-                        for actor, obs in zip(self.actors, encoded_observations)]
+                return [actor(torch.FloatTensor(observation).to(self.device)).cpu().numpy()
+                        for actor, observation in zip(self.actors, observations)]
             else:
-                return [self.noise[i].sample() + action
+                return [self.noise[i].get_action(action, self.time_step)
                         for i, action in enumerate(self.predict(observations, True))]
-
-    def get_encoded_observations(self, index: int, observations: List[float]) -> npt.NDArray[np.float64]:
-        return np.array([j for j in np.hstack(self.encoders[index]*np.array(observations, dtype=float)) if j != None], dtype = float)
