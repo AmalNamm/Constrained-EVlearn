@@ -3,7 +3,6 @@ import math
 from typing import Any, List, Mapping, Tuple, Union
 from gym import spaces
 import numpy as np
-import pandas as pd
 import torch
 from citylearn.base import Environment
 from citylearn.data import EnergySimulation, CarbonIntensity, Pricing, Weather
@@ -48,6 +47,8 @@ class Building(Environment):
         PV object for offsetting electricity demand from grid.
     name : str, optional
         Unique building name.
+    maximum_temperature_delta: float, default: 5.0
+        Expected maximum absolute temperature delta above and below indoor dry-bulb temperature in [C].
 
     Other Parameters
     ----------------
@@ -62,7 +63,7 @@ class Building(Environment):
             heating_storage: StorageTank = None, electrical_storage: Battery = None,
             dhw_device: Union[HeatPump, ElectricHeater] = None, cooling_device: HeatPump = None,
             heating_device: Union[HeatPump, ElectricHeater] = None, pv: PV = None, chargers: List[Charger] = None,
-            image_path: str = None, name: str = None, lat: float = None, lon : float = None, **kwargs: Any
+            image_path: str = None, name: str = None, lat: float = None, lon : float = None, maximum_temperature_delta: float = None, **kwargs: Any
     ):
         r"""Initialize `Building`.
 
@@ -129,8 +130,8 @@ class Building(Environment):
         self.action_metadata = action_metadata
         self.lat = lat
         self.lon = lon
-        self.__observation_epsilon = 0.0  # to avoid out of bound observations
-        self.__temperature_epsilon = 5  # C
+        self.__observation_epsilon = 0.0 # to avoid out of bound observations
+        self.maximum_temperature_delta = 5.0 if maximum_temperature_delta is None else maximum_temperature_delta # C
         self.__thermal_load_factor = 1.15
         self.non_periodic_normalized_observation_space_limits = None
         self.periodic_normalized_observation_space_limits = None
@@ -773,9 +774,8 @@ class Building(Environment):
             },
             'net_electricity_consumption': self.__net_electricity_consumption[self.time_step],
             **{k: v[self.time_step] for k, v in vars(self.carbon_intensity).items()},
-            'cooling_device_cop': self.cooling_device.get_cop(self.weather.outdoor_dry_bulb_temperature[self.time_step],
-                                                              heating=False),
-            'heating_device_cop': self.cooling_device.get_cop(
+            'cooling_device_cop': self.cooling_device.get_cop(self.weather.outdoor_dry_bulb_temperature[self.time_step], heating=False),
+            'heating_device_cop': self.heating_device.get_cop(
                 self.weather.outdoor_dry_bulb_temperature[self.time_step], heating=True
             ) if isinstance(self.heating_device, HeatPump) else self.heating_device.efficiency,
             'cooling_demand': self.energy_simulation.cooling_demand[self.time_step],
@@ -1158,13 +1158,13 @@ class Building(Environment):
                     high_limit[key] = self.heating_device.efficiency
 
             elif key == 'indoor_dry_bulb_temperature':
-                low_limit[key] = self.energy_simulation.indoor_dry_bulb_temperature.min() - self.__temperature_epsilon
-                high_limit[key] = self.energy_simulation.indoor_dry_bulb_temperature.max() + self.__temperature_epsilon
+                low_limit[key] = self.energy_simulation.indoor_dry_bulb_temperature.min() - self.maximum_temperature_delta
+                high_limit[key] = self.energy_simulation.indoor_dry_bulb_temperature.max() + self.maximum_temperature_delta
 
             elif key == 'indoor_dry_bulb_temperature_delta':
                 low_limit[key] = 0
-                high_limit[key] = self.__temperature_epsilon
-
+                high_limit[key] = self.maximum_temperature_delta
+                
             elif key in ['cooling_demand', 'heating_demand']:
                 if key == 'cooling_demand':
                     max_demand = self.energy_simulation.cooling_demand.max()
@@ -1514,6 +1514,8 @@ class DynamicsBuilding(Building):
         Indoor dry-bulb temperature dynamics model for cooling mode.
     heating_dynamics: Dynamics
         Indoor dry-bulb temperature dynamics model for heating mode.
+    ignore_dynamics: bool, default: False
+        Wether to simulate temperature dynamics at any time step.
 
     Other Parameters
     ----------------
@@ -1521,12 +1523,13 @@ class DynamicsBuilding(Building):
         Other keyword arguments used to initialize :py:class:`citylearn.building.Building` super class.
     """
 
-    def __init__(self, *args: Any, cooling_dynamics: Dynamics, heating_dynamics: Dynamics, **kwargs: Any):
+    def __init__(self, *args: Any, cooling_dynamics: Dynamics, heating_dynamics: Dynamics, ignore_dynamics: bool = None, **kwargs: Any):
         """Intialize `DynamicsBuilding`"""
 
         self.cooling_dynamics = cooling_dynamics
         self.heating_dynamics = heating_dynamics
         self.dynamics = None
+        self.ignore_dynamics = False if ignore_dynamics is None else ignore_dynamics
         super().__init__(*args, **kwargs)
 
     def set_dynamics(self) -> Dynamics:
@@ -1574,8 +1577,8 @@ class LSTMDynamicsBuilding(DynamicsBuilding):
     def simulate_dynamics(self) -> bool:
         """Whether to predict indoor dry-bulb temperature at current `time_step`."""
 
-        return self.dynamics._model_input[0][0] is not None
-
+        return not self.ignore_dynamics and self.dynamics._model_input[0][0] is not None
+    
     def next_time_step(self):
         """Update the dynamics model input time series, Advance all energy storage and electric devices,
         and PV to next `time_step` then predict and update indoor dry-bulb temperature for new `time_step`."""
