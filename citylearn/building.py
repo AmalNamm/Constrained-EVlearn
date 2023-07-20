@@ -915,7 +915,7 @@ class Building(Environment):
         self.update_dhw(dhw_storage_action)
         self.update_electrical_storage(electrical_storage_action)
 
-        if "ev_storage_action" not in kwargs:
+        if "ev_storage_action" not in kwargs: #TODO Rever metodo
             # for the actions of EVs per charger
             if len(kwargs) != len(self.chargers):
                 raise Exception(

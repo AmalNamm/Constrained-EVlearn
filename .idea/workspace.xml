@@ -4,26 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="606c8733-6e18-48ca-8547-eb551df70d64" name="Changes" comment="MADDPG implementation">
-      <change afterPath="$PROJECT_DIR$/citylearn/agents/EVs/maddpg1.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/schema2.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/TestsWithoutEVs.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/CityLearn.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/CityLearn.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="606c8733-6e18-48ca-8547-eb551df70d64" name="Changes" comment="General imporvements to the implementation of EVs">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/citylearn/EV.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/EV.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/agents/EVs/maddpg.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/agents/EVs/maddpg.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/agents/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/agents/base.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/citylearn/building.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/building.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/charger.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/charger.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/citylearn/citylearn.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/citylearn.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_1.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_1.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_2.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_2.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_3.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_3.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/schema.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/energy_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/energy_model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/rl.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/rl.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/EVsEnv.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/examples/EVsEnv.ipynb" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -69,7 +54,7 @@
     <option name="stateVersion" value="1" />
   </component>
   <component name="ProblemsViewState">
-    <option name="selectedTabId" value="CurrentFile" />
+    <option name="selectedTabId" value="ProjectErrors" />
   </component>
   <component name="ProjectId" id="2OdiLivBjfDdECxMNLsS3v6AdrP" />
   <component name="ProjectViewState">
@@ -249,7 +234,8 @@
       <workItem from="1689598202487" duration="673000" />
       <workItem from="1689598894805" duration="133000" />
       <workItem from="1689599041147" duration="13979000" />
-      <workItem from="1689754324561" duration="7563000" />
+      <workItem from="1689754324561" duration="7595000" />
+      <workItem from="1689841868861" duration="6528000" />
     </task>
     <task id="LOCAL-00001" summary="Added Charger and EVCar Class to energy_model.py">
       <created>1683211433859</created>
@@ -307,7 +293,14 @@
       <option name="project" value="LOCAL" />
       <updated>1688480682730</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="General imporvements to the implementation of EVs">
+      <created>1689765977758</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1689765977758</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -332,7 +325,8 @@
     <MESSAGE value="Observations and actions finalized" />
     <MESSAGE value="Merge corrections" />
     <MESSAGE value="MADDPG implementation" />
-    <option name="LAST_COMMIT_MESSAGE" value="MADDPG implementation" />
+    <MESSAGE value="General imporvements to the implementation of EVs" />
+    <option name="LAST_COMMIT_MESSAGE" value="General imporvements to the implementation of EVs" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

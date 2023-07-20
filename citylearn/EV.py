@@ -11,8 +11,7 @@ import random
 
 class EV(Environment):
 
-    def __init__(self, ev_simulation: EVSimulation, energy_consumption_rate: float,
-                 observation_metadata: Mapping[str, bool],
+    def __init__(self, ev_simulation: EVSimulation, observation_metadata: Mapping[str, bool],
                  action_metadata: Mapping[str, bool], battery: Battery = None,
                  image_path: str = None, name: str = None, **kwargs):
         """
@@ -24,8 +23,6 @@ class EV(Environment):
             Temporal features, locations, predicted SOCs and more.
         battery : Battery
             An instance of the Battery class.
-        energy_consumption_rate : float
-            Energy consumption rate of the car while driving in kWh per distance unit (e.g., kWh/k).
         observation_metadata : dict
             Mapping of active and inactive observations.
         action_metadata : dict
@@ -42,13 +39,13 @@ class EV(Environment):
         self.ev_simulation = ev_simulation
         self.name = name
         self.battery = battery
-        self.energy_consumption_rate = energy_consumption_rate
         self.observation_metadata = observation_metadata
         self.action_metadata = action_metadata
         self.non_periodic_normalized_observation_space_limits = None
         self.periodic_normalized_observation_space_limits = None
         self.observation_space = self.estimate_observation_space()
         self.action_space = self.estimate_action_space()
+        #Todo add parameter on the max charge and discharge ???
         self.image_path = image_path
         self.__observation_epsilon = 0.0  # to avoid out of bound observations
 
@@ -68,17 +65,6 @@ class EV(Environment):
     @ev_simulation.setter
     def ev_simulation(self, ev_simulation: EVSimulation):
         self.__ev_simulation = ev_simulation
-
-    @property
-    def energy_consumption_rate(self) -> float:
-        """Return the energy consumption rate of the car while driving."""
-        return self.__energy_consumption_rate
-
-    @energy_consumption_rate.setter
-    def energy_consumption_rate(self, energy_consumption_rate: float):
-        if energy_consumption_rate < 0:
-            raise ValueError("Energy consumption rate must be non-negative.")
-        self.__energy_consumption_rate = energy_consumption_rate
 
     @property
     def name(self) -> str:
@@ -141,7 +127,7 @@ class EV(Environment):
 
         return self.__action_space
 
-    @property
+    @property #TODO
     def active_observations(self) -> List[str]:
         """Observations in `observation_metadata` with True value i.e. obeservable."""
 
@@ -287,19 +273,7 @@ class EV(Environment):
         self.battery.reset()
 
         # variable reset
-        #self.__cooling_electricity_consumption = []
-        #self.__heating_electricity_consumption = []
-        #self.__dhw_electricity_consumption = []
-        #self.__solar_generation = self.pv.get_generation(self.energy_simulation.solar_generation) * -1
-        #self.__net_electricity_consumption = []
-        #self.__net_electricity_consumption_emission = []
-        #self.__net_electricity_consumption_cost = []
         self.update_variables()
-
-        ## reset controlled variables
-        #self.energy_simulation.cooling_demand = self.__cooling_demand_without_partial_load.copy()
-        #self.energy_simulation.heating_demand = self.__heating_demand_without_partial_load.copy()
-        #self.energy_simulation.indoor_dry_bulb_temperature = self.__indoor_dry_bulb_temperature_without_partial_load.copy()
 
     def update_variables(self): #TODO
         """Update cooling, heating, dhw and net electricity consumption as well as net electricity consumption cost and carbon emissions."""
@@ -441,31 +415,6 @@ class EV(Environment):
             'month': range(1, 13)
         }
 
-    def apply_actions(self,
-                      connect_to_charger_action: int = None, disconnect_from_charger_action: int = None,
-                      charging_amount_action: float = None):
-        r"""Update EV connection and charging status for the next timestep.
-        Parameters
-        ----------
-        connect_to_charger_action : int, default: np.nan
-            ID of the charger to connect the EV to. Use np.nan or a negative number for no connection.
-        disconnect_from_charger_action : int, default: np.nan
-            ID of the charger to disconnect the EV from. Use np.nan or a negative number for no disconnection.
-        charging_amount_action : float, default: 0.0
-            Fraction of `EV_battery` `capacity` to charge by.
-        """
-        connect_to_charger_action = -1 if connect_to_charger_action is None or math.isnan(
-            connect_to_charger_action) else connect_to_charger_action
-        disconnect_from_charger_action = -1 if disconnect_from_charger_action is None or math.isnan(
-            disconnect_from_charger_action) else disconnect_from_charger_action
-        charging_amount_action = 0.0 if charging_amount_action is None or math.isnan(
-            charging_amount_action) else charging_amount_action
-        if connect_to_charger_action >= 0:
-            self.connect_EV_to_charger(connect_to_charger_action)
-        if disconnect_from_charger_action >= 0:
-            self.disconnect_EV_from_charger(disconnect_from_charger_action)
-        self.update_EV_charging(charging_amount_action)
-
     def estimate_observation_space(self, include_all: bool = None, normalize: bool = None,
                                    periodic_normalization: bool = None) -> spaces.Box:  # TODO
         r"""Get estimate of observation spaces.
@@ -560,12 +509,6 @@ class EV(Environment):
                 limit = self.battery.nominal_power / self.battery.capacity
                 low_limit.append(-limit)
                 high_limit.append(limit)
-            elif key == "ev_connection_action":  # TODO might change
-                low_limit.append(0)
-                high_limit.append(7)  # number of chargers
-            elif key == "ev_disconnection_action":  # TODO might change
-                low_limit.append(0)
-                high_limit.append(3)  # number of evs
         return spaces.Box(low=np.array(low_limit, dtype='float32'), high=np.array(high_limit, dtype='float32'))
 
     def autosize_battery(self, **kwargs):
