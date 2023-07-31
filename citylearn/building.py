@@ -915,23 +915,13 @@ class Building(Environment):
         self.update_dhw(dhw_storage_action)
         self.update_electrical_storage(electrical_storage_action)
 
-        if "ev_storage_action" not in kwargs: #TODO Rever metodo
-            # for the actions of EVs per charger
-            if len(kwargs) != len(self.chargers):
-                raise Exception(
-                    "Something went wrong as the actions length is different from the chargers length available")
-            else:
-                for key, action_value in kwargs.items():
-                    for c in self.chargers:
-                        if f'ev_storage_{c.charger_id}_action' == key:
-                            if c.connected_ev is not None:
-                                c.update_connected_ev_soc(action_value)
-                            else:
-                                pass
-                                #raise Exception(
-                                #    f"Trying to charge without any connected car in charger {c.charger_id}")
-        else:
-            pass #TODO apply non action maybe ???
+        if self.chargers is not None:
+            print(kwargs.items())
+            for key, action_value in kwargs.items():
+                for c in self.chargers:
+                    if f'ev_storage_{c.charger_id}_action' == key:
+                        print(action_value)
+                        c.update_connected_ev_soc(action_value)
 
     def update_dynamics(self):
         r"""Update building dynamics e.g. space indoor temperature, relative humidity, etc."""
@@ -1418,6 +1408,7 @@ class Building(Environment):
         self.__net_electricity_consumption = []
         self.__net_electricity_consumption_emission = []
         self.__net_electricity_consumption_cost = []
+        self.__chargers_electricity_consumption = []
         self.update_variables()
 
         # reset controlled variables
@@ -1461,6 +1452,12 @@ class Building(Environment):
 
         self.__dhw_electricity_consumption.append(dhw_consumption)
 
+        if self.chargers is not None:
+            total = 0
+            for c in self.chargers:
+                total = total + c.electricity_consumption[self.time_step] #TODO this might not work as the method is used after next time step is called
+            self.__chargers_electricity_consumption.append(total)
+
         # net electricity consumption
         net_electricity_consumption = cooling_consumption \
                                       + heating_consumption \
@@ -1468,6 +1465,7 @@ class Building(Environment):
                                       + self.electrical_storage.electricity_consumption[self.time_step] \
                                       + self.energy_simulation.non_shiftable_load[self.time_step] \
                                       + self.__solar_generation[self.time_step]
+        #                             + self.__chargers_electricity_consumption[self.time_step] TODO
         self.__net_electricity_consumption.append(net_electricity_consumption)
 
         # net electriciy consumption cost
@@ -1489,17 +1487,17 @@ class Building(Environment):
             f"\n  Weather: {self.weather}"
             f"\n  Carbon Intensity: {self.carbon_intensity}"
             f"\n  Pricing: {self.pricing}"
-            f"\n  Domestic Hot Water Storage: {self.dhw_storage}"
-            f"\n  Cooling Storage: {self.cooling_storage}"
-            f"\n  Heating Storage: {self.heating_storage}"
-            f"\n  Electrical Storage: {self.electrical_storage}"
-            f"\n  Domestic Hot Water Device: {self.dhw_device}"
-            f"\n  Cooling Device: {self.cooling_device}"
-            f"\n  Heating Device: {self.heating_device}"
-            f"\n  PV: {self.pv}"
+            #f"\n  Domestic Hot Water Storage: {self.dhw_storage}"
+            #f"\n  Cooling Storage: {self.cooling_storage}"
+            #f"\n  Heating Storage: {self.heating_storage}"
+            #f"\n  Electrical Storage: {self.electrical_storage}"
+            #f"\n  Domestic Hot Water Device: {self.dhw_device}"
+            #f"\n  Cooling Device: {self.cooling_device}"
+            #f"\n  Heating Device: {self.heating_device}"
+            #f"\n  PV: {self.pv}"
             f"\n  Charger: {chargers_str}"
-            f"\n  Observation Metadata: {self.observation_metadata}"
-            f"\n  Action Metadata: {self.action_metadata}"
+            #f"\n  Observation Metadata: {self.observation_metadata}"
+            #f"\n  Action Metadata: {self.action_metadata}"
         )
 
 

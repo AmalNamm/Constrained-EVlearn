@@ -155,6 +155,57 @@ class SolarPenaltyReward(RewardFunction):
             reward = reward_list
         
         return reward
+
+
+class CarPenaltyReward(RewardFunction):
+    """Extends SolarPenaltyReward with considerations for car charging.
+
+    Parameters
+    ----------
+    env: citylearn.citylearn.CityLearnEnv
+        CityLearn environment.
+    """
+
+    def __init__(self, env: CityLearnEnv):
+        super().__init__(env)
+
+    def calculate(self) -> List[float]:
+        reward_list = []
+
+        for b in self.env.buildings:
+            e = b.net_electricity_consumption[-1]
+            cc = b.cooling_storage.capacity
+            hc = b.heating_storage.capacity
+            dc = b.dhw_storage.capacity
+            ec = b.electrical_storage.capacity_history[0]
+            cs = b.cooling_storage.soc[-1] / cc
+            hs = b.heating_storage.soc[-1] / hc
+            ds = b.dhw_storage.soc[-1] / dc
+            es = b.electrical_storage.soc[-1] / ec
+            reward = 0.0
+            reward += -(1.0 + np.sign(e) * cs) * abs(e) if cc > ZERO_DIVISION_CAPACITY else 0.0
+            reward += -(1.0 + np.sign(e) * hs) * abs(e) if hc > ZERO_DIVISION_CAPACITY else 0.0
+            reward += -(1.0 + np.sign(e) * ds) * abs(e) if dc > ZERO_DIVISION_CAPACITY else 0.0
+            reward += -(1.0 + np.sign(e) * es) * abs(e) if ec > ZERO_DIVISION_CAPACITY else 0.0
+
+            if b.chargers is not None:
+                for c in b.chargers:
+                    last_connected_car = c.past_connected_evs[-2]
+                    last_charged_value = c.past_charging_action_values[-2]
+                    if last_connected_car is None and last_charged_value != 0: #The algorithm decided to charge despite no car being there
+                        reward = reward -1 #TODO Better function
+                    if last_connected_car != c.connected_ev and last_connected_car is not None: #A car left tne charger we need to check if he left with the needed soc
+                        if abs(last_connected_car.battery.soc[-2] - last_connected_car.ev_simulation.required_soc_departure[-2]) > THRESHOLD:
+                            reward = reward - 1  # TODO Better function MIght also be different if its for more or for less
+
+            reward_list.append(reward)
+
+        if self.env.central_agent:
+            reward = [sum(reward_list)]
+        else:
+            reward = reward_list
+
+        return reward
     
 class ComfortReward(RewardFunction):
     """Reward for occupant thermal comfort satisfaction.

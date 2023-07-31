@@ -631,7 +631,7 @@ class CityLearnEnv(Environment, Env):
 
         # render simulation
         print("RENDERING")
-        self.render()
+        #self.render()
         actions = self.__parse_actions(actions)
 
         for building, building_actions in zip(self.buildings, actions):
@@ -866,7 +866,6 @@ class CityLearnEnv(Environment, Env):
         # Advance buildings to the next time step
         for ev in self.evs:
             ev.next_time_step()
-            self.associate_ev_2_charger(ev)
 
         super().next_time_step()
 
@@ -1136,16 +1135,17 @@ class CityLearnEnv(Environment, Env):
                     # Each charger replicates the observations of the original chargers_observations but specific for its own
                     # If shared observations are active for the specific observation, that observation is added to shared_observations
                     if chargers_observations is not None and 'charger_state' in chargers_observations:
-                        ev_observation_metadata = {s: True for s in chargers_observations if s != 'charger_state'}
                         for state_type in ['connected', 'incoming']:
-                            observation_metadata[f'charger_{charger_name}_{state_type}_state'] = True  # Add base case
+                            if chargers_observations['charger_state']["active"]:
+                                observation_metadata[f'charger_{charger_name}_{state_type}_state'] = True  # Add base case
                             if "charger_state" in chargers_shared_observations:
                                 shared_observations.append(f'charger_{charger_name}_{state_type}_state')
-                            for obs in ev_observation_metadata:
-                                if chargers_actions[obs]["active"]:
+
+                            for obs in chargers_observations:
+                                if chargers_observations[obs]["active"] and obs != 'charger_state':
                                     observation_metadata[f'charger_{charger_name}_{state_type}_{obs}'] = True
-                                    if obs in chargers_shared_observations:
-                                        shared_observations.append(f'charger_{charger_name}_{state_type}_{obs}')
+                                if obs in chargers_shared_observations:
+                                    shared_observations.append(f'charger_{charger_name}_{state_type}_{obs}')
                         building.observation_metadata = observation_metadata
 
                 building.chargers = chargers_list
@@ -1207,15 +1207,14 @@ class CityLearnEnv(Environment, Env):
                         ev_simulation = EVSimulation(*ev_simulation.values.T)
 
                         # data from the file
-                        energy_consumption_rate = ev_schema["energy_consumption_rate"]
+                        #energy_consumption_rate = ev_schema["energy_consumption_rate"]
 
                         # observation and action metadata
                         ev_inactive_observations = [] if ev_schema.get('inactive_observations', None) is None else \
                             ev_schema['inactive_observations']
                         ev_inactive_actions = [] if ev_schema.get('inactive_actions', None) is None else ev_schema[
                             'inactive_actions']
-                        ev_observation_metadata = {s: False if s in ev_inactive_observations else True for s in
-                                                   chargers_observations}
+                        ev_observation_metadata = {s: False if s in ev_inactive_observations else True for s in chargers_observations if s != 'charger_state'}
                         ev_action_metadata = {a: False if a in ev_inactive_actions else True for a in chargers_actions}
 
                         # construct ev
@@ -1227,7 +1226,6 @@ class CityLearnEnv(Environment, Env):
 
                         ev: EV = ev_constructor(
                             ev_simulation=ev_simulation,
-                            energy_consumption_rate=energy_consumption_rate,
                             observation_metadata=ev_observation_metadata,
                             action_metadata=ev_action_metadata,
                             name=ev_name,

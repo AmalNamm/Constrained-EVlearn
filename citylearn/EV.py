@@ -238,8 +238,8 @@ class EV(Environment):
 
         # Determine the range for random variation.
         # Here we use a normal distribution centered at 0 and a standard deviation of 0.1.
-        # We also make sure that the values are truncated at -30% and +30%.
-        variation_percentage = np.clip(np.random.normal(0, 0.1), -0.3, 0.3)
+        # We also make sure that the values are truncated at -20% and +20%.
+        variation_percentage = np.clip(np.random.normal(0, 0.1), -0.2, 0.2)
 
         # Apply the variation
         variation_kwh = variation_percentage * soc_system_connection_kwh
@@ -248,7 +248,7 @@ class EV(Environment):
         soc_final_kwh = soc_system_connection_kwh + variation_kwh
 
         # Charge or discharge the battery to the new SoC.
-        self.battery.charge(soc_final_kwh - soc_init_kwh)
+        self.battery.set_ad_hoc_charge(soc_final_kwh - soc_init_kwh)
 
     def next_time_step(self) -> Mapping[int, str]:
 
@@ -260,10 +260,14 @@ class EV(Environment):
         super().next_time_step()
         self.update_variables() #TODO Might need to go below the logic of charging
 
-        if self.ev_simulation.ev_state[self.time_step] == 1 or self.ev_simulation.ev_state[self.time_step] == 2: #connected or incoming
+        if self.ev_simulation.ev_state[self.time_step] == 2: #TODO might imporve the logioc. Current problems is that EVs soc is not stable
             self.adjust_ev_soc_on_system_connection(self.ev_simulation.estimated_soc_arrival[self.time_step])
 
-    def reset(self): #TODO
+        elif self.ev_simulation.ev_state[self.time_step] == 3:
+            self.adjust_ev_soc_on_system_connection((self.battery.soc[-1] / self.battery.capacity)*100)
+
+
+    def reset(self):
         """
         Reset the EVCar to its initial state.
         """
@@ -396,8 +400,8 @@ class EV(Environment):
                 observations[k] = v * nm
         else:
             pass
-
         return observations
+
 
     @staticmethod
     def get_periodic_observation_metadata() -> dict[str, range]:
@@ -555,7 +559,6 @@ class EV(Environment):
 
         return (
             f"EV {self.name}:\n"
-            f"  Energy consumption rate: {self.energy_consumption_rate}\n"
             f"  Battery: {self.battery}\n\n"
             f"Simulation details:\n"
             f"  {ev_simulation_str}"

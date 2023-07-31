@@ -5,6 +5,7 @@ from citylearn.base import Environment
 
 np.seterr(divide='ignore', invalid='ignore')
 ZERO_DIVISION_CAPACITY = 0.00001
+THRESHOLD = 5
 
 
 class Device(Environment):
@@ -678,32 +679,31 @@ class StorageTank(StorageDevice):
 
 class Battery(ElectricDevice, StorageDevice):
 
-    def __init__(self, capacity: float, nominal_power: float = None, capacity_loss_coefficient: float = None,
-                 power_efficiency_curve: List[List[float]] = None, capacity_power_curve: List[List[float]] = None,
-                 **kwargs: Any):
+
+    
+    def __init__(self, capacity: float, nominal_power: float, capacity_loss_coefficient: float = None, power_efficiency_curve: List[List[float]] = None, capacity_power_curve: List[List[float]] = None, **kwargs: Any):
 
         r"""Base electricity storage class.
 
-    Parameters
-    ----------
-    capacity : float
-        Maximum amount of energy the storage device can store in [kWh]. Must be >= 0 and if == 0 or None, set to 0.00001 to avoid `ZeroDivisionError`.
-    nominal_power: float
-        Maximum amount of electric power that the battery can use to charge or discharge.
-    capacity_loss_coefficient : float, default: 0.00001
-        Battery degradation; storage capacity lost in each charge and discharge cycle (as a fraction of the total capacity).
-    power_efficiency_curve: list, default: [[0, 0.83],[0.3, 0.83],[0.7, 0.9],[0.8, 0.9],[1, 0.85]]
-        Charging/Discharging efficiency as a function of the power released or consumed.
-    capacity_power_curve: list, default: [[0.0, 1],[0.8, 1],[1.0, 0.2]]   
-        Maximum power of the battery as a function of its current state of charge.
+        Parameters
+        ----------
+        capacity : float
+            Maximum amount of energy the storage device can store in [kWh]. Must be >= 0 and if == 0 or None, set to 0.00001 to avoid `ZeroDivisionError`.
+        nominal_power: float
+            Maximum amount of electric power that the battery can use to charge or discharge.
+        capacity_loss_coefficient : float, default: 0.00001
+            Battery degradation; storage capacity lost in each charge and discharge cycle (as a fraction of the total capacity).
+        power_efficiency_curve: list, default: [[0, 0.83],[0.3, 0.83],[0.7, 0.9],[0.8, 0.9],[1, 0.85]]
+            Charging/Discharging efficiency as a function of the power released or consumed.
+        capacity_power_curve: list, default: [[0.0, 1],[0.8, 1],[1.0, 0.2]]
+            Maximum power of the battery as a function of its current state of charge.
 
-    Other Parameters
-    ----------------
-    **kwargs : Any
-        Other keyword arguments used to initialize super classes.
-    """
-    
-    def __init__(self, capacity: float, nominal_power: float, capacity_loss_coefficient: float = None, power_efficiency_curve: List[List[float]] = None, capacity_power_curve: List[List[float]] = None, **kwargs: Any):
+        Other Parameters
+        ----------------
+        **kwargs : Any
+            Other keyword arguments used to initialize super classes.
+        """
+
         self._efficiency_history = []
         self._capacity_history = []
         super().__init__(capacity = capacity, nominal_power = nominal_power, **kwargs)
@@ -802,7 +802,9 @@ class Battery(ElectricDevice, StorageDevice):
         r"""Autosize `capacity` for an EV battery.
         """
 
-        self.capacity = 60
+        self.capacity = 50
+        self.nominal_power = 50
+        self.initial_soc = 40
 
     def charge(self, energy: float):
         """Charges or discharges storage with respect to specified energy while considering `capacity` degradation and `soc_init` limitations, losses to the environment quantified by `efficiency`, `power_efficiency_curve` and `capacity_power_curve`.
@@ -822,6 +824,19 @@ class Battery(ElectricDevice, StorageDevice):
         self.efficiency = self.get_current_efficiency(energy)
         super().charge(energy)
         self.capacity = self.capacity - min(self.degrade(), self.capacity)
+
+    def set_ad_hoc_charge(self, energy: float):
+        """Charges or discharges storage with disregard to capacity` degradation, losses to the environment quantified by `efficiency`, `power_efficiency_curve` and `capacity_power_curve`.
+        Considers only `soc_init` limitations and maximum capacity limitations
+        Used for setting EVs Soc after coming from a transit state
+
+        Parameters
+        ----------
+        energy : float
+            Energy to charge if (+) or discharge if (-) in [kWh].
+
+        """
+        super().charge(energy)
 
     def get_max_output_power(self) -> float:
         r"""Get maximum output power while considering `capacity_power_curve` limitations if defined otherwise, returns `nominal_power`.
@@ -910,12 +925,12 @@ class Battery(ElectricDevice, StorageDevice):
     def __str__(self):
         return (f"Battery Specifications: \n"
                 f"State of Charge (SOC): {self.soc_init} kWh\n"
-                f"Nominal Power: {self.nominal_power} kW\n"
+                #f"Nominal Power: {self.nominal_power} kW\n"
                 f"Efficiency: {self.efficiency} \n"
                 f"Capacity: {self.capacity} kWh\n"
                 f"Capacity Loss Coefficient: {self.capacity_loss_coefficient}\n"
                 f"Efficiency history: {self._efficiency_history}\n"
                 f"Capacity history: {self._capacity_history}\n"
-                f"Power Efficiency Curve: {self.power_efficiency_curve}\n"
-                f"Capacity Power Curve: {self.capacity_power_curve}\n"
+                #f"Power Efficiency Curve: {self.power_efficiency_curve}\n"
+                #f"Capacity Power Curve: {self.capacity_power_curve}\n"
                 f"Soc History: {self.soc}")
