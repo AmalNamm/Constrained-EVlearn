@@ -2,7 +2,7 @@ import inspect
 from typing import List, Dict
 from citylearn.base import Environment
 
-from citylearn.EV import EV
+from citylearn.electric_vehicle import electric_vehicle
 
 ZERO_DIVISION_CAPACITY = 0.00001
 
@@ -21,7 +21,7 @@ class Charger(Environment):
             charge_efficiency_curve: Dict[float, float] = None,
             discharge_efficiency_curve: Dict[float, float] = None,
             image_path: str = None,
-            connected_ev: EV = None, incoming_ev: EV = None,
+            connected_ev: electric_vehicle = None, incoming_ev: electric_vehicle = None,
             **kwargs
     ):
         r"""Initializes the `Electric Vehicle Charger` class with the given attributes.
@@ -125,13 +125,13 @@ class Charger(Environment):
         return self.__discharge_efficiency_curve
 
     @property
-    def connected_ev(self) -> EV:
-        """EV currently connected to charger"""
+    def connected_ev(self) -> electric_vehicle:
+        """electric_vehicle currently connected to charger"""
         return self.__connected_ev
 
     @property
-    def incoming_ev(self) -> EV:
-        """EV incoming to charger"""
+    def incoming_ev(self) -> electric_vehicle:
+        """electric_vehicle incoming to charger"""
         return self.__incoming_ev
 
     @charger_id.setter
@@ -159,7 +159,7 @@ class Charger(Environment):
         return self.__nominal_power
 
     @property
-    def past_connected_evs(self) -> List[EV]:
+    def past_connected_evs(self) -> List[electric_vehicle]:
         r"""Each timestep with the list of Past connected Evs or None in the case no car was connected """
 
         return self.__past_connected_evs
@@ -175,6 +175,12 @@ class Charger(Environment):
         r"""Electricity consumption time series."""
 
         return self.__electricity_consumption
+
+    @property
+    def electricity_consumption_without_partial_load(self) -> List[float]:
+        r"""Electricity consumption time series in the case of EVs are not being controlled by an algorithm"""
+
+        return self.__electricity_consumption_without_partial_load
 
     @property
     def available_nominal_power(self) -> float:
@@ -231,14 +237,14 @@ class Charger(Environment):
         self.__discharge_efficiency_curve = discharge_efficiency_curve
 
     @connected_ev.setter
-    def connected_ev(self, ev: EV):
+    def connected_ev(self, ev: electric_vehicle):
         self.__connected_ev = ev
 
     @incoming_ev.setter
-    def incoming_ev(self, ev: EV):
+    def incoming_ev(self, ev: electric_vehicle):
         self.__incoming_ev = ev
 
-    def plug_car(self, car: EV):
+    def plug_car(self, car: electric_vehicle):
         """
         Connects a car to the charger.
 
@@ -270,7 +276,7 @@ class Charger(Environment):
         """
         self.connected_ev = None
 
-    def associate_incoming_car(self, car: EV):
+    def associate_incoming_car(self, car: electric_vehicle):
         """
         Associates incoming car to the charger.
 
@@ -306,7 +312,7 @@ class Charger(Environment):
         self.__past_charging_action_values[self.time_step] = action_value
         if self.connected_ev and action_value != 0:
             car = self.connected_ev
-            energy = action_value
+            energy = action_value * car.battery.capacity
             charging = energy >= 0
 
             if charging:
@@ -314,7 +320,7 @@ class Charger(Environment):
                 energy = min(energy, car.battery.capacity - car.battery.soc[self.time_step])
             else:
                 # make sure we do not discharge beyond the minimum level (assuming it's zero)
-                energy = max(energy, -car.battery.soc[self.time_step])
+                energy = max(energy, -car.battery.soc[self.time_step]) #TODO add here minimum
 
             energy_kwh = energy * self.efficiency
 
@@ -322,13 +328,21 @@ class Charger(Environment):
             # negative for discharging)
             car.battery.charge(energy_kwh if charging else -energy_kwh)
             self.__electricity_consumption[self.time_step] = car.battery.electricity_consumption[-1]
+
+            #charge for maintaining the case of no partial load, this is just for result comparison and is done to a no partial load battery
+
+            energy_aux = min(self.max_charging_power, (car.aux_battery.capacity*car.ev_simulation.required_soc_departure[self.time_step]) - car.aux_battery.soc[self.time_step])
+            car.aux_battery.charge(energy_aux)
+            self.__electricity_consumption_without_partial_load[self.time_step] = energy_aux
         else:
             self.__electricity_consumption[self.time_step] = 0
+            self.__electricity_consumption_without_partial_load[self.time_step] = 0
 
     def next_time_step(self):
         r"""Advance to next `time_step` and set `electricity_consumption` at new `time_step` to 0.0."""
 
         self.__electricity_consumption.append(0.0)
+        self.__electricity_consumption_without_partial_load.append(0.0)
         self.__past_connected_evs.append(None)
         self.__past_charging_action_values.append(0.0)
         self.connected_ev = None
@@ -343,6 +357,7 @@ class Charger(Environment):
         self.connected_ev = None
         self.incoming_ev = None
         self.__electricity_consumption = [0.0]
+        self.__electricity_consumption_without_partial_load = [0.0]
         self.__past_connected_evs = [None]
         self.__past_charging_action_values = [0.0]
 
@@ -359,6 +374,6 @@ class Charger(Environment):
             #f"Charge Efficiency Curve: {self.charge_efficiency_curve}\n"
             #f"Discharge Efficiency Curve: {self.discharge_efficiency_curve}\n"
             f"Currently Connected Car: {self.connected_ev}\n"
-            f"Incoming EV: {self.incoming_ev}\n"
+            f"Incoming electric_vehicle: {self.incoming_ev}\n"
        )
 #

@@ -799,7 +799,7 @@ class Battery(ElectricDevice, StorageDevice):
         self.__capacity_power_curve = np.array(capacity_power_curve).T
 
     def autosize_for_EV(self):
-        r"""Autosize `capacity` for an EV battery.
+        r"""Autosize `capacity` for an electric_vehicle battery.
         """
 
         self.capacity = 50

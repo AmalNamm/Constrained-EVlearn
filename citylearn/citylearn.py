@@ -11,7 +11,7 @@ from gym.core import RenderFrame
 from citylearn import __version__ as citylearn_version
 from citylearn.base import Environment
 from citylearn.building import Building
-from citylearn.EV import EV
+from citylearn.electric_vehicle import electric_vehicle
 from citylearn.charger import Charger
 from citylearn.cost_function import CostFunction
 from citylearn.data import DataSet, EnergySimulation, CarbonIntensity, Pricing, Weather, EVSimulation
@@ -77,7 +77,7 @@ class CityLearnEnv(Environment, Env):
     def __init__(self,
                  schema: Union[str, Path, Mapping[str, Any]], root_directory: Union[str, Path] = None,
                  buildings: Union[List[Building], List[str], List[int]] = None,
-                 evs: Union[List[EV], List[str], List[int]] = None, simulation_start_time_step: int = None,
+                 evs: Union[List[electric_vehicle], List[str], List[int]] = None, simulation_start_time_step: int = None,
                  simulation_end_time_step: int = None,
                  reward_function: 'citylearn.reward_function.RewardFunction' = None, central_agent: bool = None,
                  shared_observations: List[str] = None, **kwargs: Any
@@ -116,7 +116,7 @@ class CityLearnEnv(Environment, Env):
         return self.__buildings
 
     @property
-    def evs(self) -> List[EV]:
+    def evs(self) -> List[electric_vehicle]:
         """Electric Vehicles in CityLearn environment."""
 
         return self.__evs
@@ -237,7 +237,7 @@ class CityLearnEnv(Environment, Env):
         -----
         If `central_agent` is True, a list of 1 sublist containing all building and EVs observation values is returned in the same order as `buildings` and `evs`.
         The `shared_observations` values are only included in the first building's observation values. If `central_agent` is False, a list of sublists
-        is returned where each sublist is a list of 1 building's or EV's observation values and the sublist in the same order as `buildings` and `evs`.
+        is returned where each sublist is a list of 1 building's or electric_vehicle's observation values and the sublist in the same order as `buildings` and `evs`.
         """
 
         if self.central_agent:
@@ -555,7 +555,7 @@ class CityLearnEnv(Environment, Env):
         self.__buildings = buildings
 
     @evs.setter
-    def evs(self, evs: List[EV]):
+    def evs(self, evs: List[electric_vehicle]):
         self.__evs = evs
 
     @simulation_start_time_step.setter
@@ -639,6 +639,7 @@ class CityLearnEnv(Environment, Env):
 
         self.next_time_step()
         reward = self.reward_function.calculate()
+        #TODO Change for different rewards for each menber
         self.__rewards.append(reward)
         return self.observations, reward, self.done, self.get_info()
 
@@ -873,7 +874,7 @@ class CityLearnEnv(Environment, Env):
         self.update_variables()
 
     def associate_evs_2_chargers(self):
-        r"""Associate EV to its destination charger for observations."""
+        r"""Associate electric_vehicle to its destination charger for observations."""
 
         for ev in self.evs:
 
@@ -955,14 +956,14 @@ class CityLearnEnv(Environment, Env):
         agent = agent_constructor(**agent_attributes)
         return agent
 
-    def _load(self, **kwargs) -> Tuple[List[Building], List[EV], int, float, 'citylearn.reward_function.RewardFunction', bool, List[str]]:
+    def _load(self, **kwargs) -> Tuple[List[Building], List[electric_vehicle], int, float, 'citylearn.reward_function.RewardFunction', bool, List[str]]:
         """Return `CityLearnEnv` and `Controller` objects as defined by the `schema`.
         
         Returns
         -------
         buildings : List[Building]
             Buildings in CityLearn environment.
-        evs : List[EV]
+        evs : List[electric_vehicle]
             Electric Vehicles in CityLearn environment.
         time_steps : int
             Number of simulation time steps.
@@ -1218,13 +1219,13 @@ class CityLearnEnv(Environment, Env):
                         ev_action_metadata = {a: False if a in ev_inactive_actions else True for a in chargers_actions}
 
                         # construct ev
-                        ev_type = 'citylearn.citylearn.EV' if ev_schema.get('type', None) is None else ev_schema['type']
+                        ev_type = 'citylearn.citylearn.electric_vehicle' if ev_schema.get('type', None) is None else ev_schema['type']
                         image_path = None if ev_schema.get('type', None) is None else ev_schema["image_path"]
                         ev_type_module = '.'.join(ev_type.split('.')[0:-1])
                         ev_type_name = ev_type.split('.')[-1]
                         ev_constructor = getattr(importlib.import_module(ev_type_module), ev_type_name)
 
-                        ev: EV = ev_constructor(
+                        ev: electric_vehicle = ev_constructor(
                             ev_simulation=ev_simulation,
                             observation_metadata=ev_observation_metadata,
                             action_metadata=ev_action_metadata,
@@ -1358,7 +1359,7 @@ class CityLearnEnv(Environment, Env):
             connected_charger = None
             incoming_charger = None
 
-            # Iterate over all buildings and chargers to find the one that's connected or has the EV incoming
+            # Iterate over all buildings and chargers to find the one that's connected or has the electric_vehicle incoming
             for building in self.buildings:
                 if building.chargers is not None:  # Ensure that chargers is not None before iterating
                     for charger in building.chargers:
@@ -1372,14 +1373,14 @@ class CityLearnEnv(Environment, Env):
                                                          [avg_lat, avg_lon])  # Get charger location if available
                 ev_location = self.random_location(charger_location[0], charger_location[1],
                                                    50)  # 10 meters radius displacement
-                line_color = "red"  # solid line for connected EV
+                line_color = "red"  # solid line for connected electric_vehicle
                 line_style = None  # solid line
             elif incoming_charger is not None:
                 charger_location = charger_locations.get(incoming_charger.charger_id,
                                                          [avg_lat, avg_lon])  # Get charger location if available
                 ev_location = self.random_location(charger_location[0], charger_location[1],
                                                    50)  # 10 meters radius displacement
-                line_color = "blue"  # dashed line for incoming EV
+                line_color = "blue"  # dashed line for incoming electric_vehicle
                 line_style = "5, 5"  # dashed line
             else:
                 ev_location = self.random_location(avg_lat, avg_lon, random.randint(2500, 5000))
@@ -1389,11 +1390,11 @@ class CityLearnEnv(Environment, Env):
             ev_icon = folium.features.CustomIcon((ev.image_path or 'images/ev.png'),
                                                  icon_size=(40, 40))  # adjust the size as needed
             folium.Marker(ev_location,
-                          popup=f"EV: {ev.name}, SOC: {ev.battery.soc[self.time_step]}",
+                          popup=f"electric_vehicle: {ev.name}, SOC: {ev.battery.soc[self.time_step]}",
                           icon=ev_icon).add_to(map_simulation)
 
             help = connected_charger or incoming_charger
-            # Draw line from EV to its connected charger if it's charging
+            # Draw line from electric_vehicle to its connected charger if it's charging
             if line_color:
                 folium.PolyLine([ev_location, charger_locations[help.charger_id]], color=line_color,
                                 weight=4,

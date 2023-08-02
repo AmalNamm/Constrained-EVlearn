@@ -8,8 +8,9 @@ from citylearn.data import EnergySimulation, CarbonIntensity, Pricing, Weather, 
 from citylearn.energy_model import Battery, ElectricHeater, HeatPump, PV, StorageTank
 from citylearn.preprocessing import Normalize, PeriodicNormalization
 import random
+import copy
 
-class EV(Environment):
+class electric_vehicle(Environment):
 
     def __init__(self, ev_simulation: EVSimulation, observation_metadata: Mapping[str, bool],
                  action_metadata: Mapping[str, bool], battery: Battery = None,
@@ -28,7 +29,7 @@ class EV(Environment):
         action_metadata : dict
             Mapping od active and inactive actions.
         name : str, optional
-            Unique EV name.
+            Unique electric_vehicle name.
 
         Other Parameters
         ----------------
@@ -39,6 +40,7 @@ class EV(Environment):
         self.ev_simulation = ev_simulation
         self.name = name
         self.battery = battery
+        self.aux_battery = copy.deepcopy(battery)
         self.observation_metadata = observation_metadata
         self.action_metadata = action_metadata
         self.non_periodic_normalized_observation_space_limits = None
@@ -46,6 +48,8 @@ class EV(Environment):
         self.observation_space = self.estimate_observation_space()
         self.action_space = self.estimate_action_space()
         #Todo add parameter on the max charge and discharge ???
+        #TODO add min charge
+        #TODO add typical consumption of energy ???
         self.image_path = image_path
         self.__observation_epsilon = 0.0  # to avoid out of bound observations
 
@@ -59,7 +63,7 @@ class EV(Environment):
 
     @property
     def ev_simulation(self) -> EVSimulation:
-        """Return the EV simulation data."""
+        """Return the electric_vehicle simulation data."""
         return self.__ev_simulation
 
     @ev_simulation.setter
@@ -106,14 +110,23 @@ class EV(Environment):
     def action_metadata(self, action_metadata: Mapping[str, bool]):
         self.__action_metadata = action_metadata
 
-    @property #TODO initilizar com soc init
+    @property
     def battery(self) -> Battery:
-        """Battery for EV."""
+        """Battery for electric_vehicle."""
         return self.__battery
+
+    @property
+    def aux_battery(self) -> Battery:
+        """Battery for electric_vehicle."""
+        return self.__aux_battery
 
     @battery.setter
     def battery(self, battery: Battery):
         self.__battery = Battery(0.0, 0.0) if battery is None else battery
+
+    @aux_battery.setter
+    def aux_battery(self, aux_battery: Battery):
+        self.__aux_battery = Battery(0.0, 0.0) if aux_battery is None else aux_battery
 
     @property
     def observation_space(self) -> spaces.Box:
@@ -127,7 +140,7 @@ class EV(Environment):
 
         return self.__action_space
 
-    @property #TODO
+    @property
     def active_observations(self) -> List[str]:
         """Observations in `observation_metadata` with True value i.e. obeservable."""
 
@@ -154,15 +167,9 @@ class EV(Environment):
     def action_space(self, action_space: spaces.Box):
         self.__action_space = action_space
 
-    @property #TODO
-    def energy_from_cooling_device_to_cooling_storage(self) -> np.ndarray:
-        """Energy supply from `cooling_device` to `cooling_storage` time series, in [kWh]."""
-
-        return np.array(self.cooling_storage.energy_balance, dtype=float).clip(min=0)
-
 
     #def travel(self):
-    #    print("The EV is now in transit ")
+    #    print("The electric_vehicle is now in transit ")
     #    """
     #    Calculate the energy consumption based on a randomly
     #    generated speed, and update the battery's state of charge using the `charge` method.
@@ -192,7 +199,7 @@ class EV(Environment):
     #        self.battery.charge(energy_charged)
 
     #def park(self):
-    #    print("The EV is parking and it is not plugged in")
+    #    print("The electric_vehicle is parking and it is not plugged in")
     #    """Update the car's location to 'parked_not_charging'."""
     #    # Simulate power usage while parked by decreasing the state of charge slightly
     #    # Assume a small amount of power loss, e.g., between 0 and 0.05 kWh
@@ -202,11 +209,11 @@ class EV(Environment):
 
     def adjust_ev_soc_on_system_connection(self, soc_system_connection):
         """
-        Adjusts the state of charge (SoC) of an electric vehicle's (EV's) battery upon connection to the system.
+        Adjusts the state of charge (SoC) of an electric vehicle's (electric_vehicle's) battery upon connection to the system.
 
-        When an EV is in transit, the system "loses" the connection and does not know how much battery
-        has been used during travel. As such, when an EV enters an incoming or connected state, its battery
-        SoC is updated to be close to the predicted SoC at arrival present in the EV dataset.
+        When an electric_vehicle is in transit, the system "loses" the connection and does not know how much battery
+        has been used during travel. As such, when an electric_vehicle enters an incoming or connected state, its battery
+        SoC is updated to be close to the predicted SoC at arrival present in the electric_vehicle dataset.
 
         However, predictions sometimes fail, so this method introduces variability for the simulation by
         randomly creating a discrepancy between the predicted value and a "real-world inspired" value. This discrepancy
@@ -222,19 +229,21 @@ class EV(Environment):
         battery's charge method. If the difference is positive, the battery is charged; if the difference is negative,
         the battery is discharged.
 
-        For example, if the EV dataset has a predicted SoC at arrival of 20% (of the battery's total capacity),
-        this method can randomly adjust the EV's battery to 22% or 19%, or even by a larger margin such as 40%.
+        For example, if the electric_vehicle dataset has a predicted SoC at arrival of 20% (of the battery's total capacity),
+        this method can randomly adjust the electric_vehicle's battery to 22% or 19%, or even by a larger margin such as 40%.
 
         Args:
         soc_system_connection (float): The predicted SoC at system connection, expressed as a percentage of the
         battery's total capacity.
         """
 
-        # Get the initial SoC in kWh from the battery
+        # Get the SoC in kWh from the battery
         soc_init_kwh = self.battery.soc_init
+        aux_soc_init_kwh = self.aux_battery.soc_init
 
         # Calculate the system connection SoC in kWh
         soc_system_connection_kwh = self.battery.capacity * (soc_system_connection / 100)
+        aux_soc_system_connection_kwh = self.aux_battery.capacity * (soc_system_connection / 100)
 
         # Determine the range for random variation.
         # Here we use a normal distribution centered at 0 and a standard deviation of 0.1.
@@ -243,24 +252,28 @@ class EV(Environment):
 
         # Apply the variation
         variation_kwh = variation_percentage * soc_system_connection_kwh
+        aux_variation_kwh = variation_percentage * aux_soc_system_connection_kwh
 
         # Calculate the final SoC in kWh
         soc_final_kwh = soc_system_connection_kwh + variation_kwh
+        aux_soc_final_kwh = aux_soc_system_connection_kwh + aux_variation_kwh
 
         # Charge or discharge the battery to the new SoC.
         self.battery.set_ad_hoc_charge(soc_final_kwh - soc_init_kwh)
+        self.aux_battery.set_ad_hoc_charge(aux_soc_final_kwh - aux_soc_init_kwh)
 
     def next_time_step(self) -> Mapping[int, str]:
 
         """
-        Advance EV to the next `time_step` by
+        Advance electric_vehicle to the next `time_step` by
         """
 
         self.battery.next_time_step()
+        self.aux_battery.next_time_step()
         super().next_time_step()
         self.update_variables() #TODO Might need to go below the logic of charging
 
-        if self.ev_simulation.ev_state[self.time_step] == 2: #TODO might imporve the logioc. Current problems is that EVs soc is not stable
+        if self.ev_simulation.ev_state[self.time_step] == 2:
             self.adjust_ev_soc_on_system_connection(self.ev_simulation.estimated_soc_arrival[self.time_step])
 
         elif self.ev_simulation.ev_state[self.time_step] == 3:
@@ -275,6 +288,7 @@ class EV(Environment):
 
         #object reset
         self.battery.reset()
+        self.aux_battery.reset()
 
         # variable reset
         self.update_variables()
@@ -516,7 +530,7 @@ class EV(Environment):
         return spaces.Box(low=np.array(low_limit, dtype='float32'), high=np.array(high_limit, dtype='float32'))
 
     def autosize_battery(self, **kwargs):
-        """Autosize `Battery` for a typical EV.
+        """Autosize `Battery` for a typical electric_vehicle.
 
         Other Parameters
         ----------------
@@ -544,7 +558,7 @@ class EV(Environment):
 
     def __str__(self):
         ev_simulation_attrs = [
-            f"EV simulation (time_step={self.time_step}):",
+            f"electric_vehicle simulation (time_step={self.time_step}):",
             f"Month: {self.ev_simulation.month[self.time_step]}",
             f"Hour: {self.ev_simulation.hour[self.time_step]}",
             f"Day Type: {self.ev_simulation.day_type[self.time_step]}",
@@ -558,7 +572,7 @@ class EV(Environment):
         ev_simulation_str = '\n'.join(ev_simulation_attrs)
 
         return (
-            f"EV {self.name}:\n"
+            f"electric_vehicle {self.name}:\n"
             f"  Battery: {self.battery}\n\n"
             f"Simulation details:\n"
             f"  {ev_simulation_str}"

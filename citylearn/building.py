@@ -138,7 +138,8 @@ class Building(Environment):
         self.observation_space = self.estimate_observation_space()
         self.action_space = self.estimate_action_space()
         self.image_path = image_path
-        self.__set_without_partial_load_variables()
+        self.__set_without_partial_load_variables() #TODO Add here the evs?
+        #TODO add different objectives for different buildings
 
         arg_spec = inspect.getfullargspec(super().__init__)
         kwargs = {
@@ -245,7 +246,7 @@ class Building(Environment):
 
     @property
     def chargers(self) -> List[Charger]:
-        """EV Chargers object for charging connected eletric vehicles."""
+        """electric_vehicle Chargers object for charging connected eletric vehicles."""
 
         return self.__chargers
 
@@ -920,7 +921,6 @@ class Building(Environment):
             for key, action_value in kwargs.items():
                 for c in self.chargers:
                     if f'ev_storage_{c.charger_id}_action' == key:
-                        print(action_value)
                         c.update_connected_ev_soc(action_value)
 
     def update_dynamics(self):
@@ -1453,10 +1453,18 @@ class Building(Environment):
         self.__dhw_electricity_consumption.append(dhw_consumption)
 
         if self.chargers is not None:
+            print("AQUIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII")
+            print(self.name)
             total = 0
+            total_no_partial_load = 0
             for c in self.chargers:
-                total = total + c.electricity_consumption[self.time_step] #TODO this might not work as the method is used after next time step is called
+                total = total + c.electricity_consumption[self.time_step-1] #TODO this might not work as the method is used after next time step is called
+                total_no_partial_load = total_no_partial_load + c.electricity_consumption_without_partial_load[self.time_step-1]
             self.__chargers_electricity_consumption.append(total)
+            self.__charger_electricity_consumption_without_partial_load = total_no_partial_load
+            print("AQUI 111224")
+            print(self.__chargers_electricity_consumption)
+            print(self.__charger_electricity_consumption_without_partial_load)
 
         # net electricity consumption
         net_electricity_consumption = cooling_consumption \

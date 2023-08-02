@@ -268,7 +268,7 @@ class CarbonIntensity:
 
 
 class EVSimulation:
-    """`EV` `ev_simulation` data class.
+    """`electric_vehicle` `ev_simulation` data class.
 
     Month,Hour,Day Type,Location,Estimated Departure Time,Required Soc At Departure
 
@@ -281,19 +281,19 @@ class EVSimulation:
     day_type : np.array
         Numeric day of week time series ranging from 1 - 8 where 1 - 7 is Monday - Sunday and 8 is reserved for special days e.g. holiday.
     ev_state : np.array
-        State of the EV indicating whether it is 'parked ready to charge' represented as 0, 'in transit', represented as 1.
+        State of the electric_vehicle indicating whether it is 'parked ready to charge' represented as 0, 'in transit', represented as 1.
     charger : np.array
-        (available only for 'in transit' state) Charger where the EV will plug in the next "parked ready to charge" state.
+        (available only for 'in transit' state) Charger where the electric_vehicle will plug in the next "parked ready to charge" state.
         It can be nan if no destination charger is specified or the charger id in the format "Charger_X_Y", where X is
         the number of the building and Y the number of the charger within that building.
     estimated_departure_time : np.array
         Number of time steps  expected until the vehicle departs (available only for 'parked ready to charge' state)
     required_soc_departure : np.array
-        Estimated SOC percentage required for the EV at departure time. (available only for 'parked ready to charge' state)
+        Estimated SOC percentage required for the electric_vehicle at departure time. (available only for 'parked ready to charge' state)
     estimated_arrival_time : np.array
         Number of time steps  expected until the vehicle arrives at the charger (available only for 'in transit' state)
     estimated_soc_arrival : np.array
-        Estimated SOC percentage for the EV at arrival time. (available only for 'in transit' state)
+        Estimated SOC percentage for the electric_vehicle at arrival time. (available only for 'in transit' state)
 
     """
 

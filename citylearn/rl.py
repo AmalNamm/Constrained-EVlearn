@@ -210,45 +210,36 @@ class OUNoise:
         self.state = x + dx
         return self.state
 
+
 class ReplayBuffer1:
-    """Fixed-size buffer to store experience tuples."""
+    def __init__(self, capacity, num_agents):
+        self.capacity = capacity
+        self.num_agents = num_agents
+        self.buffer = [[] for _ in range(num_agents)]
+        self.position = [0 for _ in range(num_agents)]
 
-    def __init__(self, action_size, buffer_size, batch_size, seed, device):
-        """Initialize a ReplayBuffer object.
+    def push(self, state, action, reward, next_state, done):
+        for i in range(self.num_agents):
+            if len(self.buffer[i]) < self.capacity:
+                self.buffer[i].append(None)
+            self.buffer[i][self.position[i]] = (state[i], action[i], reward[i], next_state[i], done)
+            self.position[i] = (self.position[i] + 1) % self.capacity
 
-        Params
-        ======
-            buffer_size (int): maximum size of buffer
-            batch_size (int): size of each training batch
-        """
-        self.action_size = action_size
-        self.memory = deque(maxlen=buffer_size)  # internal memory (deque)
-        self.batch_size = batch_size
-        self.experience = namedtuple("Experience", field_names=["state", "action", "reward", "next_state", "done"])
-        self.seed = random.seed(seed)
-        self.device = device
+    def sample(self, batch_size):
+        # For each agent, get a batch of experiences
+        batch = [random.sample(self.buffer[i], batch_size) for i in range(self.num_agents)]
 
-    def add(self, state, action, reward, next_state, done):
-        """Add a new experience to memory."""
-        e = self.experience(state, action, reward, next_state, done)
-        self.memory.append(e)
+        # For each agent's batch, separate the experiences into state, action, reward, next_state, done
+        state, action, reward, next_state, done = [], [], [], [], []
+        for agent_batch in batch:
+            state_i, action_i, reward_i, next_state_i, done_i = zip(*agent_batch)
+            state.append(np.stack(state_i))
+            action.append(np.stack(action_i))
+            reward.append(np.stack(reward_i))
+            next_state.append(np.stack(next_state_i))
+            done.append(np.stack(done_i))
 
-    def sample(self):
-        """Randomly sample a batch of experiences from memory."""
-        experiences = random.sample(self.memory, k=self.batch_size)
-
-        print(e.state for e in experiences if e is not None)
-
-        states = torch.from_numpy(np.vstack([e.state for e in experiences if e is not None])).float().to(self.device)
-        actions = torch.from_numpy(np.vstack([e.action for e in experiences if e is not None])).float().to(self.device)
-        rewards = torch.from_numpy(np.vstack([e.reward for e in experiences if e is not None])).float().to(self.device)
-        next_states = torch.from_numpy(np.vstack([e.next_state for e in experiences if e is not None])).float().to(
-            self.device)
-        dones = torch.from_numpy(np.vstack([e.done for e in experiences if e is not None]).astype(np.uint8)).float().to(
-            self.device)
-
-        return (states, actions, rewards, next_states, dones)
+        return state, action, reward, next_state, done
 
     def __len__(self):
-        """Return the current size of internal memory."""
-        return len(self.memory)
+        return min([len(self.buffer[i]) for i in range(self.num_agents)])
