@@ -47,6 +47,10 @@ class MARLISA(SAC):
         self.set_energy_coefficients()
         self.set_pca()
 
+        print(f" Standardize time step {self.standardize_start_time_step}")
+        print(f" Start regression time step {self.start_regression_time_step}")
+
+
     @property
     def regression_buffer_capacity(self) -> int:
         return self.__regression_buffer_capacity
@@ -133,6 +137,7 @@ class MARLISA(SAC):
         # Normalize all the observations using periodical normalization, one-hot encoding, or -1, 1 scaling. It also removes observations that are not necessary (solar irradiance if there are no solar PV panels).
 
         for i, (o, a, r, n, c0, c1) in enumerate(zip(observations, actions, reward, next_observations, self.coordination_variables_history[0], self.coordination_variables_history[1])):
+            print(f" Inside 1")
             if self.information_sharing:
                 # update regression buffer
                 variables = np.hstack(np.concatenate((self.get_encoded_regression_variables(i, o), a)))
@@ -188,8 +193,10 @@ class MARLISA(SAC):
                 pass
 
             if self.time_step >= self.standardize_start_time_step and self.batch_size <= len(self.replay_buffer[i]):
+                print(f" Inside 2")
                 # This code only runs once. Once the random exploration phase is over, we normalize all the states and rewards to make them have mean=0 and std=1, and apply PCA. We push the normalized compressed values back into the buffer, replacing the old buffer.
                 if not self.pca_flag[i]:
+                    print(f" Inside 2.1")
                     # calculate normalized observations and rewards
                     X = np.array([j[0] for j in self.replay_buffer[i].buffer], dtype=float)
                     self.norm_mean[i] = np.nanmean(X, axis=0)
@@ -215,7 +222,8 @@ class MARLISA(SAC):
                 else:
                     pass
 
-                for _ in range(self.update_per_time_step):
+                for i in range(self.update_per_time_step):
+                    print(f" Inside 3 {i}")
                     o, a, r, n, d = self.replay_buffer[i].sample(self.batch_size)
                     tensor = torch.cuda.FloatTensor if self.device.type == 'cuda' else torch.FloatTensor
                     print("cuda") if self.device.type == 'cuda' else print("not")
@@ -227,16 +235,15 @@ class MARLISA(SAC):
 
                     # setting device on GPU if available, else CPU
                     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-                    print('Using device:', device)
-                    print()
                     
                     #Additional Info when using cuda
-                    #if device.type == 'cuda':
-                    #    print(torch.cuda.get_device_name(0))
-                    #    print('Memory Usage:')
-                    #    print('Allocated:', round(torch.cuda.memory_allocated(0)/1024**3,1), 'GB')
-                    #    print('Cached:   ', round(torch.cuda.memory_reserved(0)/1024**3,1), 'GB')
+                    if device.type == 'cuda':
+                        print(torch.cuda.get_device_name(0))
+                        print('Memory Usage:')
+                        print('Allocated:', round(torch.cuda.memory_allocated(0)/1024**3,1), 'GB')
+                        print('Cached:   ', round(torch.cuda.memory_reserved(0)/1024**3,1), 'GB')
 
+                    print(f" Inside 3 torch no grad {i}")
                     with torch.no_grad():
                         # Update Q-values. First, sample an action from the Gaussian policy/distribution for the current (next) observation and its associated log probability of occurrence.
                         new_next_actions, new_log_pi, _ = self.policy_net[i].sample(n)
@@ -248,6 +255,7 @@ class MARLISA(SAC):
                         ) - self.alpha*new_log_pi
                         q_target = r + (1 - d)*self.discount*target_q_values
 
+                    print(f" Inside 3 Update Soft Q-Networks {i}")
                     # Update Soft Q-Networks
                     q1_pred = self.soft_q_net1[i](o, a)
                     q2_pred = self.soft_q_net2[i](o, a)
@@ -260,6 +268,7 @@ class MARLISA(SAC):
                     q2_loss.backward()
                     self.soft_q_optimizer2[i].step()
 
+                    print(f" Inside 3 Update Policy {i}")
                     # Update Policy
                     new_actions, log_pi, _ = self.policy_net[i].sample(o)
                     q_new_actions = torch.min(
@@ -271,6 +280,7 @@ class MARLISA(SAC):
                     policy_loss.backward()
                     self.policy_optimizer[i].step()
 
+                    print(f" Inside 3 Soft Updates {i}")
                     # Soft Updates
                     for target_param, param in zip(self.target_soft_q_net1[i].parameters(), self.soft_q_net1[i].parameters()):
                         target_param.data.copy_(target_param.data*(1.0 - self.tau) + param.data*self.tau)

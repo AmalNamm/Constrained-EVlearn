@@ -381,12 +381,6 @@ class CityLearnEnv(Environment, Env):
 
         return self.__net_electricity_consumption_cost
 
-    # @property TODO
-    # def net_electricity_consumption_without_EVs_cost(self) -> List[float]:
-    #    """Summed `Building.net_electricity_consumption_cost` time series, in [$]."""
-    #
-    #    return self.__net_electricity_consumption_cost
-
     @property
     def net_electricity_consumption(self) -> List[float]:
         """Summed `Building.net_electricity_consumption` time series, in [kWh]."""
@@ -672,7 +666,7 @@ class CityLearnEnv(Environment, Env):
 
         return actions
 
-    def get_building_information(self) -> Tuple[Mapping[str, Any]]:  # TODO update
+    def get_building_information(self) -> Tuple[Mapping[str, Any]]:
         """Get buildings PV capacity, end-use annual demands, and correlations with other buildings end-use annual demands.
 
         Returns

@@ -62,3 +62,10 @@ What happens when the observations dont exist ? They are at zero or minus one ? 
 So put all obsevrations in the ev
 
 and observations in the charger as its power and availability
+
+1 - Sem evs
+2 - 1 ano 17 edificios primavera, rewards, verao etc etc, ver transfer learning e diferentes objetivos  - MUDAR DADOS PARA TER SO EVS EM RESIDENCIAL ja esta, mas e agora como pode haver casas sem evs aqui ? que beneficios vao ter ?
+3 - 4 anos com 9 edificios com evs e espaços comerciais e escritórios, ver evolução ao longo dos anos - COPIAR CONFS DO CASO 1
+4 - Descentralizado vs centralizado (ver melhorias e piorias tempos e etc)
+5 - nº camadas vs tempo que demora x resultados
+6 -

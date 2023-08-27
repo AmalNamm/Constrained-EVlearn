@@ -819,8 +819,10 @@ class Battery(ElectricDevice, StorageDevice):
         If charging, soc = min(`soc_init` + energy*`efficiency`, `max_input_power`, `capacity`)
         If discharging, soc = max(0, `soc_init` + energy/`efficiency`, `max_output_power`)
         """
-
+        print("AQUIIIIIIIIIIIIII")
+        print(energy)
         energy = min(energy, self.get_max_input_power()) if energy >= 0 else max(-self.get_max_output_power(), energy)
+        print(energy)
         self.efficiency = self.get_current_efficiency(energy)
         super().charge(energy)
         self.capacity = self.capacity - min(self.degrade(), self.capacity)

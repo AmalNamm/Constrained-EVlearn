@@ -7,6 +7,7 @@ from typing import Any, List, Mapping, Tuple, Union
 from gym import spaces
 from citylearn.base import Environment
 from citylearn.citylearn import CityLearnEnv
+import time
 
 LOGGER = logging.getLogger()
 logging.getLogger('matplotlib.font_manager').disabled = True
@@ -133,35 +134,49 @@ class Agent(Environment):
         else:
             pass
 
+        rewards_all = []
+        runtimes = []
+        average_runtime=0
+        kpis_list = []
+
         for episode in range(episodes):
             deterministic = deterministic or (deterministic_finish and episode >= episodes - 1)
             observations = self.env.reset()
+            rewards_ep = []
 
             while not self.env.done:
                 print("\n \n ------TIME STEP------")
                 print(f"{episode} - {self.env.time_step}")
 #
-                #print("------Electric vehicles------")
-                #for e in self.env.evs:
-                #    print(e)
-                #    print()
-                #print("------Buildings------")
-                #for b in self.env.buildings:
-                #    print(b)
-                #    print()
+                print("------Electric vehicles------")
+                for e in self.env.evs:
+                    print(e)
+                    print()
+                print("------Buildings------")
+                for b in self.env.buildings:
+                    print(b)
+                    print()
 ##
-                #print("------Observations------")
-                #print(observations)
+                print("------Observations------")
+                print(observations)
 ##
 ##
-                #print("------Predict------")
+                print("------Predict------")
+                start_time = time.time()  # Get the current time
                 actions = self.predict(observations, deterministic=deterministic)
+                end_time = time.time()  # Get the current time again after the function has run
+
+                elapsed_time = end_time - start_time  # Calculate the elapsed time
+                runtimes.append(elapsed_time)
+
+
 #
-                #print("------Actions------")
-                #print(actions)
+                print("------Actions------")
+                print(actions)
 
                 # apply actions to citylearn_env
                 next_observations, rewards, _, _ = self.env.step(actions)
+                rewards_ep.append(rewards)
 
                 print("------Rewards------")
                 print(rewards)
@@ -181,11 +196,28 @@ class Agent(Environment):
                                 f' Rewards: {rewards}'
                 )
 
+            print("Episode")
+            print(episode)
+            # Calculate the average runtime
+            average_runtime = sum(runtimes) / len(runtimes)
+
+            print(f"Average Runtime: {average_runtime:.6f} seconds")
+
+            kpis = self.env.evaluate().pivot(index='cost_function', columns='name', values='value')
+            kpis = kpis.dropna(how='all')
+            kpis_list.append(kpis)
+            rewards_ep = [reward for reward in rewards_ep if isinstance(reward, List)]
+            sum_inner_lists = [sum(inner_list) for inner_list in rewards_ep]
+            total_sum = sum(sum_inner_lists)
+            rewards_all.append(total_sum)
+            print(rewards_all)
+
             # store episode's env to disk
             if keep_env_history:
                 self.__save_env(episode, env_history_directory)
             else:
                 pass
+        return rewards_all, average_runtime, kpis_list
 
     def get_env_history(self, directory: Union[str, Path], episodes: List[int] = None) -> Tuple[CityLearnEnv]:
         """Return tuple of :py:class:`citylearn.citylearn.CityLearnEnv` objects at terminal point for simulated episodes.

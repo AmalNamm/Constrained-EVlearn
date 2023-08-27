@@ -13,7 +13,7 @@ import copy
 class electric_vehicle(Environment):
 
     def __init__(self, ev_simulation: EVSimulation, observation_metadata: Mapping[str, bool],
-                 action_metadata: Mapping[str, bool], battery: Battery = None,
+                 action_metadata: Mapping[str, bool], battery: Battery = None, min_battery_soc: int = 20,
                  image_path: str = None, name: str = None, **kwargs):
         """
         Initialize the EVCar class.
@@ -48,8 +48,7 @@ class electric_vehicle(Environment):
         self.observation_space = self.estimate_observation_space()
         self.action_space = self.estimate_action_space()
         #Todo add parameter on the max charge and discharge ???
-        #TODO add min charge
-        #TODO add typical consumption of energy ???
+        self.min_battery_soc = min_battery_soc
         self.image_path = image_path
         self.__observation_epsilon = 0.0  # to avoid out of bound observations
 
@@ -78,7 +77,17 @@ class electric_vehicle(Environment):
 
     @name.setter
     def name(self, name: str):
-        self.__name = name
+        self.__name = name    \
+
+    @property
+    def min_battery_soc(self) -> int:
+        """min battery soc percentage."""
+
+        return self.__min_battery_soc
+
+    @min_battery_soc.setter
+    def min_battery_soc(self, min_battery_soc: str):
+        self.__min_battery_soc = min_battery_soc
 
     @property
     def image_path(self) -> str:
@@ -123,10 +132,11 @@ class electric_vehicle(Environment):
     @battery.setter
     def battery(self, battery: Battery):
         self.__battery = Battery(0.0, 0.0) if battery is None else battery
+        self.__aux_battery = copy.deepcopy(self.battery)
 
     @aux_battery.setter
     def aux_battery(self, aux_battery: Battery):
-        self.__aux_battery = Battery(0.0, 0.0) if aux_battery is None else aux_battery
+        self.__aux_battery = copy.deepcopy(self.battery) if aux_battery is None else aux_battery
 
     @property
     def observation_space(self) -> spaces.Box:
@@ -166,46 +176,6 @@ class electric_vehicle(Environment):
     @action_space.setter
     def action_space(self, action_space: spaces.Box):
         self.__action_space = action_space
-
-
-    #def travel(self):
-    #    print("The electric_vehicle is now in transit ")
-    #    """
-    #    Calculate the energy consumption based on a randomly
-    #    generated speed, and update the battery's state of charge using the `charge` method.
-#
-    #    """
-    #    # Generate a realistic speed randomly (between 30km/h to 120km/h seems realistic)
-    #    speed = random.uniform(30, 120)  # in km/hr
-#
-    #    # Convert speed to distance based on the time step (assuming that self.seconds_per_time_step is in seconds)
-    #    distance = speed * (self.seconds_per_time_step / 3600)  # Convert km/hr to km/second
-#
-    #    # Calculate the energy consumption
-    #    energy_consumption = distance * self.energy_consumption_rate
-#
-    #    # Introduce variability in energy consumption and charging
-    #    if random.random() < 0.9:  # 90% chance to discharge while in transit
-    #        # Discharge the battery to account for energy consumption while driving.
-    #        print("Discharging in transit")
-    #        self.battery.charge(-energy_consumption)
-    #    else:  # 10% chance to charge while at another location
-    #        # Generate a random charging speed in kWh (between 7-120 kWh seems realistic for 1 hour)
-    #        charging_speed = random.uniform(7, 120)  # in kWh per hour
-    #        # Calculate the amount of energy charged based on the time step
-    #        energy_charged = charging_speed * (self.seconds_per_time_step / 3600)  # Convert kWh/hr to kWh/second
-    #        # Charge the battery at another location while travelling
-    #        print(f"Charging in transit {energy_charged}")
-    #        self.battery.charge(energy_charged)
-
-    #def park(self):
-    #    print("The electric_vehicle is parking and it is not plugged in")
-    #    """Update the car's location to 'parked_not_charging'."""
-    #    # Simulate power usage while parked by decreasing the state of charge slightly
-    #    # Assume a small amount of power loss, e.g., between 0 and 0.05 kWh
-    #    power_loss_while_parked = random.uniform(0, 0.005)  # in kWh
-    #    self.battery.charge(-power_loss_while_parked)
-
 
     def adjust_ev_soc_on_system_connection(self, soc_system_connection):
         """
@@ -271,7 +241,6 @@ class electric_vehicle(Environment):
         self.battery.next_time_step()
         self.aux_battery.next_time_step()
         super().next_time_step()
-        self.update_variables() #TODO Might need to go below the logic of charging
 
         if self.ev_simulation.ev_state[self.time_step] == 2:
             self.adjust_ev_soc_on_system_connection(self.ev_simulation.estimated_soc_arrival[self.time_step])
@@ -289,62 +258,6 @@ class electric_vehicle(Environment):
         #object reset
         self.battery.reset()
         self.aux_battery.reset()
-
-        # variable reset
-        self.update_variables()
-
-    def update_variables(self): #TODO
-        """Update cooling, heating, dhw and net electricity consumption as well as net electricity consumption cost and carbon emissions."""
-        pass
-       ## cooling electricity consumption
-       #cooling_demand = self.energy_simulation.cooling_demand[self.time_step] + self.cooling_storage.energy_balance[
-       #    self.time_step]
-       #cooling_consumption = self.cooling_device.get_input_power(cooling_demand,
-       #                                                          self.weather.outdoor_dry_bulb_temperature[
-       #                                                              self.time_step], heating=False)
-       #self.__cooling_electricity_consumption.append(cooling_consumption)
-
-       ## heating electricity consumption
-       #heating_demand = self.energy_simulation.heating_demand[self.time_step] + self.heating_storage.energy_balance[
-       #    self.time_step]
-
-       #if isinstance(self.heating_device, HeatPump):
-       #    heating_consumption = self.heating_device.get_input_power(heating_demand,
-       #                                                              self.weather.outdoor_dry_bulb_temperature[
-       #                                                                  self.time_step], heating=True)
-       #else:
-       #    heating_consumption = self.dhw_device.get_input_power(heating_demand)
-
-       #self.__heating_electricity_consumption.append(heating_consumption)
-
-       ## dhw electricity consumption
-       #dhw_demand = self.energy_simulation.dhw_demand[self.time_step] + self.dhw_storage.energy_balance[self.time_step]
-
-       #if isinstance(self.dhw_device, HeatPump):
-       #    dhw_consumption = self.dhw_device.get_input_power(dhw_demand,
-       #                                                      self.weather.outdoor_dry_bulb_temperature[self.time_step],
-       #                                                      heating=True)
-       #else:
-       #    dhw_consumption = self.dhw_device.get_input_power(dhw_demand)
-
-       #self.__dhw_electricity_consumption.append(dhw_consumption)
-
-       ## net electricity consumption
-       #net_electricity_consumption = cooling_consumption \
-       #                              + heating_consumption \
-       #                              + dhw_consumption \
-       #                              + self.electrical_storage.electricity_consumption[self.time_step] \
-       #                              + self.energy_simulation.non_shiftable_load[self.time_step] \
-       #                              + self.__solar_generation[self.time_step]
-       #self.__net_electricity_consumption.append(net_electricity_consumption)
-
-       ## net electriciy consumption cost
-       #self.__net_electricity_consumption_cost.append(
-       #    net_electricity_consumption * self.pricing.electricity_pricing[self.time_step])
-
-       ## net electriciy consumption emission
-       #self.__net_electricity_consumption_emission.append(
-       #    max(0, net_electricity_consumption * self.carbon_intensity.carbon_intensity[self.time_step]))
 
     def observations(self, include_all: bool = None, normalize: bool = None, periodic_normalization: bool = None) -> \
             Mapping[str, float]:
@@ -374,7 +287,7 @@ class electric_vehicle(Environment):
 
         data = {
             **{k: v[self.time_step] for k, v in ev_data.items() if k not in unwanted_keys},
-            'ev_soc': self.battery.soc[self.time_step] / self.battery.capacity #TODO not working for some reason
+            'ev_soc': self.battery.soc_init
         }
 
         if include_all:
@@ -434,7 +347,7 @@ class electric_vehicle(Environment):
         }
 
     def estimate_observation_space(self, include_all: bool = None, normalize: bool = None,
-                                   periodic_normalization: bool = None) -> spaces.Box:  # TODO
+                                   periodic_normalization: bool = None) -> spaces.Box:
         r"""Get estimate of observation spaces.
         Parameters
         ----------
@@ -467,7 +380,7 @@ class electric_vehicle(Environment):
         return spaces.Box(low=np.array(low_limit, dtype='float32'), high=np.array(high_limit, dtype='float32'))
 
     def estimate_observation_space_limits(self, include_all: bool = None, periodic_normalization: bool = None) -> Tuple[
-        Mapping[str, float], Mapping[str, float]]:  # TODO
+        Mapping[str, float], Mapping[str, float]]:
         r"""Get estimate of observation space limits.
         Find minimum and maximum possible values of all the observations, which can then be used by the RL agent to scale the observations and train any function approximators more effectively.
         Parameters
@@ -501,7 +414,7 @@ class electric_vehicle(Environment):
                     low_limit[key] = 0
                     high_limit[key] = 24
             elif key in "required_soc_departure" or key in "estimated_soc_arrival"  or key in "ev_soc":
-                    low_limit[key] = 0.0
+                    low_limit[key] = 0.0 #todo
                     high_limit[key] = 1.0
         low_limit = {k: v - 0.05 for k, v in low_limit.items()}
         high_limit = {k: v + 0.05 for k, v in high_limit.items()}

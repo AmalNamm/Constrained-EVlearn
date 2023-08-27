@@ -62,7 +62,7 @@ class Building(Environment):
             pricing: Pricing = None, dhw_storage: StorageTank = None, cooling_storage: StorageTank = None,
             heating_storage: StorageTank = None, electrical_storage: Battery = None,
             dhw_device: Union[HeatPump, ElectricHeater] = None, cooling_device: HeatPump = None,
-            heating_device: Union[HeatPump, ElectricHeater] = None, pv: PV = None, chargers: List[Charger] = None,
+            heating_device: Union[HeatPump, ElectricHeater] = None, pv: PV = None, chargers: List[Charger] = None, reward_type: str = "D",
             image_path: str = None, name: str = None, lat: float = None, lon : float = None, maximum_temperature_delta: float = None, **kwargs: Any
     ):
         r"""Initialize `Building`.
@@ -138,8 +138,8 @@ class Building(Environment):
         self.observation_space = self.estimate_observation_space()
         self.action_space = self.estimate_action_space()
         self.image_path = image_path
-        self.__set_without_partial_load_variables() #TODO Add here the evs?
-        #TODO add different objectives for different buildings
+        self.__set_without_partial_load_variables()
+        self.reward_type = reward_type
 
         arg_spec = inspect.getfullargspec(super().__init__)
         kwargs = {
@@ -218,7 +218,13 @@ class Building(Environment):
     def lon(self) -> float:
         """Longitude"""
 
-        return self.__lon
+        return self.__lon    \
+
+    @property
+    def reward_type(self) -> str:
+        """Reward Type"""
+
+        return self.__reward_type
 
     @property
     def dhw_device(self) -> Union[HeatPump, ElectricHeater]:
@@ -352,7 +358,7 @@ class Building(Environment):
         # net electricity consumption without storage and partial load
         return self.net_electricity_consumption_without_storage + np.sum([
             cooling_electricity_consumption_difference,
-            heating_electricity_consumption_difference,
+            heating_electricity_consumption_difference
         ], axis=0)
 
     @property
@@ -403,15 +409,32 @@ class Building(Environment):
         Notes
         -----
         net_electricity_consumption_without_storage = `net_electricity_consumption` - (`cooling_storage_electricity_consumption`
-        + `heating_storage_electricity_consumption` + `dhw_storage_electricity_consumption` + `electrical_storage_electricity_consumption`)
+        + `heating_storage_electricity_consumption` + `dhw_storage_electricity_consumption` + `electrical_storage_electricity_consumption` + `charger_electricity_consumption`) + __chargers_electricity_consumption_without_partial_load
         """
+
+        cooling_consumption = self.cooling_storage_electricity_consumption
+        heating_consumption = self.heating_storage_electricity_consumption
+        dhw_consumption = self.dhw_storage_electricity_consumption
+        electrical_consumption = self.electrical_storage_electricity_consumption
+        chargers_v2g_consumption = self.__chargers_electricity_consumption
+        chargers_without_v2g_consumption = self.__chargers_electricity_consumption_without_partial_load
+
+        # Print the individual consumption values
+        print(f"DATA AT without storage {self.time_step}, building{self.name}")
+        print("Cooling Consumption:", cooling_consumption)
+        print("Heating Consumption:", heating_consumption)
+        print("DHW Consumption:", dhw_consumption)
+        print("Electrical Consumption:", electrical_consumption)
+        print("Chargers V2G Consumption:", chargers_v2g_consumption)
+        print("Chargers (without V2G) Consumption:", chargers_without_v2g_consumption)
 
         return self.net_electricity_consumption - np.sum([
             self.cooling_storage_electricity_consumption,
             self.heating_storage_electricity_consumption,
             self.dhw_storage_electricity_consumption,
-            self.electrical_storage_electricity_consumption
-        ], axis=0)
+            self.electrical_storage_electricity_consumption,
+            self.__chargers_electricity_consumption
+        ], axis=0) + self.__chargers_electricity_consumption_without_partial_load # Consumption when EV batteries are used for V2G
 
     @property
     def net_electricity_consumption_emission(self) -> List[float]:
@@ -732,6 +755,10 @@ class Building(Environment):
     def name(self, name: str):
         self.__name = self.uid if name is None else name
 
+    @reward_type.setter
+    def reward_type(self, reward_type: str):
+        self.__reward_type = reward_type
+
     def observations(self, include_all: bool = None, normalize: bool = None, periodic_normalization: bool = None) -> \
             Mapping[str, float]:
         r"""Observations at current time step.
@@ -917,7 +944,6 @@ class Building(Environment):
         self.update_electrical_storage(electrical_storage_action)
 
         if self.chargers is not None:
-            print(kwargs.items())
             for key, action_value in kwargs.items():
                 for c in self.chargers:
                     if f'ev_storage_{c.charger_id}_action' == key:
@@ -1231,9 +1257,8 @@ class Building(Environment):
                 if self.chargers is not None:
                     for c in self.chargers:
                         if key == f"ev_storage_{c.charger_id}":
-                            limit = c.max_charging_power #later change to incorporate ev powers
-                            low_limit.append(-limit)
-                            high_limit.append(limit)
+                            low_limit.append(-1.0)
+                            high_limit.append(1.0)
 
             else:
                 if key == 'cooling_storage':
@@ -1269,6 +1294,7 @@ class Building(Environment):
         self.__cooling_demand_without_partial_load = self.energy_simulation.cooling_demand.copy()
         self.__heating_demand_without_partial_load = self.energy_simulation.heating_demand.copy()
         self.__indoor_dry_bulb_temperature_without_partial_load = self.energy_simulation.indoor_dry_bulb_temperature.copy()
+
 
     def autosize_cooling_device(self, **kwargs):
         """Autosize `cooling_device` `nominal_power` to minimum power needed to always meet `cooling_demand`.
@@ -1409,6 +1435,7 @@ class Building(Environment):
         self.__net_electricity_consumption_emission = []
         self.__net_electricity_consumption_cost = []
         self.__chargers_electricity_consumption = []
+        self.__chargers_electricity_consumption_without_partial_load = []
         self.update_variables()
 
         # reset controlled variables
@@ -1452,28 +1479,34 @@ class Building(Environment):
 
         self.__dhw_electricity_consumption.append(dhw_consumption)
 
+        total = 0
+        total_no_partial_load = 0
         if self.chargers is not None:
-            print("AQUIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII")
-            print(self.name)
-            total = 0
-            total_no_partial_load = 0
+
             for c in self.chargers:
-                total = total + c.electricity_consumption[self.time_step-1] #TODO this might not work as the method is used after next time step is called
+                total = total + c.electricity_consumption[self.time_step-1]
                 total_no_partial_load = total_no_partial_load + c.electricity_consumption_without_partial_load[self.time_step-1]
-            self.__chargers_electricity_consumption.append(total)
-            self.__charger_electricity_consumption_without_partial_load = total_no_partial_load
-            print("AQUI 111224")
-            print(self.__chargers_electricity_consumption)
-            print(self.__charger_electricity_consumption_without_partial_load)
+
+        self.__chargers_electricity_consumption.append(total)
+        self.__chargers_electricity_consumption_without_partial_load.append(total_no_partial_load)
 
         # net electricity consumption
+        print(f"DATA AT update variables {self.time_step}, building{self.name}")
+        print("Cooling Consumption:", cooling_consumption)
+        print("Heating Consumption:", heating_consumption)
+        print("DHW Consumption:", dhw_consumption)
+        print("Electrical Storage Consumption:", self.electrical_storage.electricity_consumption[self.time_step])
+        print("Non-Shiftable Load:", self.energy_simulation.non_shiftable_load[self.time_step])
+        print("Solar Generation:", self.__solar_generation[self.time_step])
+        print("Chargers Electricity Consumption:", self.__chargers_electricity_consumption[self.time_step])
+
         net_electricity_consumption = cooling_consumption \
                                       + heating_consumption \
                                       + dhw_consumption \
                                       + self.electrical_storage.electricity_consumption[self.time_step] \
                                       + self.energy_simulation.non_shiftable_load[self.time_step] \
-                                      + self.__solar_generation[self.time_step]
-        #                             + self.__chargers_electricity_consumption[self.time_step] TODO
+                                      + self.__solar_generation[self.time_step] \
+                                      + self.__chargers_electricity_consumption[self.time_step]
         self.__net_electricity_consumption.append(net_electricity_consumption)
 
         # net electriciy consumption cost
@@ -1495,6 +1528,9 @@ class Building(Environment):
             f"\n  Weather: {self.weather}"
             f"\n  Carbon Intensity: {self.carbon_intensity}"
             f"\n  Pricing: {self.pricing}"
+            f"\n  net elect consuption: {self.net_electricity_consumption}"
+            f"\n  net elect consuption without storage: {self.net_electricity_consumption_without_storage}"
+            f"\n  net elect consuption without storage an partial load: {self.net_electricity_consumption_without_storage_and_partial_load}"           
             #f"\n  Domestic Hot Water Storage: {self.dhw_storage}"
             #f"\n  Cooling Storage: {self.cooling_storage}"
             #f"\n  Heating Storage: {self.heating_storage}"
