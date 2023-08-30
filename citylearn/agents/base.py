@@ -135,8 +135,8 @@ class Agent(Environment):
             pass
 
         rewards_all = []
-        runtimes = []
-        average_runtime=0
+        individual_runtimes_predict = []
+        average_runtime = 0
         kpis_list = []
 
         for episode in range(episodes):
@@ -148,38 +148,38 @@ class Agent(Environment):
                 print("\n \n ------TIME STEP------")
                 print(f"{episode} - {self.env.time_step}")
 #
-                print("------Electric vehicles------")
-                for e in self.env.evs:
-                    print(e)
-                    print()
-                print("------Buildings------")
-                for b in self.env.buildings:
-                    print(b)
-                    print()
+                #print("------Electric vehicles------")
+                #for e in self.env.evs:
+                #    print(e)
+                #    print()
+                #print("------Buildings------")
+                #for b in self.env.buildings:
+                #    print(b)
+                #    print()
 ##
-                print("------Observations------")
-                print(observations)
+#                print("------Observations------")
+#                print(observations)
 ##
 ##
-                print("------Predict------")
+#                print("------Predict------")
                 start_time = time.time()  # Get the current time
                 actions = self.predict(observations, deterministic=deterministic)
                 end_time = time.time()  # Get the current time again after the function has run
 
                 elapsed_time = end_time - start_time  # Calculate the elapsed time
-                runtimes.append(elapsed_time)
+                individual_runtimes_predict.append(elapsed_time)
 
 
 #
-                print("------Actions------")
-                print(actions)
+#                print("------Actions------")
+#                print(actions)
 
                 # apply actions to citylearn_env
                 next_observations, rewards, _, _ = self.env.step(actions)
                 rewards_ep.append(rewards)
 
-                print("------Rewards------")
-                print(rewards)
+#                print("------Rewards------")
+#                print(rewards)
 
                 # update
                 if not deterministic:
@@ -196,21 +196,16 @@ class Agent(Environment):
                                 f' Rewards: {rewards}'
                 )
 
-            print("Episode")
-            print(episode)
             # Calculate the average runtime
-            average_runtime = sum(runtimes) / len(runtimes)
+            average_runtime = sum(individual_runtimes_predict) / len(individual_runtimes_predict)
 
-            print(f"Average Runtime: {average_runtime:.6f} seconds")
-
+            #Save kpis
             kpis = self.env.evaluate().pivot(index='cost_function', columns='name', values='value')
             kpis = kpis.dropna(how='all')
             kpis_list.append(kpis)
+
             rewards_ep = [reward for reward in rewards_ep if isinstance(reward, List)]
-            sum_inner_lists = [sum(inner_list) for inner_list in rewards_ep]
-            total_sum = sum(sum_inner_lists)
-            rewards_all.append(total_sum)
-            print(rewards_all)
+            rewards_all.append(rewards_ep) #rewards all is a list, of lists, of lists [[ep1[ts1][ts2]], [ep2[B1][B2]], ....]
 
             # store episode's env to disk
             if keep_env_history:

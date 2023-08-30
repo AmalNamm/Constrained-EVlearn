@@ -191,24 +191,28 @@ class Critic(nn.Module):
 class OUNoise:
     """Ornstein-Uhlenbeck process."""
 
-    def __init__(self, size, seed, mu=0., theta=0.15, sigma=0.2):
+    def __init__(self, size, seed, mu=0., theta=0.15, sigma=0.25, decay_factor=0.005):
+        ...
+        self.decay_factor = decay_factor
         """Initialize parameters and noise process."""
         self.mu = mu * np.ones(size)
         self.theta = theta
         self.sigma = sigma
         self.seed = random.seed(seed)
         self.reset()
+        self.internal_state = copy.copy(self.mu)
 
     def reset(self):
         """Reset the internal state (= noise) to mean (mu)."""
-        self.state = copy.copy(self.mu)
+        self.internal_state = copy.copy(self.mu)
 
     def sample(self):
         """Update internal state and return it as a noise sample."""
-        x = self.state
-        dx = self.theta * (self.mu - x) + self.sigma * np.array([random.random() for _ in range(len(x))])
-        self.state = x + dx
-        return self.state
+        x = self.internal_state
+        dx = self.theta * (self.mu - x) + self.sigma * np.array([np.random.randn() for _ in range(len(x))])
+        self.internal_state = x + dx
+        #self.sigma *= self.decay_factor
+        return self.internal_state
 
 import numpy as np
 from collections import deque

@@ -9,13 +9,13 @@ from citylearn.agents.sac import SAC as RLAgent
 import time
 import pandas as pd
 
-dataset_name = 'tiago_thesis_test_1_without_EVs_baseline'
+dataset_name = 'cs5'
 env = CityLearnEnv(dataset_name, central_agent=False)
 averages = []
 model = RLAgent(env)
 
 start_time = time.time()
-rewards, average_runtime, kpis_list = model.learn(episodes=2, keep_env_history=True, env_history_directory="./sc2_sac1")
+rewards, average_runtime, kpis_list = model.learn(episodes=10, keep_env_history=True, env_history_directory="./V2GENV_overnight28/sc2_sactestReward")
 end_time = time.time()
 elapsed_time = end_time - start_time
 

@@ -1,5 +1,5 @@
 from typing import Any, List
-
+from citylearn.preprocessing import Encoder, NoNormalization, PeriodicNormalization, OnehotEncoding ,RemoveFeature, Normalize
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -10,14 +10,14 @@ import random
 import numpy.typing as npt
 import timeit
 from torch.cuda.amp import autocast, GradScaler
-from citylearn.agents.rbc import RBC, BasicBatteryRBC, BasicRBC, HourRBC, OptimizedRBC
+from citylearn.agents.rbc import RBC, BasicBatteryRBC, BasicRBC, V2GRBC, OptimizedRBC
 from citylearn.agents.rlc import RLC
 from torch.utils.tensorboard import SummaryWriter
 
 class MADDPG(RLC):
     def __init__(self, env: CityLearnEnv, actor_units: tuple = (256, 128), critic_units: tuple = (256, 128),
-                 buffer_size: int = int(1e5), batch_size: int = 100, gamma: float = 0.99,
-                 target_update_interval: int = 1000, lr_actor: float = 1e-4, lr_critic: float = 1e-3, update_every: int = 5,
+                 buffer_size: int = int(1e5), batch_size: int = 128, gamma: float = 0.99, sigma=0.2,
+                 target_update_interval: int = 500, lr_actor: float = 1e-4, lr_critic: float = 1e-3, steps_between_training_updates: int = 5, decay_percentage=0.995, tau = 1e-3,
                  *args, **kwargs):
         super().__init__(env, **kwargs)
 
@@ -38,6 +38,7 @@ class MADDPG(RLC):
         self.seed = random.randint(0, 100_000_000)
         self.actor_units = actor_units
         self.critic_units = critic_units
+        self.tau = tau
 
         self.actors = [
             Actor(self.observation_dimension[i], self.action_space[i].shape[0], self.seed, *self.actor_units).to(
@@ -58,25 +59,32 @@ class MADDPG(RLC):
         self.critics_optimizer = [torch.optim.Adam(self.critics[i].parameters(), lr=lr_critic) for i in
                                   range(len(self.action_space))]
 
-        self.noise = [OUNoise(self.action_space[i].shape[0], self.seed) for i in range(len(self.action_space))]
+        decay_factor = decay_percentage ** (1/self.env.time_steps)
+        self.noise = [OUNoise(self.action_space[i].shape[0], self.seed, sigma=sigma, decay_factor=decay_factor) for i in range(len(self.action_space))]
 
         self.target_update_interval = target_update_interval
-        self.update_every = update_every
-        self.timestep = 0  # Keep track of timesteps
+        self.steps_between_training_updates = steps_between_training_updates
         self.scaler = GradScaler()
+        self.exploration_done = False
 
     def update(self, observations, actions, reward, next_observations, done):
         self.replay_buffer.push(observations, actions, reward, next_observations, done)
 
-        print("Reward MADDPG")
-        print(reward)
-
-        if len(self.replay_buffer) < self.batch_size or self.timestep < self.end_exploration_time_step:
-            print("returned")
+        if len(self.replay_buffer) < self.batch_size:
+            print("returned due to buffer")
             return
 
-        if self.timestep % self.update_every != 0:
-            print("returned 2")
+        if not self.exploration_done:
+            if self.time_step < self.end_exploration_time_step:
+                print("returned due to minor")
+                return
+            elif self.time_step == self.end_exploration_time_step:
+                self.exploration_done = True
+                print("Ended exploration")
+                return
+
+        if self.time_step % self.steps_between_training_updates != 0:
+            print("Not time to train")
             return
 
         print("training")
@@ -137,35 +145,43 @@ class MADDPG(RLC):
             actor_optim.zero_grad()
             self.scaler.update()
 
-            if self.timestep % self.target_update_interval == 0:
+            if self.time_step % self.target_update_interval == 0:
                 # Update target networks
-                self.soft_update(critic, critic_target)
-                self.soft_update(actor, actor_target)
+                self.soft_update(critic, critic_target, self.tau)
+                self.soft_update(actor, actor_target, self.tau)
 
     def soft_update(self, local_model, target_model, tau=1e-3):
         for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):
             target_param.data.copy_(tau * local_param.data + (1.0 - tau) * target_param.data)
 
+    def get_deterministic_actions(self, observations):
+        with torch.no_grad():
+            encoded_observations = [self.get_encoded_observations(i, obs) for i, obs in enumerate(observations)]
+            to_return = [actor(torch.FloatTensor(obs).to(self.device)).cpu().numpy()
+                    for actor, obs in zip(self.actors, encoded_observations)]
+            print("TO RETURN")
+            print(to_return)
+            return to_return
+
     def predict(self, observations, deterministic=False):
-
-        if self.timestep > self.end_exploration_time_step or deterministic:
-            print("ALI")
-            with torch.no_grad():
-                encoded_observations = [self.get_encoded_observations(i, obs) for i, obs in enumerate(observations)]
-                if deterministic:
-                    self.timestep += 1
-                    return [actor(torch.FloatTensor(obs).to(self.device)).cpu().numpy()
-                            for actor, obs in zip(self.actors, encoded_observations)]
-                else:
-                    return [self.noise[i].sample() + action
-                            for i, action in enumerate(self.predict(observations, True))]
+        actions_return = None
+        if self.time_step > self.end_exploration_time_step or deterministic:
+            if deterministic:
+                actions_return = self.get_deterministic_actions(observations)
+            else:
+                print("TO not deterministic")
+                actions = [self.noise[i].sample() + action for i, action in
+                           enumerate(self.get_deterministic_actions(observations))]
+                print(actions)
+                clipped_actions = [np.clip(action, -1, 1) for action in actions]
+                actions_return = [action.tolist() for action in clipped_actions]
         else:
-            print("AQUI")
-            self.timestep += 1
-            return self.get_exploration_prediction(observations)
+            actions_return = self.get_exploration_prediction(observations)
 
+        self.next_time_step()
+        return actions_return
 
-    def get_exploration_prediction(self, states: List[float]) -> List[float]:
+    def get_exploration_prediction(self, states: List[List[float]]) -> List[float]:
         """Return random actions`.
 
         Returns
@@ -173,12 +189,72 @@ class MADDPG(RLC):
         actions: List[float]
             Action values.
         """
-
-        return [list(self.action_scaling_coefficient*s.sample()) for s in self.action_space]
+        print("TO not deterministic")
+        actions = [self.noise[i].sample() + action for i, action in
+                   enumerate(self.get_deterministic_actions(states))]
+        print(actions)
+        clipped_actions = [np.clip(action, -1, 1) for action in actions]
+        actions_return = [action.tolist() for action in clipped_actions]
+        return actions_return
 
     def get_encoded_observations(self, index: int, observations: List[float]) -> npt.NDArray[np.float64]:
         return np.array([j for j in np.hstack(self.encoders[index]*np.array(observations, dtype=float)) if j != None], dtype = float)
 
+    def reset(self):
+        super().reset()
+
+    def set_encoders(self) -> List[List[Encoder]]:
+        r"""Get observation value transformers/encoders for use in MARLISA agent internal regression model.
+
+        The encoder classes are defined in the `preprocessing.py` module and include `PeriodicNormalization` for cyclic observations,
+        `OnehotEncoding` for categorical obeservations, `RemoveFeature` for non-applicable observations given available storage systems and devices
+        and `Normalize` for observations with known minimum and maximum boundaries.
+
+        Returns
+        -------
+        encoders : List[Encoder]
+            Encoder classes for observations ordered with respect to `active_observations`.
+        """
+
+        encoders = []
+
+        for o, s in zip(self.observation_names, self.observation_space):
+            e = []
+
+            remove_features = [
+                'outdoor_dry_bulb_temperature', 'outdoor_dry_bulb_temperature_predicted_6h',
+                'outdoor_dry_bulb_temperature_predicted_12h', 'outdoor_dry_bulb_temperature_predicted_24h',
+                'outdoor_relative_humidity', 'outdoor_relative_humidity_predicted_6h',
+                'outdoor_relative_humidity_predicted_12h', 'outdoor_relative_humidity_predicted_24h',
+                'diffuse_solar_irradiance', 'diffuse_solar_irradiance_predicted_6h',
+                'diffuse_solar_irradiance_predicted_12h', 'diffuse_solar_irradiance_predicted_24h'
+            ]
+
+            for i, n in enumerate(o):
+                if n in ['month', 'hour']:
+                    e.append(PeriodicNormalization(s.high[i]))
+
+                elif any(item in n for item in ["required_soc_departure", "estimated_soc_arrival", "ev_soc"]):
+                    e.append(Normalize(s.low[i], s.high[i]))
+
+                elif any(item in n for item in ["estimated_departure_time", "estimated_arrival_time"]):
+                    e.append(OnehotEncoding([-1] + list(range(0, 25))))
+
+                elif n in ['day_type']:
+                    e.append(OnehotEncoding([1, 2, 3, 4, 5, 6, 7, 8]))
+
+                elif n in ["daylight_savings_status"]:
+                    e.append(OnehotEncoding([0, 1]))
+
+                elif n in remove_features:
+                    e.append(RemoveFeature())
+
+                else:
+                    e.append(NoNormalization())
+
+            encoders.append(e)
+
+        return encoders
 
 class MADDPGRBC(MADDPG):
     r"""Uses :py:class:`citylearn.agents.rbc.RBC` to select action during exploration before using :py:class:`citylearn.agents.sac.SAC`.
@@ -287,3 +363,21 @@ class MADDPGBasicBatteryRBC(MADDPGRBC):
     def __init__(self, env: CityLearnEnv, **kwargs: Any):
         super().__init__(env, **kwargs)
         self.rbc = BasicBatteryRBC(env, **kwargs)
+
+class MADDPGV2GRBC(MADDPGRBC):
+    r"""Uses :py:class:`citylearn.agents.rbc.V2GRBC` to select action during exploration before using :py:class:`citylearn.agents.sac.SAC`.
+
+    Parameters
+    ----------
+    env: CityLearnEnv
+        CityLearn environment.
+
+    Other Parameters
+    ----------------
+    **kwargs : Any
+        Other keyword arguments used to initialize super class.
+    """
+
+    def __init__(self, env: CityLearnEnv, **kwargs: Any):
+        super().__init__(env, **kwargs)
+        self.rbc = V2GRBC(env, **kwargs)

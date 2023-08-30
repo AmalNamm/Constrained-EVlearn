@@ -101,6 +101,9 @@ class OnehotEncoding(Encoder):
 
     def __mul__(self, x: Union[float, int, str]):
         identity_mat = np.eye(len(self.classes))
+        mask = np.array(self.classes) == x
+        if not mask.any():
+            raise ValueError(f"The value {x} is not defined in the class encoding.")
         return identity_mat[np.array(self.classes) == x][0]
 
     def __rmul__(self, x: Union[float, int, str]):

@@ -420,13 +420,13 @@ class Building(Environment):
         chargers_without_v2g_consumption = self.__chargers_electricity_consumption_without_partial_load
 
         # Print the individual consumption values
-        print(f"DATA AT without storage {self.time_step}, building{self.name}")
-        print("Cooling Consumption:", cooling_consumption)
-        print("Heating Consumption:", heating_consumption)
-        print("DHW Consumption:", dhw_consumption)
-        print("Electrical Consumption:", electrical_consumption)
-        print("Chargers V2G Consumption:", chargers_v2g_consumption)
-        print("Chargers (without V2G) Consumption:", chargers_without_v2g_consumption)
+        #print(f"DATA AT without storage {self.time_step}, building{self.name}")
+        #print("Cooling Consumption:", cooling_consumption)
+        #print("Heating Consumption:", heating_consumption)
+        #print("DHW Consumption:", dhw_consumption)
+        #print("Electrical Consumption:", electrical_consumption)
+        #print("Chargers V2G Consumption:", chargers_v2g_consumption)
+        #print("Chargers (without V2G) Consumption:", chargers_without_v2g_consumption)
 
         return self.net_electricity_consumption - np.sum([
             self.cooling_storage_electricity_consumption,
@@ -1491,14 +1491,14 @@ class Building(Environment):
         self.__chargers_electricity_consumption_without_partial_load.append(total_no_partial_load)
 
         # net electricity consumption
-        print(f"DATA AT update variables {self.time_step}, building{self.name}")
-        print("Cooling Consumption:", cooling_consumption)
-        print("Heating Consumption:", heating_consumption)
-        print("DHW Consumption:", dhw_consumption)
-        print("Electrical Storage Consumption:", self.electrical_storage.electricity_consumption[self.time_step])
-        print("Non-Shiftable Load:", self.energy_simulation.non_shiftable_load[self.time_step])
-        print("Solar Generation:", self.__solar_generation[self.time_step])
-        print("Chargers Electricity Consumption:", self.__chargers_electricity_consumption[self.time_step])
+        #print(f"DATA AT update variables {self.time_step}, building{self.name}")
+        #print("Cooling Consumption:", cooling_consumption)
+        #print("Heating Consumption:", heating_consumption)
+        #print("DHW Consumption:", dhw_consumption)
+        #print("Electrical Storage Consumption:", self.electrical_storage.electricity_consumption[self.time_step])
+        #print("Non-Shiftable Load:", self.energy_simulation.non_shiftable_load[self.time_step])
+        #print("Solar Generation:", self.__solar_generation[self.time_step])
+        #print("Chargers Electricity Consumption:", self.__chargers_electricity_consumption[self.time_step])
 
         net_electricity_consumption = cooling_consumption \
                                       + heating_consumption \

@@ -5,185 +5,30 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="606c8733-6e18-48ca-8547-eb551df70d64" name="Changes" comment="Save progress">
-      <change afterPath="$PROJECT_DIR$/TiagoData/prices_extractor.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/cs1/pricing.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/cs5/EV_1.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/cs5/EV_2.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/cs5/EV_3.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/cs5/EV_4.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/cs5/EV_5.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/cs5/EV_6.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/cs5/EV_7.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/cs5/EV_8.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/cs5/pricing.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs2/Building_10.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs2/Building_11.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs2/Building_12.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs2/Building_13.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs2/Building_14.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs2/Building_15.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs2/Building_16.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs2/Building_17.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs2/Building_2.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs2/Building_3.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs2/Building_4.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs2/Building_5.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs2/Building_6.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs2/Building_7.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs2/Building_8.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs2/Building_9.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs2/carbon_intensity.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs2/pricing.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs2/weather.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs3/Building_1.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs3/Building_10.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs3/Building_11.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs3/Building_12.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs3/Building_13.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs3/Building_14.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs3/Building_15.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs3/Building_16.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs3/Building_17.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs3/Building_2.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs3/Building_3.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs3/Building_4.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs3/Building_5.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs3/Building_6.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs3/Building_7.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs3/Building_8.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs3/Building_9.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs3/carbon_intensity.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs3/pricing.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs3/weather.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs4/Building_1.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs4/Building_10.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs4/Building_11.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs4/Building_12.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs4/Building_13.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs4/Building_14.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs4/Building_15.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs4/Building_16.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs4/Building_17.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs4/Building_2.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs4/Building_3.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs4/Building_4.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs4/Building_5.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs4/Building_6.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs4/Building_7.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs4/Building_8.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs4/Building_9.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs4/carbon_intensity.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs4/pricing.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs4/schema.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs4/weather.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs6/EV_1.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs6/EV_2.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs6/EV_3.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs6/EV_4.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs6/EV_5.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs6/EV_6.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs6/EV_7.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs6/EV_8.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs6/pricing.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs6/schema.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis_test_1_without_EVs_baseline/Building_1.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis_test_1_without_EVs_baseline/Building_2.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis_test_1_without_EVs_baseline/Building_3.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis_test_1_without_EVs_baseline/Building_4.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis_test_1_without_EVs_baseline/Building_5.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis_test_1_without_EVs_baseline/Building_6.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis_test_1_without_EVs_baseline/Building_7.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis_test_1_without_EVs_baseline/Building_8.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis_test_1_without_EVs_baseline/Building_9.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis_test_1_without_EVs_baseline/carbon_intensity.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis_test_1_without_EVs_baseline/pricing.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis_test_1_without_EVs_baseline/weather.csv" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/CS1 Hyperparameters and Reward Function Tuning.ipynb" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/CS1.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/CS2 State of the Art Benchmarking.ipynb" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/CS3 - maddpg.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/CS3 - marlisa.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/CS3 - sac.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/examples/CS0 - Run MADDPG for tests.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/examples/CS0 - Run V2GRBC for tests.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/examples/CS4 - Hyperparameter Tuning.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TiagoData/Notes to self.txt" beforeDir="false" afterPath="$PROJECT_DIR$/TiagoData/Notes to self.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/TiagoData/energy_model_class_diagram.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/TiagoData/energy_model_class_diagram_simple.png" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/citylearn/agents/EVs/maddpg.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/agents/EVs/maddpg.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/citylearn/agents/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/agents/base.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/agents/marlisa.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/agents/marlisa.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/citylearn/agents/rbc.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/agents/rbc.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/citylearn/building.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/building.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/citylearn/charger.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/charger.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/citylearn/citylearn.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/citylearn.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/LivingLab/Hourly/Building_1.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs1/Building_1.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/LivingLab/Hourly/EV_1.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/LivingLab/Hourly/EV_2.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/LivingLab/Hourly/EV_3.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/LivingLab/Hourly/schema.json" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs3/schema.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/LivingLab/IDs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2021_updated/Building_1.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs6/Building_1.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2021_updated/Building_2.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs6/Building_2.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2021_updated/Building_3.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs6/Building_3.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2021_updated/Building_4.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs6/Building_4.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2021_updated/Building_5.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs6/Building_5.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2021_updated/Building_6.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs6/Building_6.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2021_updated/Building_7.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs6/Building_7.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2021_updated/Building_8.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs6/Building_8.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2021_updated/Building_9.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs6/Building_9.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2021_updated/carbon_intensity.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs6/carbon_intensity.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2021_updated/schema.json" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis_test_1_without_EVs_baseline/schema.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2021_updated/weather.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs6/weather.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/Building_1.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs5/Building_1.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/Building_10.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs1/Building_10.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/Building_11.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs1/Building_11.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/Building_12.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs1/Building_12.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/Building_13.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs1/Building_13.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/Building_14.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs1/Building_14.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/Building_15.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs1/Building_15.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/Building_16.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs1/Building_16.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/Building_17.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs1/Building_17.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/Building_2.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs1/Building_2.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/Building_3.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs1/Building_3.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/Building_4.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs1/Building_4.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/Building_5.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs1/Building_5.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/Building_6.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs1/Building_6.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/Building_7.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs1/Building_7.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/Building_8.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs1/Building_8.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/Building_9.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs1/Building_9.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_1.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_2.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/EV_3.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/carbon_intensity.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs1/carbon_intensity.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/pricing.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/schema.json" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs5/schema.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/schemawith3evstesand6buildings.json" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs2/schema.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_with_EVs/weather.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs1/weather.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_without_EVs/Building_1.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/tiago_thesis/cs2/Building_1.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_without_EVs/Building_10.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs5/Building_10.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_without_EVs/Building_11.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs5/Building_11.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_without_EVs/Building_12.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs5/Building_12.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_without_EVs/Building_13.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs5/Building_13.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_without_EVs/Building_14.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs5/Building_14.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_without_EVs/Building_15.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs5/Building_15.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_without_EVs/Building_16.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs5/Building_16.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_without_EVs/Building_17.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs5/Building_17.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_without_EVs/Building_2.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs5/Building_2.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_without_EVs/Building_3.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs5/Building_3.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_without_EVs/Building_4.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs5/Building_4.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_without_EVs/Building_5.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs5/Building_5.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_without_EVs/Building_6.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs5/Building_6.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_without_EVs/Building_7.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs5/Building_7.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_without_EVs/Building_8.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs5/Building_8.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_without_EVs/Building_9.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs5/Building_9.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_without_EVs/carbon_intensity.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs5/carbon_intensity.csv" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_without_EVs/pricing.csv" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_without_EVs/schema.json" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs1/schema.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/citylearn_challenge_2022_phase_all_without_EVs/weather.csv" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs5/weather.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/citylearn/data/cs5/schema.json" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs5/schema.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/citylearn/electric_vehicle.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/electric_vehicle.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/citylearn/energy_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/energy_model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/citylearn/preprocessing.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/preprocessing.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/citylearn/reward_function.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/reward_function.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/citylearn/rl.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/rl.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/EVsEnv.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/examples/EVsEnv.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/TestWithEvs.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/examples/Test2.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/TestWithoutEvs.ipynb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/custom_reward_function.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/CS1 Hyperparameters and Reward Function Tuning.ipynb" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/CS1.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/CS1 - Unique Reward Tuning.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/CS2 State of the Art Benchmarking.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/examples/CS2 State of the Art Benchmarking.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/CS3 - maddpg.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/CS3 - maddpg.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/CS3 - marlisa.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/CS3 - marlisa.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/CS3 - sac.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/CS3 - sac.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -249,7 +94,7 @@
     "database.data.extractors.current.id": "Comma-separated (CSV)_id",
     "git-widget-placeholder": "mastertest",
     "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "C:/Users/Tiago Fonseca/Documents/GitHub/CityLearn/TiagoData/output24h teste.txt",
+    "last_opened_file_path": "C:/Users/Tiago Fonseca/Documents/GitHub/CityLearn/examples",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -268,15 +113,37 @@
       <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\citylearn\data\tiago_thesis" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\citylearn\data" />
       <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\examples\tiago_thesis" />
+      <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\examples" />
+      <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\citylearn\data" />
       <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\examples\tiago_thesis\sc2_sac" />
       <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\examples\tiago_thesis\sc2_maddpgrbcNight" />
-      <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\citylearn\data\tiago_thesis" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.test">
+  <component name="RunManager" selected="Python.CS3 - maddpg">
     <configuration name="test.html" type="JavascriptDebugType" temporary="true" nameIsGenerated="true" uri="http://localhost:63342/CityLearn/TiagoData/templates/test.html" useBuiltInWebServerPort="true">
+      <method v="2" />
+    </configuration>
+    <configuration name="CS3 - maddpg" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="CityLearn" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/examples" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/examples/CS3 - maddpg.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="true" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
     <configuration default="true" type="PythonConfigurationType" factoryName="Python">
@@ -325,6 +192,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.CS3 - maddpg" />
         <item itemvalue="Python.test" />
         <item itemvalue="JavaScript Debug.test.html" />
       </list>
@@ -437,7 +305,9 @@
       <workItem from="1692353198858" duration="11569000" />
       <workItem from="1692541236157" duration="12178000" />
       <workItem from="1692628284875" duration="10869000" />
-      <workItem from="1692823552969" duration="65354000" />
+      <workItem from="1692823552969" duration="65409000" />
+      <workItem from="1693137261867" duration="49647000" />
+      <workItem from="1693311268711" duration="38400000" />
     </task>
     <task id="LOCAL-00001" summary="Added Charger and EVCar Class to energy_model.py">
       <created>1683211433859</created>
@@ -516,7 +386,14 @@
       <option name="project" value="LOCAL" />
       <updated>1690999873103</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="Save progress">
+      <created>1693099130298</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1693099130298</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -565,14 +442,9 @@
           <line>101</line>
           <option name="timeStamp" value="17" />
         </line-breakpoint>
-        <line-breakpoint suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/citylearn/charger.py</url>
-          <line>311</line>
-          <option name="timeStamp" value="18" />
-        </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/citylearn/citylearn.py</url>
-          <line>749</line>
+          <line>748</line>
           <option name="timeStamp" value="19" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -594,6 +466,20 @@
           <url>file://$PROJECT_DIR$/citylearn/cost_function.py</url>
           <line>105</line>
           <option name="timeStamp" value="23" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/examples/CS3 - maddpg.py</url>
+          <option name="timeStamp" value="24" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/citylearn/reward_function.py</url>
+          <line>276</line>
+          <option name="timeStamp" value="34" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/citylearn/agents/rbc.py</url>
+          <line>277</line>
+          <option name="timeStamp" value="37" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

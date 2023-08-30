@@ -2,6 +2,7 @@ from typing import List, Tuple
 import numpy as np
 from citylearn.citylearn import CityLearnEnv
 from citylearn.energy_model import ZERO_DIVISION_CAPACITY
+from math import sqrt
 
 class RewardFunction:
     r"""Base and default reward function class.
@@ -156,6 +157,39 @@ class SolarPenaltyReward(RewardFunction):
         
         return reward
 
+class RunningStat:
+    def __init__(self):
+        self.n = 0
+        self.old_m = 0
+        self.new_m = 0
+        self.old_s = 0
+        self.new_s = 0
+
+    def push(self, x):
+        self.n += 1
+        if self.n == 1:
+            self.old_m = x
+            self.new_m = x
+            self.old_s = 0
+        else:
+            self.new_m = self.old_m + (x - self.old_m) / self.n
+            self.new_s = self.old_s + (x - self.old_m) * (x - self.new_m)
+
+            self.old_m = self.new_m
+            self.old_s = self.new_s
+
+    @property
+    def mean(self):
+        return self.new_m if self.n else 0.0
+
+    @property
+    def variance(self):
+        return self.new_s / self.n if self.n > 1 else 0.0
+
+    @property
+    def standard_deviation(self):
+        return sqrt(self.variance)
+
 
 class V2GPenaltyReward(RewardFunction):
     """Rewards with considerations for car charging and for MADDPG Mixed environments.
@@ -166,53 +200,150 @@ class V2GPenaltyReward(RewardFunction):
         CityLearn environment.
     """
 
-    def __init__(self, env: CityLearnEnv):
+    def __init__(self, env: CityLearnEnv,
+                 peak_percentage_threshold=0.10,
+                 ramping_percentage_threshold=0.10,
+                 peak_penalty_weight=20,
+                 ramping_penalty_weight=15,
+                 energy_transfer_bonus=10,
+                 window_size=6,
+                 penalty_no_car_charging=-2,
+                 penalty_exceed_max_rate=-2,
+                 penalty_battery_limits=-1.25,
+                 penalty_soc_under_5_10=-10,
+                 reward_close_soc=5,
+                 reward_self_ev_consumption=1.10,
+                 community_weight=0.2,
+                 reward_extra_self_production=1.10,
+                 squash=0):
+
         super().__init__(env)
         self.rolling_window = []
 
-    # Penalties
-    PEAK_PERCENTAGE_THRESHOLD = 0.10  # Example: 10% increase over the average of last x timesteps.
-    RAMPING_PERCENTAGE_THRESHOLD = 0.20  # Example: 20% increase in the change of consumption from average.
-    PEAK_PENALTY_WEIGHT = 2
-    RAMPING_PENALTY_WEIGHT = 1.5
-    ENERGY_TRANSFER_BONUS = 0.5
-    WINDOW_SIZE = 5  # Example: Last 5 timesteps
-
-    PENALTY_NO_CAR_CHARGING = -100
-    PENALTY_EXCEED_MAX_RATE = -50
-    PENALTY_BATTERY_LIMITS = -30
-    PENALTY_SOC_UNDER_5_10 = -10
-    PENALTY_SOC_OVER_5_10 = -5
-
-    REWARD_CLOSE_SOC = 10  # Reward value when SOC is close to what's requested
+        # Setting the parameters
+        self.PEAK_PERCENTAGE_THRESHOLD = peak_percentage_threshold
+        self.RAMPING_PERCENTAGE_THRESHOLD = ramping_percentage_threshold
+        self.PEAK_PENALTY_WEIGHT = peak_penalty_weight
+        self.RAMPING_PENALTY_WEIGHT = ramping_penalty_weight
+        self.ENERGY_TRANSFER_BONUS = energy_transfer_bonus
+        self.WINDOW_SIZE = window_size
+        self.PENALTY_NO_CAR_CHARGING = penalty_no_car_charging
+        self.PENALTY_EXCEED_MAX_RATE = penalty_exceed_max_rate
+        self.PENALTY_BATTERY_LIMITS = penalty_battery_limits
+        self.PENALTY_SOC_UNDER_5_10 = penalty_soc_under_5_10
+        self.REWARD_CLOSE_SOC = reward_close_soc
+        self.COMMUNITY_WEIGHT = community_weight
+        self.SQUASH = squash
+        self.REWARD_EXTRA_SELF_PRODUCTION = reward_extra_self_production
+        self.REWARD_SELF_EV_CONSUMPTION = reward_self_ev_consumption
 
     def calculate_building_reward(self, b) -> float:
         """Calculate individual building reward."""
         net_energy = b.net_electricity_consumption[b.time_step]
 
         # Reward initialization
-        reward = 0
+        reward = 1
 
         # Building reward calculation
-        if b.reward_type == "C":  # Pricing-based reward
-            if net_energy > 0:  # Consuming from the grid
-                reward = -b.pricing[b.time_step] * net_energy
-            else:  # Exporting to the grid
-                reward = 0.80 * b.pricing[b.time_step] * abs(net_energy)
-        elif b.reward_type == "G":  # Reducing carbon emissions
-            reward = b.carbon_intensity[b.time_step] * (net_energy * -1)
-        elif b.reward_type == "Z":  # Increasing zero net energy
-            if net_energy > 0:  # The building is consuming more than it's producing
-                reward = -net_energy
-            else:  # The building is producing excess energy or is balanced
-                reward = abs(net_energy) * 0.5  # Lesser reward for exporting TODO
-        else:
-            reward = net_energy * -1
+        #if b.reward_type == "C":  # Pricing-based reward
+        #    if net_energy > 0:  # Consuming from the grid
+        #        reward = -b.pricing.electricity_pricing[b.time_step] * net_energy
+        #    else:  # Exporting to the grid
+        #        reward = 0.80 * b.pricing.electricity_pricing[b.time_step] * abs(net_energy)
+        #elif b.reward_type == "G":  # Reducing carbon emissions
+        #    reward = b.carbon_intensity.carbon_intensity[b.time_step] * (net_energy * -1)
+        #elif b.reward_type == "Z":  # Increasing zero net energy
+        #    if net_energy > 0:  # The building is consuming more than it's producing
+        #        reward = -net_energy
+        #    else:  # The building is producing excess energy or is balanced
+        #        reward = abs(net_energy) * 0.5  # Lesser reward for exporting TODO
+        #else:
+        #    reward = net_energy * -1
+
+        reward = min(b.net_electricity_consumption[b.time_step] * -1 ** 3, 0)
 
         # Deducting EV penalties from the building reward
-        reward += self.calculate_ev_penalty(b)
+        reward += self.calculate_ev_penalty(b, reward, net_energy)
 
         return reward
+
+    def calculate_ev_penalty(self, b, current_reward, net_energy) -> float:
+        """Calculate penalties based on EV specific logic."""
+        penalty = 0
+        penalty_multiplier = abs(current_reward)  # Multiplier for the penalty
+
+        if b.chargers:
+            for c in b.chargers:
+                last_connected_car = c.past_connected_evs[-2]
+                last_charged_value = c.past_charging_action_values[-2]
+                #if last_connected_car is not None:
+                #    last_charged_value = last_charged_value * last_connected_car.battery.capacity
+
+                ## 1. Penalty for charging when no car is present
+                #if last_connected_car is None and last_charged_value != 0:
+                #    penalty += self.PENALTY_NO_CAR_CHARGING * penalty_multiplier
+#
+                ## 2. Penalty if the value of the charge action exceeds the charger's max charging rate
+                #if abs(last_charged_value) > c.max_charging_power or abs(last_charged_value) < c.max_discharging_power:
+                #    penalty += self.PENALTY_EXCEED_MAX_RATE * penalty_multiplier
+##
+                ## 3. Penalty for exceeding the battery's limits
+                #if last_connected_car is not None:
+                #    if last_connected_car.battery.soc[-2] + last_charged_value > last_connected_car.battery.capacity:
+                #        penalty += self.PENALTY_BATTERY_LIMITS * penalty_multiplier
+                #    if last_connected_car.battery.soc[-2] + last_charged_value < last_connected_car.min_battery_soc:
+                #        penalty += self.PENALTY_BATTERY_LIMITS * penalty_multiplier
+#
+
+
+                # 4. Penalties (or Reward) for SoC differences
+                if last_connected_car is not None:
+                    required_soc = last_connected_car.ev_simulation.required_soc_departure[-1]
+                    actual_soc = last_connected_car.battery.soc[-1]
+
+
+                    hours_until_departure = last_connected_car.ev_simulation.estimated_departure_time[-1]
+                    max_possible_charge = c.max_charging_power * hours_until_departure
+                    max_possible_discharge = c.max_discharging_power * hours_until_departure
+
+                    soc_needed_per_hour = (required_soc - actual_soc) / hours_until_departure
+
+                    soc_diff = ((actual_soc*100)/last_connected_car.battery.capacity) - required_soc
+
+                    # If the car needs more charge than it currently has and it's impossible to achieve the required SoC
+                    if soc_diff > 0 and soc_diff > max_possible_charge:
+                        penalty += self.PENALTY_SOC_UNDER_5_10 ** 3 * penalty_multiplier
+
+                    # If the car has excess charge and it's impossible to discharge to the required SoC
+                    elif soc_diff < 0 and abs(soc_diff) > max_possible_discharge:
+                        penalty += self.PENALTY_SOC_UNDER_5_10 ** 1.5 * penalty_multiplier
+
+                    # Adjusted penalties/rewards based on SoC difference at departure
+                    if hours_until_departure == 0:
+                        if -25 < soc_diff <= -10:
+                            penalty += 2 * self.PENALTY_SOC_UNDER_5_10 * penalty_multiplier * soc_needed_per_hour
+                        elif soc_diff <= -25:
+                            penalty += self.PENALTY_SOC_UNDER_5_10 ** 2 * penalty_multiplier * soc_needed_per_hour
+                        elif -10 < soc_diff <= 10:
+                            penalty += self.REWARD_CLOSE_SOC * penalty_multiplier # Reward for leaving with SOC close to the requested value
+
+                    # More reward for getting close to required SoC when it's achievable within the remaining time
+                    if -10 < soc_diff <= 10:
+                        if (soc_diff > 0 and soc_diff <= max_possible_charge) or (
+                                soc_diff < 0 and abs(soc_diff) <= max_possible_discharge):
+                            reward_multiplier = 1 / (
+                                        hours_until_departure + 0.1)  # Adding 0.1 to prevent division by zero
+                            penalty += self.REWARD_CLOSE_SOC * penalty_multiplier * reward_multiplier
+
+                ## 5. Reward for charging the car during times of extra self-production
+                #if last_connected_car is not None and last_charged_value > 0 and net_energy < 0:
+                #    penalty += self.REWARD_EXTRA_SELF_PRODUCTION * penalty_multiplier
+
+                ## 6. Reward for discharging the car to support building consumption and avoid importing energy
+                #if last_connected_car is not None and last_charged_value < 0 and net_energy > 0:
+                #    penalty += self.REWARD_SELF_EV_CONSUMPTION * penalty_multiplier
+
+        return penalty
 
     def calculate_community_reward(self, buildings, rewards) -> List[float]:
         """Calculate community building reward."""
@@ -263,74 +394,28 @@ class V2GPenaltyReward(RewardFunction):
                 community_reward += abs(b.net_electricity_consumption[b.time_step]) * self.ENERGY_TRANSFER_BONUS
 
         # Combine the calculated community reward with the individual rewards of each building.
-        updated_rewards = [r + community_reward for r in rewards]
+        updated_rewards = [r + community_reward * self.COMMUNITY_WEIGHT  for r in rewards]
 
         return updated_rewards
 
-    def calculate_ev_penalty(self, b) -> float:
-        """Calculate penalties based on EV specific logic."""
-        penalty = 0
-        if b.chargers:
-            for c in b.chargers:
-                last_connected_car = c.past_connected_evs[-2]
-                last_charged_value = c.past_charging_action_values[-2]
-                last_charged_value = last_charged_value * last_connected_car.battery.capacity
-
-                # 1. Penalty for charging when no car is present
-                if last_connected_car is None and last_charged_value != 0:
-                    penalty += self.PENALTY_NO_CAR_CHARGING
-
-                # 2. Penalty if the value of the charge action exceeds the charger's max charging rate
-                if abs(last_charged_value) > c.max_charging_power or abs(last_charged_value) < c.max_discharging_power:
-                    penalty += self.PENALTY_EXCEED_MAX_RATE
-
-                # 3. Penalty for exceeding the battery's limits
-                if last_connected_car is not None:
-                    if last_connected_car.battery.soc[-2] + last_charged_value > last_connected_car.battery.capacity:
-                        penalty += self.PENALTY_BATTERY_LIMITS
-                    if last_connected_car.battery.soc[-2] + last_charged_value < last_connected_car.min_battery_soc:
-                        penalty += self.PENALTY_BATTERY_LIMITS
-
-                # 4. Penalties for SoC differences
-                if last_connected_car is not None:
-                    required_soc = last_connected_car.ev_simulation.required_soc_departure[-2]
-                    actual_soc = last_connected_car.battery.soc[-2]
-                    soc_diff = (actual_soc*100)/last_connected_car.battery.capacity - required_soc
-
-                    # Penalize for lower SoC than required
-                    if -10 < soc_diff <= -5:
-                        penalty += self.PENALTY_SOC_UNDER_5_10
-                    elif -25 < soc_diff <= -10:
-                        penalty += 2 * self.PENALTY_SOC_UNDER_5_10
-                    elif soc_diff <= -25:
-                        penalty += 4 * self.PENALTY_SOC_UNDER_5_10
-
-                    # Penalize for higher SoC than required
-                    if 5 < soc_diff <= 10:
-                        penalty += self.PENALTY_SOC_OVER_5_10
-                    elif soc_diff > 10:
-                        penalty += 2 * self.PENALTY_SOC_OVER_5_10
-
-                    # Reward for leaving with SOC close to the requested value
-                    if -5 < soc_diff <= 5:
-                        penalty += self.REWARD_CLOSE_SOC
-
-        return penalty
-
     def calculate(self) -> List[float]:
-        reward_list = []
+        raw_reward_list = []
 
         for b in self.env.buildings:
             # Building reward calculation
             reward = self.calculate_building_reward(b)
+            raw_reward_list.append(reward)
 
-            # Community Level Reward
-            reward += self.WEIGHT_REWARD_COMMUNITY
+        reward_list = raw_reward_list
+        ## Calculate community rewards
+        #reward_list = self.calculate_community_reward(self.env.buildings, raw_reward_list)
 
-            # EV specific penalties
-            reward += self.calculate_ev_penalty(b)
+        #Squash the rewards
+        if self.SQUASH:
+            for idx in range(len(self.env.buildings)):
 
-            reward_list.append(reward)
+                # Squash the normalized reward using tanh
+                reward_list[idx] = np.tanh(reward_list[idx])
 
         # Central agent reward aggregation
         if self.env.central_agent:

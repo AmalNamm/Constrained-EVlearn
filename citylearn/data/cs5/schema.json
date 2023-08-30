@@ -216,8 +216,10 @@
     }
   },
   "reward_function": {
-    "type": "citylearn.reward_function.CarPenaltyReward",
-    "attributes": null
+    "type": "citylearn.reward_function.V2GPenaltyReward",
+    "attributes": {
+      "n_buildings": 17
+    }
   },
   "evs": {
     "EV_1": {

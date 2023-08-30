@@ -261,7 +261,7 @@ class Charger(Environment):
         # if self.connected_ev is None
         self.__past_connected_evs[self.time_step] = car
         self.connected_ev = car
-        print(f"Connecting car {car.name} to charger {self.charger_id}")
+        #print(f"Connecting car {car.name} to charger {self.charger_id}")
         # else:
         #    raise ValueError("Charger has reached its maximum connected cars capacity")
 
@@ -292,7 +292,7 @@ class Charger(Environment):
         """
         # if self.incoming_ev_ev is None:
         self.incoming_ev = car
-        print(f"Incoming car {car.name} to charger {self.charger_id}")
+        #print(f"Incoming car {car.name} to charger {self.charger_id}")
 
         # else:
         #    raise ValueError("Charger has reached its maximum associated cars capacity")
@@ -312,7 +312,11 @@ class Charger(Environment):
         self.__past_charging_action_values[self.time_step] = action_value
         if self.connected_ev and action_value != 0:
             car = self.connected_ev
-            energy = action_value * car.battery.capacity
+            if action_value > 0:
+                energy = action_value * self.max_charging_power
+            else:
+                energy = action_value * self.max_discharging_power
+
             charging = energy >= 0
 
             if charging:
@@ -325,6 +329,7 @@ class Charger(Environment):
 
             energy_kwh = energy * self.efficiency
 
+
             # Here we call the car's battery's charge method directly, passing the energy (positive for charging,
             # negative for discharging)
             car.battery.charge(energy_kwh)
@@ -332,15 +337,9 @@ class Charger(Environment):
 
             #charge for maintaining the case of no partial load, this is just for result comparison and is done to a no partial load battery
 
-            print("AUX")
-            print(car.aux_battery)
             energy_aux = min(self.max_charging_power, (car.aux_battery.capacity*car.ev_simulation.required_soc_departure[self.time_step]) - car.aux_battery.soc[self.time_step])
-            print("energy aux")
-            print(energy_aux)
             car.aux_battery.charge(energy_aux)
             self.__electricity_consumption_without_partial_load[self.time_step] = car.aux_battery.electricity_consumption[-1]
-            print("listaaaa")
-            print(self.__electricity_consumption_without_partial_load[self.time_step])
         else:
             self.__electricity_consumption[self.time_step] = 0
             self.__electricity_consumption_without_partial_load[self.time_step] = 0

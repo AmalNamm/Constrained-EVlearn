@@ -633,7 +633,6 @@ class CityLearnEnv(Environment, Env):
 
         self.next_time_step()
         reward = self.reward_function.calculate()
-        #TODO Change for different rewards for each menber
         self.__rewards.append(reward)
         return self.observations, reward, self.done, self.get_info()
 
@@ -1032,6 +1031,8 @@ class CityLearnEnv(Environment, Env):
             lon = self.schema['buildings'][building_name]["coordinates"]["longitude"]
             image_path = None if self.schema['buildings'][building_name].get('image_path', None) is None else \
                 self.schema['buildings'][building_name]["image_path"]
+            reward_type = None if self.schema['buildings'][building_name].get('reward_type', None) is None else \
+                self.schema['buildings'][building_name]["reward_type"]
 
             # data
             energy_simulation = pd.read_csv(os.path.join(root_directory, building_schema['energy_simulation'])).iloc[
@@ -1102,6 +1103,7 @@ class CityLearnEnv(Environment, Env):
                 lat=lat,
                 lon=lon,
                 image_path=image_path,
+                reward_type = reward_type,
                 seconds_per_time_step=seconds_per_time_step,
                 **dynamics,
             )

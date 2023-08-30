@@ -287,7 +287,7 @@ class electric_vehicle(Environment):
 
         data = {
             **{k: v[self.time_step] for k, v in ev_data.items() if k not in unwanted_keys},
-            'ev_soc': self.battery.soc_init
+            'ev_soc': self.battery.soc[self.time_step] / self.battery.capacity
         }
 
         if include_all:

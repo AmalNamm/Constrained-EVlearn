@@ -564,7 +564,7 @@ class StorageDevice(Device):
 
         # The initial State Of Charge (SOC) is the previous SOC minus the energy losses
         soc = min(self.soc_init + energy * self.round_trip_efficiency, self.capacity) if energy >= 0 else max(0,
-                                                                                                              self.soc_init + energy / self.round_trip_efficiency)
+                                                                                                  self.soc_init + energy / self.round_trip_efficiency)
         self.__soc.append(soc)
         self.__energy_balance.append(self.set_energy_balance())
 
@@ -819,10 +819,7 @@ class Battery(ElectricDevice, StorageDevice):
         If charging, soc = min(`soc_init` + energy*`efficiency`, `max_input_power`, `capacity`)
         If discharging, soc = max(0, `soc_init` + energy/`efficiency`, `max_output_power`)
         """
-        print("AQUIIIIIIIIIIIIII")
-        print(energy)
         energy = min(energy, self.get_max_input_power()) if energy >= 0 else max(-self.get_max_output_power(), energy)
-        print(energy)
         self.efficiency = self.get_current_efficiency(energy)
         super().charge(energy)
         self.capacity = self.capacity - min(self.degrade(), self.capacity)
