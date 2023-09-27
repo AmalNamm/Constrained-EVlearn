@@ -327,8 +327,8 @@ class Charger(Environment):
                 max_discharge = - (car.battery.soc[self.time_step] - 0.10 * car.battery.capacity)
                 energy = max(energy, max_discharge)
 
-            energy_kwh = energy * self.efficiency
 
+            energy_kwh = energy * self.efficiency
 
             # Here we call the car's battery's charge method directly, passing the energy (positive for charging,
             # negative for discharging)

@@ -69,3 +69,7 @@ and observations in the charger as its power and availability
 4 - Descentralizado vs centralizado (ver melhorias e piorias tempos e etc)
 5 - nº camadas vs tempo que demora x resultados
 6 -
+
+
+
+KPI medição impacto v2g... por exemplo load - o que os EVS fornecem, ou ver SOTA

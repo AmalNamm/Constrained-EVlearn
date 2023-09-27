@@ -5,30 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="606c8733-6e18-48ca-8547-eb551df70d64" name="Changes" comment="Save progress">
-      <change afterPath="$PROJECT_DIR$/examples/CS0 - Run MADDPG for tests.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/CS0 - Run V2GRBC for tests.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/examples/CS4 - Hyperparameter Tuning.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/TiagoData/energy_model_class_diagram.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/TiagoData/energy_model_class_diagram_simple.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/agents/EVs/maddpg.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/agents/EVs/maddpg.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/agents/base.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/agents/base.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/agents/rbc.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/agents/rbc.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/building.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/building.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/charger.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/charger.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/citylearn.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/citylearn.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/data/cs5/schema.json" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/data/cs5/schema.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/electric_vehicle.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/electric_vehicle.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/energy_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/energy_model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/preprocessing.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/preprocessing.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/reward_function.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/reward_function.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/citylearn/rl.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/rl.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/CS1 Hyperparameters and Reward Function Tuning.ipynb" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/CS1.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/CS1 - Unique Reward Tuning.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/CS2 State of the Art Benchmarking.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/examples/CS2 State of the Art Benchmarking.ipynb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/CS3 - maddpg.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/CS3 - maddpg.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/CS3 - marlisa.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/CS3 - marlisa.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/CS3 - sac.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/CS3 - sac.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/RandomTest/sc2_maddpgrbctestReward/0.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/examples/RandomTest/sc2_maddpgrbctestReward/0.pkl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/RandomTest/sc2_maddpgrbctestReward/1.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/examples/RandomTest/sc2_maddpgrbctestReward/1.pkl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/V2GENV_overnight28/sc2_maddpgrbctestReward/0.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/examples/V2GENV_overnight28/sc2_maddpgrbctestReward/0.pkl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/V2GENV_overnight28_2/sc2_maddpgrbctestReward/0.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/examples/V2GENV_overnight28_2/sc2_maddpgrbctestReward/0.pkl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/bayesian_optimization_result.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/examples/bayesian_optimization_result.pkl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/bayesian_optimization_result_V2.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/examples/bayesian_optimization_result_V2.pkl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/bayesian_optimization_result_V3.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/examples/bayesian_optimization_result_V3.pkl" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -82,28 +66,28 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_ADD_EXTERNAL_FILES": "true",
-    "DefaultHtmlFileTemplate": "HTML File",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "TODO_SCOPE": "All Places",
-    "WebServerToolWindowFactoryState": "false",
-    "database.data.extractors.current.export.id": "Comma-separated (CSV)_id",
-    "database.data.extractors.current.id": "Comma-separated (CSV)_id",
-    "git-widget-placeholder": "mastertest",
-    "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "C:/Users/Tiago Fonseca/Documents/GitHub/CityLearn/examples",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_ADD_EXTERNAL_FILES&quot;: &quot;true&quot;,
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;TODO_SCOPE&quot;: &quot;All Places&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;database.data.extractors.current.export.id&quot;: &quot;Comma-separated (CSV)_id&quot;,
+    &quot;database.data.extractors.current.id&quot;: &quot;Comma-separated (CSV)_id&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;mastertest&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Tiago Fonseca/Documents&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\examples" />
@@ -120,8 +104,30 @@
       <recent name="C:\Users\Tiago Fonseca\Documents\GitHub\CityLearn\examples\tiago_thesis\sc2_maddpgrbcNight" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.CS3 - maddpg">
+  <component name="RunManager" selected="Python.CS0 - Run MADDPG for tests">
     <configuration name="test.html" type="JavascriptDebugType" temporary="true" nameIsGenerated="true" uri="http://localhost:63342/CityLearn/TiagoData/templates/test.html" useBuiltInWebServerPort="true">
+      <method v="2" />
+    </configuration>
+    <configuration name="CS0 - Run MADDPG for tests" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="CityLearn" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/examples" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/examples/CS0 - Run MADDPG for tests.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="true" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
     <configuration name="CS3 - maddpg" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
@@ -192,6 +198,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.CS0 - Run MADDPG for tests" />
         <item itemvalue="Python.CS3 - maddpg" />
         <item itemvalue="Python.test" />
         <item itemvalue="JavaScript Debug.test.html" />
@@ -307,7 +314,23 @@
       <workItem from="1692628284875" duration="10869000" />
       <workItem from="1692823552969" duration="65409000" />
       <workItem from="1693137261867" duration="49647000" />
-      <workItem from="1693311268711" duration="38400000" />
+      <workItem from="1693311268711" duration="50003000" />
+      <workItem from="1693438041001" duration="87000" />
+      <workItem from="1693440240395" duration="20524000" />
+      <workItem from="1693591977438" duration="64555000" />
+      <workItem from="1694613233910" duration="117000" />
+      <workItem from="1694635897790" duration="1263000" />
+      <workItem from="1694647205421" duration="4513000" />
+      <workItem from="1694679243918" duration="7955000" />
+      <workItem from="1694703329197" duration="1433000" />
+      <workItem from="1695318238040" duration="617000" />
+      <workItem from="1695330301371" duration="2532000" />
+      <workItem from="1695397654325" duration="621000" />
+      <workItem from="1695407582178" duration="11125000" />
+      <workItem from="1695685749933" duration="609000" />
+      <workItem from="1695768071301" duration="738000" />
+      <workItem from="1695768831157" duration="1761000" />
+      <workItem from="1695774059627" duration="749000" />
     </task>
     <task id="LOCAL-00001" summary="Added Charger and EVCar Class to energy_model.py">
       <created>1683211433859</created>
@@ -393,7 +416,42 @@
       <option name="project" value="LOCAL" />
       <updated>1693099130298</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="Save progress">
+      <created>1693354527661</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1693354527661</updated>
+    </task>
+    <task id="LOCAL-00014" summary="Save progress">
+      <created>1694354361142</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1694354361142</updated>
+    </task>
+    <task id="LOCAL-00015" summary="Save progress">
+      <created>1694354485044</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1694354485044</updated>
+    </task>
+    <task id="LOCAL-00016" summary="Save progress">
+      <created>1695774128041</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1695774128041</updated>
+    </task>
+    <task id="LOCAL-00017" summary="Save progress">
+      <created>1695774155385</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1695774155385</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -453,33 +511,33 @@
           <option name="timeStamp" value="20" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/citylearn/cost_function.py</url>
-          <line>148</line>
-          <option name="timeStamp" value="21" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/citylearn/cost_function.py</url>
-          <line>128</line>
-          <option name="timeStamp" value="22" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/citylearn/cost_function.py</url>
-          <line>105</line>
-          <option name="timeStamp" value="23" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/examples/CS3 - maddpg.py</url>
           <option name="timeStamp" value="24" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/citylearn/reward_function.py</url>
-          <line>276</line>
+          <line>281</line>
           <option name="timeStamp" value="34" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/citylearn/agents/rbc.py</url>
-          <line>277</line>
+          <line>246</line>
+          <option name="timeStamp" value="35" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/citylearn/agents/EVs/maddpg.py</url>
+          <line>248</line>
+          <option name="timeStamp" value="36" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/citylearn/agents/EVs/maddpg.py</url>
+          <line>259</line>
           <option name="timeStamp" value="37" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/examples/CS0 - Run MADDPG for tests.py</url>
+          <line>115</line>
+          <option name="timeStamp" value="38" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
@@ -488,5 +546,8 @@
         <watch expression="self" />
       </configuration>
     </watches-manager>
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/CityLearn$CS0___Run_MADDPG_for_tests.coverage" NAME="CS0 - Run MADDPG for tests Coverage Results" MODIFIED="1694704727925" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples" />
   </component>
 </project>

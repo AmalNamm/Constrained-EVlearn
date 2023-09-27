@@ -216,7 +216,7 @@
     }
   },
   "reward_function": {
-    "type": "citylearn.reward_function.CarPenaltyReward",
+    "type": "citylearn.reward_function.MARL",
     "attributes": null
   },
   "evs": {
@@ -233,6 +233,7 @@
         "longitude": -8.598365
       },
       "image_path": "images/building.png",
+      "reward_type": "D",
       "inactive_observations": [],
       "inactive_actions": [],
       "electrical_storage": {
@@ -250,7 +251,7 @@
         "type": "citylearn.energy_model.PV",
         "autosize": false,
         "attributes": {
-          "nominal_power": 120.0
+          "nominal_power": 4.0
         }
       }
     },
@@ -260,13 +261,14 @@
       "weather": "weather.csv",
       "carbon_intensity": "carbon_intensity.csv",
       "pricing": "pricing.csv",
-      "inactive_observations": [],
-      "inactive_actions": [],
       "coordinates": {
-        "latitude": 41.209114,
-        "longitude":  -8.632814
+        "latitude": 41.195632,
+        "longitude": -8.598365
       },
       "image_path": "images/building.png",
+      "reward_type": "D",
+      "inactive_observations": [],
+      "inactive_actions": [],
       "electrical_storage": {
         "type": "citylearn.energy_model.Battery",
         "autosize": false,
@@ -292,13 +294,14 @@
       "weather": "weather.csv",
       "carbon_intensity": "carbon_intensity.csv",
       "pricing": "pricing.csv",
-      "inactive_observations": [],
-      "inactive_actions": [],
       "coordinates": {
-        "latitude": 41.209114,
-        "longitude":  -8.632814
+        "latitude": 41.195632,
+        "longitude": -8.598365
       },
       "image_path": "images/building.png",
+      "reward_type": "D",
+      "inactive_observations": [],
+      "inactive_actions": [],
       "electrical_storage": {
         "type": "citylearn.energy_model.Battery",
         "autosize": false,
@@ -325,10 +328,11 @@
       "carbon_intensity": "carbon_intensity.csv",
       "pricing": "pricing.csv",
       "coordinates": {
-        "latitude": 41.189875,
-        "longitude": -8.612208
+        "latitude": 41.195632,
+        "longitude": -8.598365
       },
       "image_path": "images/building.png",
+      "reward_type": "D",
       "inactive_observations": [],
       "inactive_actions": [],
       "electrical_storage": {
@@ -357,10 +361,11 @@
       "carbon_intensity": "carbon_intensity.csv",
       "pricing": "pricing.csv",
       "coordinates": {
-        "latitude": 41.202139,
-        "longitude": -8.644700
+        "latitude": 41.195632,
+        "longitude": -8.598365
       },
       "image_path": "images/building.png",
+      "reward_type": "D",
       "inactive_observations": [],
       "inactive_actions": [],
       "electrical_storage": {
@@ -389,10 +394,11 @@
       "carbon_intensity": "carbon_intensity.csv",
       "pricing": "pricing.csv",
       "coordinates": {
-        "latitude": 41.209114,
-        "longitude":  -8.632814
+        "latitude": 41.195632,
+        "longitude": -8.598365
       },
       "image_path": "images/building.png",
+      "reward_type": "D",
       "inactive_observations": [],
       "inactive_actions": [],
       "electrical_storage": {
@@ -420,13 +426,14 @@
       "weather": "weather.csv",
       "carbon_intensity": "carbon_intensity.csv",
       "pricing": "pricing.csv",
-      "inactive_observations": [],
-      "inactive_actions": [],
       "coordinates": {
-        "latitude": 41.209114,
-        "longitude":  -8.632814
+        "latitude": 41.195632,
+        "longitude": -8.598365
       },
       "image_path": "images/building.png",
+      "reward_type": "D",
+      "inactive_observations": [],
+      "inactive_actions": [],
       "electrical_storage": {
         "type": "citylearn.energy_model.Battery",
         "autosize": false,
@@ -452,13 +459,14 @@
       "weather": "weather.csv",
       "carbon_intensity": "carbon_intensity.csv",
       "pricing": "pricing.csv",
-      "inactive_observations": [],
-      "inactive_actions": [],
       "coordinates": {
-        "latitude": 41.209114,
-        "longitude":  -8.632814
+        "latitude": 41.195632,
+        "longitude": -8.598365
       },
       "image_path": "images/building.png",
+      "reward_type": "D",
+      "inactive_observations": [],
+      "inactive_actions": [],
       "electrical_storage": {
         "type": "citylearn.energy_model.Battery",
         "autosize": false,
@@ -484,13 +492,14 @@
       "weather": "weather.csv",
       "carbon_intensity": "carbon_intensity.csv",
       "pricing": "pricing.csv",
-      "inactive_observations": [],
-      "inactive_actions": [],
       "coordinates": {
-        "latitude": 41.209114,
-        "longitude":  -8.632814
+        "latitude": 41.195632,
+        "longitude": -8.598365
       },
       "image_path": "images/building.png",
+      "reward_type": "D",
+      "inactive_observations": [],
+      "inactive_actions": [],
       "electrical_storage": {
         "type": "citylearn.energy_model.Battery",
         "autosize": false,
@@ -516,13 +525,14 @@
       "weather": "weather.csv",
       "carbon_intensity": "carbon_intensity.csv",
       "pricing": "pricing.csv",
-      "inactive_observations": [],
-      "inactive_actions": [],
       "coordinates": {
-        "latitude": 41.209114,
-        "longitude":  -8.632814
+        "latitude": 41.195632,
+        "longitude": -8.598365
       },
       "image_path": "images/building.png",
+      "reward_type": "D",
+      "inactive_observations": [],
+      "inactive_actions": [],
       "electrical_storage": {
         "type": "citylearn.energy_model.Battery",
         "autosize": false,
@@ -548,13 +558,14 @@
       "weather": "weather.csv",
       "carbon_intensity": "carbon_intensity.csv",
       "pricing": "pricing.csv",
-      "inactive_observations": [],
-      "inactive_actions": [],
       "coordinates": {
-        "latitude": 41.209114,
-        "longitude":  -8.632814
+        "latitude": 41.195632,
+        "longitude": -8.598365
       },
       "image_path": "images/building.png",
+      "reward_type": "D",
+      "inactive_observations": [],
+      "inactive_actions": [],
       "electrical_storage": {
         "type": "citylearn.energy_model.Battery",
         "autosize": false,
@@ -580,13 +591,14 @@
       "weather": "weather.csv",
       "carbon_intensity": "carbon_intensity.csv",
       "pricing": "pricing.csv",
-      "inactive_observations": [],
-      "inactive_actions": [],
       "coordinates": {
-        "latitude": 41.209114,
-        "longitude":  -8.632814
+        "latitude": 41.195632,
+        "longitude": -8.598365
       },
       "image_path": "images/building.png",
+      "reward_type": "D",
+      "inactive_observations": [],
+      "inactive_actions": [],
       "electrical_storage": {
         "type": "citylearn.energy_model.Battery",
         "autosize": false,
@@ -612,13 +624,14 @@
       "weather": "weather.csv",
       "carbon_intensity": "carbon_intensity.csv",
       "pricing": "pricing.csv",
-      "inactive_observations": [],
-      "inactive_actions": [],
       "coordinates": {
-        "latitude": 41.209114,
-        "longitude":  -8.632814
+        "latitude": 41.195632,
+        "longitude": -8.598365
       },
       "image_path": "images/building.png",
+      "reward_type": "D",
+      "inactive_observations": [],
+      "inactive_actions": [],
       "electrical_storage": {
         "type": "citylearn.energy_model.Battery",
         "autosize": false,
@@ -644,13 +657,14 @@
       "weather": "weather.csv",
       "carbon_intensity": "carbon_intensity.csv",
       "pricing": "pricing.csv",
-      "inactive_observations": [],
-      "inactive_actions": [],
       "coordinates": {
-        "latitude": 41.209114,
-        "longitude":  -8.632814
+        "latitude": 41.195632,
+        "longitude": -8.598365
       },
       "image_path": "images/building.png",
+      "reward_type": "D",
+      "inactive_observations": [],
+      "inactive_actions": [],
       "electrical_storage": {
         "type": "citylearn.energy_model.Battery",
         "autosize": false,
@@ -676,13 +690,14 @@
       "weather": "weather.csv",
       "carbon_intensity": "carbon_intensity.csv",
       "pricing": "pricing.csv",
-      "inactive_observations": [],
-      "inactive_actions": [],
       "coordinates": {
-        "latitude": 41.209114,
-        "longitude":  -8.632814
+        "latitude": 41.195632,
+        "longitude": -8.598365
       },
       "image_path": "images/building.png",
+      "reward_type": "D",
+      "inactive_observations": [],
+      "inactive_actions": [],
       "electrical_storage": {
         "type": "citylearn.energy_model.Battery",
         "autosize": false,
@@ -708,13 +723,14 @@
       "weather": "weather.csv",
       "carbon_intensity": "carbon_intensity.csv",
       "pricing": "pricing.csv",
-      "inactive_observations": [],
-      "inactive_actions": [],
       "coordinates": {
-        "latitude": 41.209114,
-        "longitude":  -8.632814
+        "latitude": 41.195632,
+        "longitude": -8.598365
       },
       "image_path": "images/building.png",
+      "reward_type": "D",
+      "inactive_observations": [],
+      "inactive_actions": [],
       "electrical_storage": {
         "type": "citylearn.energy_model.Battery",
         "autosize": false,
@@ -740,13 +756,14 @@
       "weather": "weather.csv",
       "carbon_intensity": "carbon_intensity.csv",
       "pricing": "pricing.csv",
-      "inactive_observations": [],
-      "inactive_actions": [],
       "coordinates": {
-        "latitude": 41.209114,
-        "longitude":  -8.632814
+        "latitude": 41.195632,
+        "longitude": -8.598365
       },
       "image_path": "images/building.png",
+      "reward_type": "D",
+      "inactive_observations": [],
+      "inactive_actions": [],
       "electrical_storage": {
         "type": "citylearn.energy_model.Battery",
         "autosize": false,

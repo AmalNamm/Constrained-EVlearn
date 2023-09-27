@@ -4,6 +4,10 @@ from citylearn.citylearn import CityLearnEnv
 from citylearn.building import Building
 import numpy as np
 import platform
+
+import os
+import platform
+
 class RBC(Agent):
     r"""Base rule based controller class.
 
@@ -248,58 +252,73 @@ class V2GRBC(BasicRBC):
                         actions[i][-charger_index - 1] = 0.001
                         continue
                     else:
-                        print(b.name)
                         # Calculate the time left until departure
-                        hours_until_departure = charger.connected_ev.ev_simulation.estimated_departure_time[-1]
+                        if charger.connected_ev.ev_simulation.estimated_departure_time[b.time_step] >= 0:
+                            hours_until_departure = charger.connected_ev.ev_simulation.estimated_departure_time[b.time_step]
+                        else:
+                            hours_until_departure = 24
+
 
                         # Calculate the SOC deficit or surplus
-                        required_soc = charger.connected_ev.ev_simulation.required_soc_departure[-1]
-                        actual_soc = charger.connected_ev.battery.soc[-1]
-                        soc_diff = required_soc - actual_soc
+                        required_soc = charger.connected_ev.ev_simulation.required_soc_departure[b.time_step] #%
+                        actual_soc = (charger.connected_ev.battery.soc[-1] * 100) / charger.connected_ev.battery.capacity #%
+                        soc_diff = required_soc - actual_soc #%
 
                         # Calculate net demand: non_shiftable_load_demand - solar generation
-                        net_demand = b.non_shiftable_load_demand[-1] - b.solar_generation[-1]
+                        #net_demand = b.non_shiftable_load_demand[b.time_step] - b.solar_generation[b.time_step]
+                        net_demand = b.net_electricity_consumption_without_storage[b.time_step]
+                        net_demand_next = b.energy_simulation.non_shiftable_load[b.time_step+1] + b.energy_simulation.solar_generation[b.time_step]
 
                         # TOU pricing condition
                         current_price = b.pricing.electricity_pricing[b.time_step]
                         future_price_avg = np.mean(
                             b.pricing.electricity_pricing[b.time_step:b.time_step + hours_until_departure])
 
-                        # Calculate the proportional SOC deficit
-                        proportional_soc_diff = soc_diff / hours_until_departure
-                        # This gives a charging rate that aims to fill the deficit evenly over remaining hours
-                        target_charging_rate = proportional_soc_diff * charger.connected_ev.battery.capacity
 
-                        # Highest Priority: Always charge if there's a SOC deficit.
-                        if soc_diff > 0:
-                            print("COnd1")
-                            print(actions[i][
-                                -charger_index - 1])
-                            actions[i][
-                                -charger_index - 1] = 1
-                            print(actions[i][
-                                      -charger_index - 1])
 
-                        # Medium Priority: If the net demand is high, the SOC requirement is met, and hours until departure is more than 3, help the grid by discharging
-                        elif net_demand > 0 and hours_until_departure > 3:
-                            print("COnd2")
-                            desired_discharging_power = min(-net_demand, charger.max_discharging_power)
-                            actions[i][-charger_index - 1] = desired_discharging_power / charger.max_discharging_power
+                        # Highest Priority: Address SOC deficit but distribute the charging over remaining hours
 
-                        # Next, charge if there's an energy surplus (negative net demand).
-                        elif net_demand < 0:
-                            print("COnd3")
-                            desired_charging_power = min(-net_demand, charger.max_charging_power)
-                            actions[i][-charger_index - 1] = desired_charging_power / charger.max_charging_power
 
-                        # Lower Priority: If there's time before departure and the current price of electricity is cheaper than the expected future average.
+                        if soc_diff > 5 and hours_until_departure <= 2:
+                            # Calculate the proportional SOC deficit
+                            proportional_soc_diff = soc_diff / hours_until_departure  # How much i have to charge in % by hour
+                            # This gives a charging rate that aims to fill the deficit evenly over remaining hours
+                            target_charging_rate = (proportional_soc_diff / 100) * charger.connected_ev.battery.capacity  # KWH
+
+                            desired_charging_power = min(target_charging_rate, (soc_diff/100)*charger.connected_ev.battery.capacity,
+                                                         charger.max_charging_power)  # Use 75% of the surplus energy
+                            actions[i][-charger_index - 1] = min(desired_charging_power / charger.max_charging_power, 1)
+
+                        elif soc_diff > 50 and  hours_until_departure > 3:
+                            # Calculate the proportional SOC deficit
+                            proportional_soc_diff = soc_diff / hours_until_departure  # How much i have to charge in % by hour
+                            # This gives a charging rate that aims to fill the deficit evenly over remaining hours
+                            target_charging_rate = (proportional_soc_diff / 100) * charger.connected_ev.battery.capacity  # KWH
+
+
+                            # Aim to fill the deficit evenly over the remaining hours
+                            actions[i][-charger_index - 1] = target_charging_rate / charger.max_charging_power
+
+                        # Medium Priority: Help the grid if there's high demand and SOC needs are met
+                        elif net_demand_next > 0 and hours_until_departure > 3 and current_price > future_price_avg:
+
+                            desired_discharging_power = max(-net_demand,
+                                                            -charger.max_discharging_power)  # We're discharging half of the net demand to balance
+                            actions[i][-charger_index - 1] = max(desired_discharging_power / charger.max_discharging_power, -1)
+
+                        # Next, charge based on available surplus, but not at the max rate
+                        elif net_demand_next < 0:
+                            desired_charging_power = min(-net_demand,
+                                                         charger.max_charging_power)  # Use 75% of the surplus energy
+                            actions[i][-charger_index - 1] = min(desired_charging_power / charger.max_charging_power, 1)
+
+                        # Lower Priority: If there's time and the current price of electricity is favorable
                         elif hours_until_departure > 3 and current_price < future_price_avg:
-                            print("COnd4")
-                            actions[i][
-                                -charger_index - 1] = 1
+                            desired_charging_power = min((soc_diff/100)*charger.connected_ev.battery.capacity,
+                                                         charger.max_charging_power)  # Use 75% of the surplus energy
+                            actions[i][-charger_index - 1] = min(desired_charging_power / charger.max_charging_power, 1)
 
                         else:
-                            print("COnd5")
                             actions[i][-charger_index - 1] = 0.01
 
         self.actions = actions
@@ -311,7 +330,7 @@ class V2GRBC(BasicRBC):
             for x in action_list:
                 if x == 0:
                     print("Encountered a 0 in actions!")
-                    self.beep()
+                    #self.beep()
                     modified_list.append(0.001)
                 else:
                     modified_list.append(x)

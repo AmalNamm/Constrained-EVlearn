@@ -12,7 +12,7 @@ import time
 
 dataset_name = 'cs5'
 episodes = 1
-path_save = "./tiago_thesis/Empirical_Reward_Test/RBC"
+path_save = "./tiago_thesis/Empirical_Reward_Test/RBC2"
 
 env = CityLearnEnv(dataset_name, central_agent=False, reward_function=V2GPenaltyReward)
 

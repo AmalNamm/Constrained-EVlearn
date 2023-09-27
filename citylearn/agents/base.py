@@ -138,7 +138,7 @@ class Agent(Environment):
         individual_runtimes_predict = []
         average_runtime = 0
         kpis_list = []
-
+        observations_ep = []
         for episode in range(episodes):
             deterministic = deterministic or (deterministic_finish and episode >= episodes - 1)
             observations = self.env.reset()
@@ -162,6 +162,7 @@ class Agent(Environment):
 ##
 ##
 #                print("------Predict------")
+                observations_ep.append(observations)
                 start_time = time.time()  # Get the current time
                 actions = self.predict(observations, deterministic=deterministic)
                 end_time = time.time()  # Get the current time again after the function has run
@@ -212,7 +213,9 @@ class Agent(Environment):
                 self.__save_env(episode, env_history_directory)
             else:
                 pass
-        return rewards_all, average_runtime, kpis_list
+
+        #return rewards_all, average_runtime, kpis_list
+        return rewards_all, average_runtime, kpis_list, observations_ep
 
     def get_env_history(self, directory: Union[str, Path], episodes: List[int] = None) -> Tuple[CityLearnEnv]:
         """Return tuple of :py:class:`citylearn.citylearn.CityLearnEnv` objects at terminal point for simulated episodes.
