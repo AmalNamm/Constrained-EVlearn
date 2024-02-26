@@ -822,37 +822,6 @@ class Building(Environment):
             valid_observations = self.active_observations
 
         observations = {k: data[k] for k in valid_observations if k in data.keys()}
-
-        #Connected is 1 and disconnected is 0
-
-        if self.chargers is not None:
-            for charger in self.chargers:
-                charger_id = charger.charger_id
-                charger_key_state = f'charger_{charger_id}_connected_state'
-                charger_key_incoming_state = f'charger_{charger_id}_incoming_state'
-
-                if charger.connected_ev:
-                    observations[charger_key_state] = 1
-                    obs = charger.connected_ev.observations(include_all, normalize, periodic_normalization)
-                    for k, v in obs.items():
-                        observations[f'charger_{charger_id}_connected_{k}'] = v
-                else:
-                    observations[charger_key_state] = 0
-                    for o in self.observation_metadata:
-                        if f"charger_{charger_id}_connected" in o and o != charger_key_state:
-                            observations[o] = -1
-
-                if charger.incoming_ev:
-                    observations[charger_key_incoming_state] = 1
-                    obs = charger.incoming_ev.observations(include_all, normalize, periodic_normalization)
-                    for k, v in obs.items():
-                        observations[f'charger_{charger_id}_incoming_{k}'] = v
-                else:
-                    observations[charger_key_incoming_state] = 0
-                    for o in self.observation_metadata:
-                        if f"charger_{charger_id}_incoming" in o and o != charger_key_incoming_state:
-                            observations[o] = -1
-
         unknown_observations = list(set(valid_observations).difference(observations.keys()))
         assert len(unknown_observations) == 0, f'Unknown observations: {unknown_observations}'
 

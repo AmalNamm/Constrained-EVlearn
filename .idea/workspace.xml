@@ -5,14 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="606c8733-6e18-48ca-8547-eb551df70d64" name="Changes" comment="Save progress">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/RandomTest/sc2_maddpgrbctestReward/0.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/examples/RandomTest/sc2_maddpgrbctestReward/0.pkl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/RandomTest/sc2_maddpgrbctestReward/1.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/examples/RandomTest/sc2_maddpgrbctestReward/1.pkl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/V2GENV_overnight28/sc2_maddpgrbctestReward/0.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/examples/V2GENV_overnight28/sc2_maddpgrbctestReward/0.pkl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/V2GENV_overnight28_2/sc2_maddpgrbctestReward/0.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/examples/V2GENV_overnight28_2/sc2_maddpgrbctestReward/0.pkl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/bayesian_optimization_result.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/examples/bayesian_optimization_result.pkl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/bayesian_optimization_result_V2.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/examples/bayesian_optimization_result_V2.pkl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/bayesian_optimization_result_V3.pkl" beforeDir="false" afterPath="$PROJECT_DIR$/examples/bayesian_optimization_result_V3.pkl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/citylearn/building.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/building.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -78,13 +74,14 @@
     &quot;database.data.extractors.current.id&quot;: &quot;Comma-separated (CSV)_id&quot;,
     &quot;git-widget-placeholder&quot;: &quot;mastertest&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/Tiago Fonseca/Documents&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Tiago Fonseca/Documents/GitHub/CityLearnEVs/citylearn/building.py&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settingsdialog.IDE.editor.colors&quot;,
+    &quot;two.files.diff.last.used.file&quot;: &quot;C:/Users/Tiago Fonseca/Documents/GitHub/CityLearnEVs/citylearn/building.py&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
@@ -330,7 +327,25 @@
       <workItem from="1695685749933" duration="609000" />
       <workItem from="1695768071301" duration="738000" />
       <workItem from="1695768831157" duration="1761000" />
-      <workItem from="1695774059627" duration="749000" />
+      <workItem from="1695774059627" duration="1543000" />
+      <workItem from="1695834115996" duration="850000" />
+      <workItem from="1695889816390" duration="832000" />
+      <workItem from="1696028127354" duration="1556000" />
+      <workItem from="1699260134492" duration="37000" />
+      <workItem from="1701247658703" duration="2294000" />
+      <workItem from="1701256196766" duration="1185000" />
+      <workItem from="1701345686891" duration="2027000" />
+      <workItem from="1701383941517" duration="7000" />
+      <workItem from="1701684291811" duration="632000" />
+      <workItem from="1701801139654" duration="33000" />
+      <workItem from="1702372175320" duration="163000" />
+      <workItem from="1705337319946" duration="13000" />
+      <workItem from="1706007876581" duration="5209000" />
+      <workItem from="1706023926162" duration="608000" />
+      <workItem from="1707170693414" duration="361000" />
+      <workItem from="1707480376427" duration="460000" />
+      <workItem from="1708526573957" duration="16000" />
+      <workItem from="1708526693822" duration="2460000" />
     </task>
     <task id="LOCAL-00001" summary="Added Charger and EVCar Class to energy_model.py">
       <created>1683211433859</created>
