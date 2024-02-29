@@ -248,8 +248,8 @@ class MADDPG(RLC):
 
         data_to_append = [self.get_encoded_observations(i, obs) for i, obs in enumerate(observations)]
 
-        print(data_to_append)
-        print(type(data_to_append))
+        #print(data_to_append)
+        #print(type(data_to_append))
         # Append the data to the file
         with open('method_calls.pkl', 'ab') as f:
             pickle.dump(data_to_append, f)

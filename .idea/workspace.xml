@@ -5,10 +5,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="606c8733-6e18-48ca-8547-eb551df70d64" name="Changes" comment="Save progress">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/citylearn/agents/EVs/maddpg.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/agents/EVs/maddpg.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/citylearn/building.py" beforeDir="false" afterPath="$PROJECT_DIR$/citylearn/building.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/CS0 - Run MADDPG for tests.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/CS0 - Run MADDPG for tests.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/CS3 - maddpg.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/CS3 - maddpg.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -346,6 +347,8 @@
       <workItem from="1707480376427" duration="460000" />
       <workItem from="1708526573957" duration="16000" />
       <workItem from="1708526693822" duration="2460000" />
+      <workItem from="1709200828592" duration="735000" />
+      <workItem from="1709227620521" duration="1153000" />
     </task>
     <task id="LOCAL-00001" summary="Added Charger and EVCar Class to energy_model.py">
       <created>1683211433859</created>
@@ -551,7 +554,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/examples/CS0 - Run MADDPG for tests.py</url>
-          <line>115</line>
+          <line>113</line>
           <option name="timeStamp" value="38" />
         </line-breakpoint>
       </breakpoints>

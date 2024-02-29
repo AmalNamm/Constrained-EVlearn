@@ -11,25 +11,23 @@ from citylearn.agents.EVs.maddpg import MADDPG as RLAgent
 import time
 import torch
 
-##dataset_name = 'cs5'
+dataset_name = 'cs5'
 #dataset_name = 'cs1'
-#episodes = 1
-##path_save = "./tiago_thesis/Empirical_Reward_Test/MADDPGRBC_scaled_rewards_v1_without_squash_all_D_V6_NewRBCCOMPARISON"
-#path_save = "./tiago_thesis/TESTTT"
+episodes = 10
+path_save = "./tiago_thesis/Empirical_Reward_Test/MADDPGRBC_scaled_rewards_v1_without_squash_all_D_V6_NewRBCCOMPARISON"
+path_save = "./tiago_thesis/TESTTT"
 #
-#env = CityLearnEnv(dataset_name, central_agent=False)
+env = CityLearnEnv(dataset_name, central_agent=False, reward_function=V2GPenaltyReward)
 ##env.reward_function.SQUASH = 1
 #
 #
 #averages = []
 ##model = RLAgent(env)
-#model = RLAgent(env, critic_units=[512, 256, 128], actor_units=[256, 128, 64], lr_actor=0.0006343946342268605, lr_critic=0.0009067117952187151, gamma=0.9773507798877807, sigma=0.2264587893937525, steps_between_training_updates=20, target_update_interval=100)
-#start_time = time.time()
-#rewards, average_runtime, kpis_list, observation_ep  = model.learn(episodes=episodes,
-#                                                  keep_env_history=True,
-#                                                  env_history_directory=path_save)
-#end_time = time.time()
-#elapsed_time = end_time - start_time
+model = RLAgent(env, critic_units=[512, 256, 128], actor_units=[256, 128, 64], lr_actor=0.0006343946342268605, lr_critic=0.0009067117952187151, gamma=0.9773507798877807, sigma=0.2264587893937525, steps_between_training_updates=20, target_update_interval=100)
+start_time = time.time()
+rewards, average_runtime, kpis_list, observation_ep  = model.learn(episodes=episodes)
+end_time = time.time()
+elapsed_time = end_time - start_time
 #
 #
 #
@@ -87,28 +85,28 @@ import torch
 # Later on, or in another script:
 # agent = MADDPG(env)
 # Load the model
-loaded_agent = RLAgent.from_saved_model("maddpg_trained.pth")
+#loaded_agent = RLAgent.from_saved_model("maddpg_trained.pth")
 
-def load_from_pickle(file_name):
-    data = []
-    with open(file_name, 'rb') as f:
-        while True:
-            try:
-                data.append(pickle.load(f))
-            except EOFError:  # This error will be raised when we reach the end of the file.
-                break
-    return data
-
-stored_data = load_from_pickle('method_calls.pkl')
-individual_runtimes_predict = []
-for timestep_array in stored_data:
-    print(timestep_array)
-    start_time = time.time()  # Get the current time
-    actions = loaded_agent.predict_deterministic(timestep_array)
-    end_time = time.time()  # Get the current time again after the function has run
-    elapsed_time = end_time - start_time  # Calculate the elapsed time
-    individual_runtimes_predict.append(elapsed_time)
-print(sum(individual_runtimes_predict) / len(individual_runtimes_predict))
+#def load_from_pickle(file_name):
+#    data = []
+#    with open(file_name, 'rb') as f:
+#        while True:
+#            try:
+#                data.append(pickle.load(f))
+#            except EOFError:  # This error will be raised when we reach the end of the file.
+#                break
+#    return data
+#
+#stored_data = load_from_pickle('method_calls.pkl')
+#individual_runtimes_predict = []
+#for timestep_array in stored_data:
+#    print(timestep_array)
+#    start_time = time.time()  # Get the current time
+#    actions = loaded_agent.predict_deterministic(timestep_array)
+#    end_time = time.time()  # Get the current time again after the function has run
+#    elapsed_time = end_time - start_time  # Calculate the elapsed time
+#    individual_runtimes_predict.append(elapsed_time)
+#print(sum(individual_runtimes_predict) / len(individual_runtimes_predict))
 
 #with open('method_calls.pkl', 'rb') as f:
 #    try:

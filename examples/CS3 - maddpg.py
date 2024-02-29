@@ -6,15 +6,18 @@ sys.path.append("C:\\Users\\Tiago Fonseca\\Documents\\GitHub\\CityLearn")
 
 from citylearn.citylearn import CityLearnEnv
 from citylearn.agents.EVs.maddpg import MADDPGOptimizedRBC as RLAgent
+from citylearn.reward_function import V2GPenaltyReward
+
 import time
 
 dataset_name = 'cs5'
-env = CityLearnEnv(dataset_name, central_agent=False)
+env = CityLearnEnv(dataset_name, central_agent=False, reward_function=V2GPenaltyReward)
 averages = []
-model = RLAgent(env, update_every=10)
+model = RLAgent(env, critic_units=[512, 256, 128], actor_units=[256, 128, 64], lr_actor=0.0006343946342268605, lr_critic=0.0009067117952187151, gamma=0.9773507798877807, sigma=0.2264587893937525, steps_between_training_updates=20, target_update_interval=100)
 
 start_time = time.time()
-rewards, average_runtime, kpis_list = model.learn(episodes=10, keep_env_history=True, env_history_directory="./V2GENV_overnight28/sc2_maddpgrbctestReward")
+#rewards, average_runtime, kpis_list = model.learn(episodes=10, keep_env_history=True, env_history_directory="./V2GENV_overnight28/sc2_maddpgrbctestReward")
+rewards, average_runtime, kpis_list = model.learn(episodes=10)
 end_time = time.time()
 elapsed_time = end_time - start_time
 
