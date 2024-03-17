@@ -15,7 +15,7 @@ averages = []
 model = RLAgent(env)
 
 start_time = time.time()
-rewards, average_runtime, kpis_list = model.learn(episodes=10, keep_env_history=True, env_history_directory="./V2GENV_overnight28/sc2_marlisatestReward")
+rewards, average_runtime, kpis_list = model.learn(episodes=20, keep_env_history=True, env_history_directory="./V2GENV_overnight28/sc2_marlisatestReward")
 end_time = time.time()
 elapsed_time = end_time - start_time
 
