@@ -17,7 +17,7 @@ model = RLAgent(env, critic_units=[512, 256, 128], actor_units=[256, 128, 64], l
 
 start_time = time.time()
 #rewards, average_runtime, kpis_list = model.learn(episodes=10, keep_env_history=True, env_history_directory="./V2GENV_overnight28/sc2_maddpgrbctestReward")
-rewards, average_runtime, kpis_list = model.learn(episodes=10)
+rewards, average_runtime, kpis_list = model.learn(episodes=20, env_history_directory="./V2GENV/INESCTECTest1")
 end_time = time.time()
 elapsed_time = end_time - start_time
 
