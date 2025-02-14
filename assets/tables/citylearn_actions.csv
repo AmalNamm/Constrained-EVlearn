@@ -1,7 +1,3 @@
-Name,Controlled Device,Unit
-cooling_storage,:py:attr:`citylearn.building.Building.cooling_storage`,kWh/kWh_capacity
-heating_storage,:py:attr:`citylearn.building.Building.heating_storage`,kWh/kWh_capacity
-dhw_storage,:py:attr:`citylearn.building.Building.dhw_storage`,kWh/kWhcapacity
-electrical_storage,:py:attr:`citylearn.building.Building.electrical_storage`,kWh/kWh_capacity
-cooling_device,:py:attr:`citylearn.building.Building.cooling_device`,kW/kW_nominal
-heating_device,:py:attr:`citylearn.building.Building.heating_device`,kW/kW_nominal
+version https://git-lfs.github.com/spec/v1
+oid sha256:7fe5ea7897479425373869f7adafe3758ce206e71b6f466a1116b242dfea0040
+size 542
