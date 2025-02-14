@@ -144,7 +144,9 @@ class MADDPG(RLC):
 
     def update(self, observations, actions, reward, next_observations, done):
         self.replay_buffer.push(observations, actions, reward, next_observations, done)
-
+        #added 13.02.2025
+        print(f"Replay Buffer Size: {len(self.replay_buffer)} / {self.batch_size}")
+        ###
         if len(self.replay_buffer) < self.batch_size:
             print("returned due to buffer")
             return
@@ -157,6 +159,8 @@ class MADDPG(RLC):
                 self.exploration_done = True
                 print("Ended exploration")
                 return
+                
+        print(f"Current time step: {self.time_step}, Training every: {self.steps_between_training_updates}")
 
         if self.time_step % self.steps_between_training_updates != 0:
             print("Not time to train")
