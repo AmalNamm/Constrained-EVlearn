@@ -184,3 +184,4 @@ reward_exploration_simulation_output/
 reward_exploration.sh
 test_notebooks/
 CityLearn-tmp/
+method_calls.pkl
