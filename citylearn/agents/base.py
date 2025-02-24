@@ -127,6 +127,8 @@ class Agent(Environment):
         deterministic = False if deterministic is None else deterministic
         self.__set_logger(logging_level)
 
+    
+
         if keep_env_history:
             env_history_directory = Path(f'citylearn_learning_{self.env.uid}') if env_history_directory is None else env_history_directory
             os.makedirs(env_history_directory, exist_ok=True)
@@ -145,8 +147,8 @@ class Agent(Environment):
             rewards_ep = []
 
             while not self.env.done:
-                print("\n \n ------TIME STEP------")
-                print(f"{episode} - {self.env.time_step}")
+                #print("\n \n ------TIME STEP------") ## commented NEW
+                #print(f"{episode} - {self.env.time_step}") ## commented NEW
 #
                 #print("------Electric vehicles------")
                 #for e in self.env.evs:
@@ -190,12 +192,12 @@ class Agent(Environment):
 
                 observations = [o for o in next_observations]
 
-                logging.debug(
-                    f'Time step: {self.env.time_step}/{self.env.time_steps - 1},'\
-                        f' Episode: {episode}/{episodes - 1},'\
-                            f' Actions: {actions},'\
-                                f' Rewards: {rewards}'
-                )
+                #logging.debug(   ## commented NEW
+                #    f'Time step: {self.env.time_step}/{self.env.time_steps - 1},'\
+                #        f' Episode: {episode}/{episodes - 1},'\
+                #            f' Actions: {actions},'\
+                #                f' Rewards: {rewards}'
+                #)
 
             # Calculate the average runtime
             average_runtime = sum(individual_runtimes_predict) / len(individual_runtimes_predict)

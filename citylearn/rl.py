@@ -278,3 +278,34 @@ class ReplayBuffer1:
 
     def __len__(self):
         return min(len(self.buffer[i]) for i in range(self.num_agents))
+
+
+class ReplayBuffer2: #new replay buffer that accounts for constraints values
+    def __init__(self, capacity, num_agents):
+        self.capacity = capacity
+        self.num_agents = num_agents
+        self.buffer = [deque(maxlen=capacity) for _ in range(num_agents)]
+
+    def push(self, state, action, reward, next_state,constraint_value, done):
+        for i in range(self.num_agents):
+            self.buffer[i].append((state[i], action[i], reward[i], next_state[i],constraint_value[i], done))
+
+    def sample(self, batch_size):
+        state, action, reward, next_state,constraint_value, done = [], [], [], [], [], []
+        for i in range(self.num_agents):
+            # For each agent, get a batch of experiences
+            batch = random.sample(self.buffer[i], batch_size)
+
+            # For each agent's batch, separate the experiences into state, action, reward, next_state, done
+            state_i, action_i, reward_i, next_state_i, done_i = zip(*batch)
+            state.append(np.stack(state_i))
+            action.append(np.stack(action_i))
+            reward.append(np.stack(reward_i))
+            next_state.append(np.stack(next_state_i))
+            done.append(np.stack(done_i))
+
+        return state, action, reward, next_state, constraint_value, done
+
+    def __len__(self):
+        return min(len(self.buffer[i]) for i in range(self.num_agents))
+

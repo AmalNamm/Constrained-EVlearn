@@ -206,6 +206,8 @@ class V2GPenaltyReward(RewardFunction):
     env: citylearn.citylearn.CityLearnEnv
         CityLearn environment.
     """
+    #V2GPenaltyReward = Base Building Reward + EV Penalties/Bonuses + Community Reward
+
 
     def __init__(self, env: CityLearnEnv,
                  peak_percentage_threshold=0.10,
@@ -286,7 +288,7 @@ class V2GPenaltyReward(RewardFunction):
                 if last_connected_car is None and last_charged_value > 0.1 or last_charged_value < 0.1:
                     penalty += self.PENALTY_NO_CAR_CHARGING * penalty_multiplier
 
-                # 3. Penalty for exceeding the battery's limits
+                # 3. Penalty for exceeding the battery's limits  ###Should we remove this one since we have now the constraints critic??? TODO
                 if last_connected_car is not None:
                    if last_connected_car.battery.soc[-2] + last_charged_value > last_connected_car.battery.capacity:
                        penalty += self.PENALTY_BATTERY_LIMITS * penalty_multiplier

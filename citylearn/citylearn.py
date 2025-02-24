@@ -624,7 +624,7 @@ class CityLearnEnv(Environment, Env):
         """
 
         # render simulation
-        print("RENDERING")
+        #print("RENDERING") ## commented NEW
         #self.render()
         actions = self.__parse_actions(actions)
 
