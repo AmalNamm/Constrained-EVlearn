@@ -274,6 +274,7 @@ class ReplayBuffer1:
             next_state.append(np.stack(next_state_i))
             done.append(np.stack(done_i))
 
+        print("In: sample ReplayBuffer1")
         return state, action, reward, next_state, done
 
     def __len__(self):
@@ -297,13 +298,15 @@ class ReplayBuffer2: #new replay buffer that accounts for constraints values
             batch = random.sample(self.buffer[i], batch_size)
 
             # For each agent's batch, separate the experiences into state, action, reward, next_state, done
-            state_i, action_i, reward_i, next_state_i, done_i = zip(*batch)
+            state_i, action_i, reward_i, next_state_i, cons_i, done_i = zip(*batch)
             state.append(np.stack(state_i))
             action.append(np.stack(action_i))
             reward.append(np.stack(reward_i))
-            next_state.append(np.stack(next_state_i))
+            constraint_value.append(np.stack(cons_i))
+            next_state.append(np.stack(next_state_i)) 
             done.append(np.stack(done_i))
 
+        print("In sample ReplayBuffer2!")
         return state, action, reward, next_state, constraint_value, done
 
     def __len__(self):

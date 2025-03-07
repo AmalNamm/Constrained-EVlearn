@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 from citylearn.agents.rlc import RLC
 from citylearn.citylearn import CityLearnEnv
-from citylearn.rl import Actor, Critic, OUNoise, ReplayBuffer1
+from citylearn.rl import Actor, Critic, OUNoise, ReplayBuffer2
 import random
 import numpy.typing as npt
 import timeit
@@ -30,7 +30,7 @@ class MADDPG(RLC):
         self.gamma = gamma
 
         # Replay buffer and batch size
-        self.replay_buffer = ReplayBuffer1(capacity=buffer_size, num_agents=self.num_agents)
+        self.replay_buffer = ReplayBuffer2(capacity=buffer_size, num_agents=self.num_agents)
         self.batch_size = batch_size
 
         # Determine device
@@ -193,11 +193,33 @@ class MADDPG(RLC):
         return torch.tensor(cost, dtype=torch.float32, device=self.device).view(-1, 1)
     #***
 
+    # We do not need all of these values now. Just future proofing. 
+    def get_constraint_cost(self, observations, actions, next_observations):
+        costs = []
+        for agent_num, (obs, action, next_obs) in enumerate(zip(observations, actions, next_observations)):
+            cost = []
+            building = self.env.buildings[agent_num]
+            for a in action:
+                sample_cost = 0.0
+                if building.chargers:
+                    for j, charger in enumerate(building.chargers):
+                        act_value = action[j]
+                        real_power = act_value * charger.nominal_power
+                        if real_power > charger.max_charging_power or real_power < charger.min_charging_power:
+                            sample_cost += 1
+            costs.append([sample_cost])
+        return costs
+                
+            
+        
 
+    
     #def update(self, observations, actions, reward, next_observations, constraint_value, done): #ADD Constraint
         #self.replay_buffer.push(observations, actions, reward, next_observations,constraint_value, done) #updated
     def update(self, observations, actions, reward, next_observations, done): #ADD Constraint
-        self.replay_buffer.push(observations, actions, reward, next_observations, done) #updated
+
+        cons = self.get_constraint_cost(observations, actions, next_observations)
+        self.replay_buffer.push(observations, actions, reward, next_observations, cons, done) #updated
         #added 13.02.2025
         #print(f"Replay Buffer Size: {len(self.replay_buffer)} / {self.batch_size}") ## commented NEW
         ###
@@ -222,19 +244,22 @@ class MADDPG(RLC):
             return
 
         print("training")
-        obs_batch, actions_batch, rewards_batch, next_obs_batch, dones_batch = self.replay_buffer.sample(
+        obs_batch, actions_batch, rewards_batch, next_obs_batch, constraint_batch, dones_batch = self.replay_buffer.sample(
             self.batch_size) #sampling from the replay buffe
 
         obs_tensors = []
         next_obs_tensors = []
         actions_tensors = []
         reward_tensors = []
+        constraint_tensor = []
         dones_tensors = []
 
         for agent_num in range(len(self.action_space)):
             obs_tensors.append(
                 torch.stack([torch.FloatTensor(self.get_encoded_observations(agent_num, obs)).to(self.device)
                              for obs in obs_batch[agent_num]]))
+            constraint_tensor.append(
+                torch.stack([torch.FloatTensor(cons).to(self.device) for cons in constraint_batch[agent_num]]) )
             next_obs_tensors.append(
                 torch.stack([torch.FloatTensor(self.get_encoded_observations(agent_num, next_obs)).to(self.device)
                              for next_obs in next_obs_batch[agent_num]]))
@@ -283,7 +308,8 @@ class MADDPG(RLC):
                 # ------ Constraint Critic Update ------
                 constraint_expected = constraint_critic(obs_full, action_full)
                 # Compute constraint cost for current actions for this agent
-                constraint_cost = self.compute_constraint_cost(agent_num, actions_tensors[agent_num])
+                #constraint_cost = self.compute_constraint_cost(agent_num, actions_tensors[agent_num]) OLD LINE - ANTON 2025-03-07
+                constraint_cost = constraint_tensor[agent_num]
                 # For next target, we use the actor target to get next actions
                 next_actions = [self.actors_target[i](next_obs_tensors[i]) for i in range(self.num_agents)]
                 next_actions_full = torch.cat(next_actions, dim=1)
