@@ -17,7 +17,7 @@ import pickle
 
 class MADDPG(RLC):
     def __init__(self, env: CityLearnEnv, actor_units: list = [256, 128], critic_units: list = [256, 128],
-                 buffer_size: int = int(1e5), batch_size: int = 128, gamma: float = 0.99, sigma=0.2,
+                 buffer_size: int = int(1e5), batch_size: int = 1024, gamma: float = 0.99, sigma=0.2,
                  target_update_interval: int = 2, lr_actor: float = 1e-5, lr_critic: float = 1e-4,
                  lr_dual: float = 1e-5, steps_between_training_updates: int = 5, decay_percentage=0.995, tau=1e-3, *args, **kwargs): ###NEW ### Added lr_dual: float = 1e-5
 
@@ -225,23 +225,23 @@ class MADDPG(RLC):
         ###
 
         if len(self.replay_buffer) < self.batch_size:
-            #print("returned due to buffer") ## commented NEW
-            return
+            print("returned due to buffer") ## commented NEW
+            return None, None, None
 
         if not self.exploration_done:
             if self.time_step < self.end_exploration_time_step:
                 #print("returned due to minor") ## commented NEW
-                return
+                return None, None, None
             elif self.time_step == self.end_exploration_time_step:
                 self.exploration_done = True
                 print("Ended exploration")
-                return
+                return None, None, None
                 
         print(f"Current time step: {self.time_step}, Training every: {self.steps_between_training_updates}")
 
         if self.time_step % self.steps_between_training_updates != 0:
             print("Not time to train")
-            return
+            return None, None, None
 
         print("training")
         obs_batch, actions_batch, rewards_batch, next_obs_batch, constraint_batch, dones_batch = self.replay_buffer.sample(
@@ -308,8 +308,10 @@ class MADDPG(RLC):
                 # ------ Constraint Critic Update ------
                 constraint_expected = constraint_critic(obs_full, action_full)
                 # Compute constraint cost for current actions for this agent
-                #constraint_cost = self.compute_constraint_cost(agent_num, actions_tensors[agent_num]) OLD LINE - ANTON 2025-03-07
+                #constraint_cost = self.compute_constraint_cost(agent_num, actions_tensors[agent_num]) #OLD LINE - ANTON 2025-03-07
+                
                 constraint_cost = constraint_tensor[agent_num]
+                
                 # For next target, we use the actor target to get next actions
                 next_actions = [self.actors_target[i](next_obs_tensors[i]) for i in range(self.num_agents)]
                 next_actions_full = torch.cat(next_actions, dim=1)
@@ -374,7 +376,8 @@ class MADDPG(RLC):
         self.scaler.step(self.lambda_optimizer)
         self.lambda_optimizer.zero_grad()
         self.scaler.update()
-
+        
+        return constraint_loss.item(), critic_loss.item(), lambda_loss.item() #q-loss for both critics, return lamda, 
         #***
             
         
