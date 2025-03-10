@@ -135,7 +135,9 @@ class Agent(Environment):
             
         else:
             pass
-
+        constraint_all = []
+        q_critic_all = []
+        lambda_all = []
         rewards_all = []
         individual_runtimes_predict = []
         average_runtime = 0
@@ -145,6 +147,9 @@ class Agent(Environment):
             deterministic = deterministic or (deterministic_finish and episode >= episodes - 1)
             observations = self.env.reset()
             rewards_ep = []
+            constraint_all_ep = []
+            q_critic_all_ep = []
+            lambda_all_ep = []
 
             while not self.env.done:
                 #print("\n \n ------TIME STEP------") ## commented NEW
@@ -186,7 +191,11 @@ class Agent(Environment):
 
                 # update
                 if not deterministic:
-                    self.update(observations, actions, rewards, next_observations, done=self.env.done)
+                    constraint_loss, critic_loss, lambda_loss = self.update(observations, actions, rewards, next_observations, done=self.env.done)
+                    if critic_loss is not None:
+                        constraint_all_ep.append(constraint_loss)
+                        q_critic_all_ep.append(critic_loss)
+                        lambda_all_ep.append(lambda_loss)
                 else:
                     pass
 
@@ -207,6 +216,9 @@ class Agent(Environment):
             kpis = kpis.dropna(how='all')
             kpis_list.append(kpis)
 
+            constraint_all.append(constraint_all_ep)
+            q_critic_all.append(q_critic_all_ep)
+            lambda_all.append(lambda_all_ep)
             rewards_ep = [reward for reward in rewards_ep if isinstance(reward, List)]
             rewards_all.append(rewards_ep) #rewards all is a list, of lists, of lists [[ep1[ts1][ts2]], [ep2[B1][B2]], ....]
 
@@ -217,7 +229,7 @@ class Agent(Environment):
                 pass
 
         #return rewards_all, average_runtime, kpis_list
-        return rewards_all, average_runtime, kpis_list, observations_ep
+        return rewards_all, average_runtime, kpis_list, observations_ep, constraint_all, q_critic_all, lambda_all
 
     def get_env_history(self, directory: Union[str, Path], episodes: List[int] = None) -> Tuple[CityLearnEnv]:
         """Return tuple of :py:class:`citylearn.citylearn.CityLearnEnv` objects at terminal point for simulated episodes.
