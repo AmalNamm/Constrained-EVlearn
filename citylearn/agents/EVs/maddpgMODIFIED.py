@@ -195,20 +195,22 @@ class MADDPG(RLC):
 
     # We do not need all of these values now. Just future proofing. 
     def get_constraint_cost(self, observations, actions, next_observations):
-        costs = []
-        for agent_num, (obs, action, next_obs) in enumerate(zip(observations, actions, next_observations)):
+        costs = [] 
+
+        for agent_num, (obs, action, next_obs) in enumerate(zip(observations, actions, next_observations)): # Enumerate the agents
+            sample_cost = 0.0
+
             cost = []
             building = self.env.buildings[agent_num]
-            for a in action:
-                sample_cost = 0.0
-                if building.chargers:
-                    for j, charger in enumerate(building.chargers):
-                        act_value = action[j]
-                        real_power = act_value * charger.nominal_power
-                        if real_power > charger.max_charging_power or real_power < charger.min_charging_power:
-                            sample_cost += 1
+            if building.chargers:
+                for j, charger in enumerate(building.chargers): # Enumerate the chargers for the specific agent
+                    act_value = action[j]
+                    real_power = act_value * charger.nominal_power
+                    if real_power > charger.max_charging_power or real_power < charger.min_charging_power:
+                        sample_cost += 1
             costs.append([sample_cost])
         return costs
+                
                 
             
         
@@ -275,6 +277,8 @@ class MADDPG(RLC):
         next_obs_full = torch.cat(next_obs_tensors, dim=1)
         action_full = torch.cat(actions_tensors, dim=1)
 
+        print("Action shape", action_full.shape)
+
         ### NEW #### To aggregate constraint costs for dual update across agents
         # ***
         global_constraint_costs = []
@@ -308,9 +312,10 @@ class MADDPG(RLC):
                 # ------ Constraint Critic Update ------
                 constraint_expected = constraint_critic(obs_full, action_full)
                 # Compute constraint cost for current actions for this agent
-                #constraint_cost = self.compute_constraint_cost(agent_num, actions_tensors[agent_num]) #OLD LINE - ANTON 2025-03-07
-                
+                constraint_cost = self.compute_constraint_cost(agent_num, actions_tensors[agent_num]) #OLD LINE - ANTON 2025-03-07
+                print("first", constraint_cost)
                 constraint_cost = constraint_tensor[agent_num]
+                print("second", constraint_cost)
                 
                 # For next target, we use the actor target to get next actions
                 next_actions = [self.actors_target[i](next_obs_tensors[i]) for i in range(self.num_agents)]
