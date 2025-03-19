@@ -277,7 +277,6 @@ class MADDPG(RLC):
         next_obs_full = torch.cat(next_obs_tensors, dim=1)
         action_full = torch.cat(actions_tensors, dim=1)
 
-        print("Action shape", action_full.shape)
 
         ### NEW #### To aggregate constraint costs for dual update across agents
         # ***
@@ -312,10 +311,8 @@ class MADDPG(RLC):
                 # ------ Constraint Critic Update ------
                 constraint_expected = constraint_critic(obs_full, action_full)
                 # Compute constraint cost for current actions for this agent
-                constraint_cost = self.compute_constraint_cost(agent_num, actions_tensors[agent_num]) #OLD LINE - ANTON 2025-03-07
-                print("first", constraint_cost)
+                #constraint_cost = self.compute_constraint_cost(agent_num, actions_tensors[agent_num]) #OLD LINE - ANTON 2025-03-07
                 constraint_cost = constraint_tensor[agent_num]
-                print("second", constraint_cost)
                 
                 # For next target, we use the actor target to get next actions
                 next_actions = [self.actors_target[i](next_obs_tensors[i]) for i in range(self.num_agents)]
