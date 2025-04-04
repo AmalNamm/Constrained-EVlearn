@@ -3,13 +3,12 @@ from citylearn.preprocessing import Encoder, NoNormalization, PeriodicNormalizat
 import numpy as np
 import torch
 import torch.nn.functional as F
-from citylearn.agents.rlc import RLC
 from citylearn.citylearn import CityLearnEnv
-from citylearn.rl import Actor, Critic, OUNoise, ReplayBuffer2
+from citylearn.rl_tgelu import Actor, Critic, ReplayBuffer2
 import random
 import numpy.typing as npt
 import timeit
-from torch.cuda.amp import autocast, GradScaler
+from torch.cuda.amp import autocast
 from citylearn.agents.rbc import RBC, BasicBatteryRBC, BasicRBC, V2GRBC, OptimizedRBC
 from citylearn.agents.rlc import RLC
 import pickle
@@ -82,7 +81,7 @@ class MADDPG(RLC):
             
 
         decay_factor = decay_percentage ** (1/self.env.time_steps)
-        #self.noise = [OUNoise(self.action_space[i].shape[0], self.seed, sigma=sigma, decay_factor=decay_factor) for i in range(len(self.action_space))]
+        #self.noise = [(self.action_space[i].shape[0], self.seed, sigma=sigma, decay_factor=decay_factor) for i in range(len(self.action_space))]
 
 
         self.target_update_interval = target_update_interval
@@ -299,15 +298,11 @@ class MADDPG(RLC):
         # ***
 
         # This is done instead of rewriting the whole logic code inside the for loop.
-        # A reference is fairly cheap so I think this should be fine 
-        # TODO benchmark
-        begin = time.time()
+        # A reference is cheap, I benchmarked this on the hub, it took around 1e-6 seconds 
         if self.target_network == False:
             self.actors_target = self.actors
             self.critics_target = self.critics
             self.constraint_critics_target = self.constraint_critics
-        end = time.time()
-        print(end-begin, "Time for REFERENCE COPY\n")
 
         # Why do we have this huge enumerate with a zip in it. Can we make it _cleaner_, probably? Only worth the time if we are doing major rewrites
         for agent_num, (actor, critic, constraint_critic, actor_target, critic_target, constraint_critic_target, actor_optim, critic_optim, constraint_optim) in enumerate(
