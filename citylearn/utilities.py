@@ -1,4 +1,4 @@
-import simplejson as json
+import json
 
 def read_json(filepath: str, **kwargs):
     """Return json document as dictionary.
