@@ -12,15 +12,17 @@ import timeit
 from torch.cuda.amp import autocast, GradScaler
 from citylearn.agents.rbc import RBC, BasicBatteryRBC, BasicRBC, V2GRBC, OptimizedRBC
 from citylearn.agents.rlc import RLC
-from torch.utils.tensorboard import SummaryWriter
 import pickle
+import time
 
 class MADDPG(RLC):
     def __init__(self, env: CityLearnEnv, actor_units: list = [256, 128], critic_units: list = [256, 128],
                  buffer_size: int = int(1e5), batch_size: int = 1024, gamma: float = 0.99, sigma=0.2,
                  target_update_interval: int = 2, lr_actor: float = 1e-5, lr_critic: float = 1e-4,
-                 lr_dual: float = 1e-5, steps_between_training_updates: int = 5, decay_percentage=0.995, tau=1e-3, *args, **kwargs): ###NEW ### Added lr_dual: float = 1e-5
-
+                 lr_dual: float = 1e-5, steps_between_training_updates: int = 5, decay_percentage=0.995, tau=1e-3,
+                 target_network=False, *args, **kwargs): ###NEW ### Added lr_dual: float = 1e-5
+        
+        self.target_network = target_network
         super().__init__(env, **kwargs)
 
         # Retrieve number of agents
@@ -57,37 +59,20 @@ class MADDPG(RLC):
                 self.device) for _ in range(len(self.action_space))
         ] ##centrailised Critic 20.02.2025
 
-        # Initialize target networks
-        self.actors_target = [
-            Actor(self.observation_dimension[i], self.action_space[i].shape[0], self.seed, actor_units).to(
-                self.device) for i in range(len(self.action_space))
-        ]
-        self.critics_target = [
-            Critic(sum(self.observation_dimension), sum(self.action_dimension), self.seed, critic_units).to(
-                self.device) for _ in range(len(self.action_space))
-        ]
+
 
         self.actors_optimizer = [torch.optim.Adam(self.actors[i].parameters(), lr=lr_actor) for i in
                                  range(len(self.action_space))]
         self.critics_optimizer = [torch.optim.Adam(self.critics[i].parameters(), lr=lr_critic) for i in
                                   range(len(self.action_space))]
 
-        ### NEW ### Constraint Critic and its target networks ***
-        #***
         self.constraint_critics = [
             Critic(sum(self.observation_dimension), sum(self.action_dimension), self.seed, critic_units).to(
                 self.device) for _ in range(len(self.action_space))
         ]
-
-        self.constraint_critics_target = [
-            Critic(sum(self.observation_dimension), sum(self.action_dimension), self.seed, critic_units).to(
-                self.device) for _ in range(len(self.action_space))
-        ]
-
         self.constraint_critics_optimizer = [torch.optim.Adam(self.constraint_critics[i].parameters(), lr=lr_critic) for i in
                                   range(len(self.action_space))] ###NEW TO DO : Should we use the same lr_critic ; learning rate for both critics? 
 
-        #***
 
         ### NEW ### Lagrangian parameter and its optimizer ***
         #***
@@ -99,10 +84,33 @@ class MADDPG(RLC):
         decay_factor = decay_percentage ** (1/self.env.time_steps)
         #self.noise = [OUNoise(self.action_space[i].shape[0], self.seed, sigma=sigma, decay_factor=decay_factor) for i in range(len(self.action_space))]
 
+
         self.target_update_interval = target_update_interval
         self.steps_between_training_updates = steps_between_training_updates
         self.scaler = GradScaler()
         self.exploration_done = False
+
+
+
+        # Initialize target networks if self.target_network is set to True, default is False
+
+        if self.target_network:
+
+            self.actors_target = [
+                Actor(self.observation_dimension[i], self.action_space[i].shape[0], self.seed, actor_units).to(
+                    self.device) for i in range(len(self.action_space))
+            ]
+            self.critics_target = [
+                Critic(sum(self.observation_dimension), sum(self.action_dimension), self.seed, critic_units).to(
+                    self.device) for _ in range(len(self.action_space))
+            ]
+
+            self.constraint_critics_target = [
+                Critic(sum(self.observation_dimension), sum(self.action_dimension), self.seed, critic_units).to(
+                    self.device) for _ in range(len(self.action_space))
+            ]
+
+
 
     @classmethod
     def from_saved_model(cls, filename):
@@ -121,6 +129,7 @@ class MADDPG(RLC):
         agent.seed = data['seed']
         agent.actor_units = data['actor_units']
         agent.critic_units = data['critic_units']
+        agent.target_network = data["target_network"]
         agent.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Initialize actors and critics with loaded data
@@ -135,29 +144,32 @@ class MADDPG(RLC):
             for _ in range(agent.num_agents)
         ]
 
+        # TODO How to load when no target is used?
         # Initialize actors_target and critics_target with loaded data
-        agent.actors_target = [
-            Actor(observation_dimension[i], action_dimension[i], agent.seed, agent.actor_units).to(
-                agent.device)
-            for i in range(agent.num_agents)
-        ]
-        agent.critics_target = [
-            Critic(data['total_observation_dimension'], data['total_action_dimension'], agent.seed,
-                   agent.critic_units).to(agent.device)
-            for _ in range(agent.num_agents)
-        ]
+        if agent.target_network:
+            agent.actors_target = [
+                Actor(observation_dimension[i], action_dimension[i], agent.seed, agent.actor_units).to(
+                    agent.device)
+                for i in range(agent.num_agents)
+            ]
+            agent.critics_target = [
+                Critic(data['total_observation_dimension'], data['total_action_dimension'], agent.seed,
+                       agent.critic_units).to(agent.device)
+                for _ in range(agent.num_agents)
+            ]
 
         # Load the state dictionaries into the actor and critic models
         for actor, state_dict in zip(agent.actors, data['actors']):
             actor.load_state_dict(state_dict)
         for critic, state_dict in zip(agent.critics, data['critics']):
             critic.load_state_dict(state_dict)
-
+        
         # Load the state dictionaries into the actor_target and critic_target models
-        for actor_target, state_dict in zip(agent.actors_target, data['actors_target']):
-            actor_target.load_state_dict(state_dict)
-        for critic_target, state_dict in zip(agent.critics_target, data['critics_target']):
-            critic_target.load_state_dict(state_dict)
+        if agent.target_network:
+            for actor_target, state_dict in zip(agent.actors_target, data['actors_target']):
+                actor_target.load_state_dict(state_dict)
+            for critic_target, state_dict in zip(agent.critics_target, data['critics_target']):
+                critic_target.load_state_dict(state_dict)
 
         # If you've saved optimizers' states, you can initialize and load them similarly (optional)
         agent.actors_optimizer = [torch.optim.Adam(actor.parameters()) for actor in agent.actors]
@@ -285,6 +297,19 @@ class MADDPG(RLC):
 
         ### NEW ### Loop over each agent to update Q critic, constraint critic, and actor
         # ***
+
+        # This is done instead of rewriting the whole logic code inside the for loop.
+        # A reference is fairly cheap so I think this should be fine 
+        # TODO benchmark
+        begin = time.time()
+        if self.target_network == False:
+            self.actors_target = self.actors
+            self.critics_target = self.critics
+            self.constraint_critics_target = self.constraint_critics
+        end = time.time()
+        print(end-begin, "Time for REFERENCE COPY\n")
+
+        # Why do we have this huge enumerate with a zip in it. Can we make it _cleaner_, probably? Only worth the time if we are doing major rewrites
         for agent_num, (actor, critic, constraint_critic, actor_target, critic_target, constraint_critic_target, actor_optim, critic_optim, constraint_optim) in enumerate(
                 zip(self.actors, self.critics, self.constraint_critics, self.actors_target, self.critics_target, self.constraint_critics_target, self.actors_optimizer,
                     self.critics_optimizer, self.constraint_critics_optimizer)):
@@ -302,7 +327,9 @@ class MADDPG(RLC):
             critic_optim.zero_grad()
             self.scaler.update()
 
-            print("Allocated GPU memory:", torch.cuda.memory_allocated(self.device)) ###NEW to debug GPU Memory Usage
+
+            # Can this slow down the process?
+            #print("Allocated GPU memory:", torch.cuda.memory_allocated(self.device)) ###NEW to debug GPU Memory Usage
 
 
             ### NEW ### Constraint Critic Update
@@ -356,7 +383,7 @@ class MADDPG(RLC):
             ### NEW ### # added the constraint target network (to be uodated when we use TGELU)
             #***
             # ------ Target Network Soft Update for Q and Constraint Critics, and Actor ------
-            if self.time_step % self.target_update_interval == 0:
+            if self.target_network and self.time_step % self.target_update_interval == 0:
                 self.soft_update(critic, critic_target, self.tau)
                 self.soft_update(actor, actor_target, self.tau)
                 self.soft_update(constraint_critic, constraint_critic_target, self.tau)
@@ -382,45 +409,7 @@ class MADDPG(RLC):
         return constraint_loss.item(), critic_loss.item(), lambda_loss.item() #q-loss for both critics, return lamda, 
         #***
             
-        
-        """
-        for agent_num, (actor, critic, actor_target, critic_target, actor_optim, critic_optim) in enumerate(
-                zip(self.actors, self.critics, self.actors_target, self.critics_target, self.actors_optimizer,
-                    self.critics_optimizer)):
-
-            with autocast():
-                # Update critic
-                Q_expected = critic(obs_full, action_full)
-                next_actions = [self.actors_target[i](next_obs_tensors[i]) for i in range(self.num_agents)]
-                next_actions_full = torch.cat(next_actions, dim=1)
-                Q_targets_next = critic_target(next_obs_full, next_actions_full)
-                Q_targets = reward_tensors[agent_num] + (self.gamma * Q_targets_next * (1 - dones_tensors[agent_num]))
-                critic_loss = F.mse_loss(Q_expected, Q_targets.detach())
-
-            self.scaler.scale(critic_loss).backward()
-            self.scaler.step(critic_optim)
-            critic_optim.zero_grad()
-            self.scaler.update()
-
-            with autocast():
-                # Update actor
-                predicted_actions = [self.actors[i](obs_tensors[i]) for i in range(self.num_agents)]
-                predicted_actions_full = torch.cat(predicted_actions, dim=1)
-                actor_loss = -critic(obs_full, predicted_actions_full).mean()
-
-            self.scaler.scale(actor_loss).backward()
-            self.scaler.step(actor_optim)
-            actor_optim.zero_grad()
-            self.scaler.update()
-
-            if self.time_step % self.target_update_interval == 0:
-                # Update target networks
-                self.soft_update(critic, critic_target, self.tau)
-                self.soft_update(actor, actor_target, self.tau)
-        """
-
     
-
     def soft_update(self, local_model, target_model, tau=1e-3):
         for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):
             target_param.data.copy_(tau * local_param.data + (1.0 - tau) * target_param.data)
@@ -558,11 +547,8 @@ class MADDPG(RLC):
         data = {
             'actors': [actor.state_dict() for actor in agent.actors],
             'critics': [critic.state_dict() for critic in agent.critics],
-            'actors_target': [actor_target.state_dict() for actor_target in agent.actors_target],
-            'critics_target': [critic_target.state_dict() for critic_target in agent.critics_target],
             'actors_optimizer': [optimizer.state_dict() for optimizer in agent.actors_optimizer],
             'critics_optimizer': [optimizer.state_dict() for optimizer in agent.critics_optimizer],
-
             # Additional data for reinitializing the agent
             'observation_dimension': agent.observation_dimension,
             'action_dimension': agent.action_dimension,
@@ -572,8 +558,13 @@ class MADDPG(RLC):
             'critic_units': agent.critic_units,
             'device': agent.device.type,  # just save the type (e.g., 'cuda' or 'cpu')
             'total_observation_dimension': sum(agent.observation_dimension),
-            'total_action_dimension': sum(agent.action_dimension)
+            'total_action_dimension': sum(agent.action_dimension),
+            "using_target_network": agent.target_network,
         }
+        if agent.target_network:
+            data['actors_target'] = [actor_target.state_dict() for actor_target in agent.actors_target],
+            data['critics_target'] = [critic_target.state_dict() for critic_target in agent.critics_target],
+
         torch.save(data, filename)
 
     def load_model(self, filename):
