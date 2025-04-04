@@ -8,7 +8,7 @@ from citylearn.rl_tgelu import Actor, Critic, ReplayBuffer2
 import random
 import numpy.typing as npt
 import timeit
-from torch.cuda.amp import autocast
+from torch.cuda.amp import autocast, GradScaler
 from citylearn.agents.rbc import RBC, BasicBatteryRBC, BasicRBC, V2GRBC, OptimizedRBC
 from citylearn.agents.rlc import RLC
 import pickle
