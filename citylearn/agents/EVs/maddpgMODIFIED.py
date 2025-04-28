@@ -3,16 +3,16 @@ from citylearn.preprocessing import Encoder, NoNormalization, PeriodicNormalizat
 import numpy as np
 import torch
 import torch.nn.functional as F
+from citylearn.agents.rlc import RLC
 from citylearn.citylearn import CityLearnEnv
-from citylearn.rl_tgelu import Actor, Critic, ReplayBuffer2
+from citylearn.rl import Actor, Critic, OUNoise, ReplayBuffer2
 import random
 import numpy.typing as npt
 import timeit
 from torch.cuda.amp import autocast, GradScaler
 from citylearn.agents.rbc import RBC, BasicBatteryRBC, BasicRBC, V2GRBC, OptimizedRBC
-from citylearn.agents.rlc import RLC
+from torch.utils.tensorboard.writer import SummaryWriter
 import pickle
-import time
 
 class MADDPG(RLC):
     def __init__(self, env: CityLearnEnv, actor_units: list = [256, 128], critic_units: list = [256, 128],
@@ -20,7 +20,7 @@ class MADDPG(RLC):
                  target_update_interval: int = 2, lr_actor: float = 1e-5, lr_critic: float = 1e-4,
                  lr_dual: float = 1e-5, steps_between_training_updates: int = 5, decay_percentage=0.995, tau=1e-3,
                  target_network=False, *args, **kwargs): ###NEW ### Added lr_dual: float = 1e-5
-        
+
         self.target_network = target_network
         super().__init__(env, **kwargs)
 
@@ -45,7 +45,7 @@ class MADDPG(RLC):
         self.sigma = sigma
 
         # Initialize actors and critics
-        # Each actor network handles its agent’s local observation and action space, learning its own policy.
+        # Each actor network handles its agent's local observation and action space, learning its own policy.
         self.actors = [
             Actor(self.observation_dimension[i], self.action_space[i].shape[0], self.seed, actor_units).to(
                 self.device) for i in range(len(self.action_space))
@@ -58,43 +58,8 @@ class MADDPG(RLC):
                 self.device) for _ in range(len(self.action_space))
         ] ##centrailised Critic 20.02.2025
 
-
-
-        self.actors_optimizer = [torch.optim.Adam(self.actors[i].parameters(), lr=lr_actor) for i in
-                                 range(len(self.action_space))]
-        self.critics_optimizer = [torch.optim.Adam(self.critics[i].parameters(), lr=lr_critic) for i in
-                                  range(len(self.action_space))]
-
-        self.constraint_critics = [
-            Critic(sum(self.observation_dimension), sum(self.action_dimension), self.seed, critic_units).to(
-                self.device) for _ in range(len(self.action_space))
-        ]
-        self.constraint_critics_optimizer = [torch.optim.Adam(self.constraint_critics[i].parameters(), lr=lr_critic) for i in
-                                  range(len(self.action_space))] ###NEW TO DO : Should we use the same lr_critic ; learning rate for both critics? 
-
-
-        ### NEW ### Lagrangian parameter and its optimizer ***
-        #***
-        self.lagrangian = torch.tensor(1.0, requires_grad = True, device=self.device)
-        self.lambda_optimizer = torch.optim.Adam([self.lagrangian], lr=lr_dual)
-        #***  ###To revisit 
-            
-
-        decay_factor = decay_percentage ** (1/self.env.time_steps)
-        #self.noise = [(self.action_space[i].shape[0], self.seed, sigma=sigma, decay_factor=decay_factor) for i in range(len(self.action_space))]
-
-
-        self.target_update_interval = target_update_interval
-        self.steps_between_training_updates = steps_between_training_updates
-        self.scaler = GradScaler()
-        self.exploration_done = False
-
-
-
-        # Initialize target networks if self.target_network is set to True, default is False
-
+        # Initialize target networks if target_network is True
         if self.target_network:
-
             self.actors_target = [
                 Actor(self.observation_dimension[i], self.action_space[i].shape[0], self.seed, actor_units).to(
                     self.device) for i in range(len(self.action_space))
@@ -104,12 +69,43 @@ class MADDPG(RLC):
                     self.device) for _ in range(len(self.action_space))
             ]
 
+        self.actors_optimizer = [torch.optim.SGD(self.actors[i].parameters(), lr=lr_actor) for i in
+                                 range(len(self.action_space))]
+        self.critics_optimizer = [torch.optim.SGD(self.critics[i].parameters(), lr=lr_critic) for i in
+                                  range(len(self.action_space))]
+
+        ### NEW ### Constraint Critic and its target networks ***
+        #***
+        self.constraint_critics = [
+            Critic(sum(self.observation_dimension), sum(self.action_dimension), self.seed, critic_units).to(
+                self.device) for _ in range(len(self.action_space))
+        ]
+
+        if self.target_network:
             self.constraint_critics_target = [
                 Critic(sum(self.observation_dimension), sum(self.action_dimension), self.seed, critic_units).to(
                     self.device) for _ in range(len(self.action_space))
             ]
 
+        self.constraint_critics_optimizer = [torch.optim.SGD(self.constraint_critics[i].parameters(), lr=lr_critic) for i in
+                                  range(len(self.action_space))] ###NEW TO DO : Should we use the same lr_critic ; learning rate for both critics? 
 
+        #***
+
+        ### NEW ### Lagrangian parameter and its optimizer ***
+        #***
+        self.lagrangian = torch.tensor(1.0, requires_grad = True, device=self.device)
+        self.lambda_optimizer = torch.optim.SGD([self.lagrangian], lr=lr_dual)
+        #***  ###To revisit 
+            
+
+        decay_factor = decay_percentage ** (1/self.env.time_steps)
+        #self.noise = [OUNoise(self.action_space[i].shape[0], self.seed, sigma=sigma, decay_factor=decay_factor) for i in range(len(self.action_space))]
+
+        self.target_update_interval = target_update_interval
+        self.steps_between_training_updates = steps_between_training_updates
+        self.scaler = GradScaler()
+        self.exploration_done = False
 
     @classmethod
     def from_saved_model(cls, filename):
@@ -128,7 +124,6 @@ class MADDPG(RLC):
         agent.seed = data['seed']
         agent.actor_units = data['actor_units']
         agent.critic_units = data['critic_units']
-        agent.target_network = data["target_network"]
         agent.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # Initialize actors and critics with loaded data
@@ -143,36 +138,33 @@ class MADDPG(RLC):
             for _ in range(agent.num_agents)
         ]
 
-        # TODO How to load when no target is used?
         # Initialize actors_target and critics_target with loaded data
-        if agent.target_network:
-            agent.actors_target = [
-                Actor(observation_dimension[i], action_dimension[i], agent.seed, agent.actor_units).to(
-                    agent.device)
-                for i in range(agent.num_agents)
-            ]
-            agent.critics_target = [
-                Critic(data['total_observation_dimension'], data['total_action_dimension'], agent.seed,
-                       agent.critic_units).to(agent.device)
-                for _ in range(agent.num_agents)
-            ]
+        agent.actors_target = [
+            Actor(observation_dimension[i], action_dimension[i], agent.seed, agent.actor_units).to(
+                agent.device)
+            for i in range(agent.num_agents)
+        ]
+        agent.critics_target = [
+            Critic(data['total_observation_dimension'], data['total_action_dimension'], agent.seed,
+                   agent.critic_units).to(agent.device)
+            for _ in range(agent.num_agents)
+        ]
 
         # Load the state dictionaries into the actor and critic models
         for actor, state_dict in zip(agent.actors, data['actors']):
             actor.load_state_dict(state_dict)
         for critic, state_dict in zip(agent.critics, data['critics']):
             critic.load_state_dict(state_dict)
-        
+
         # Load the state dictionaries into the actor_target and critic_target models
-        if agent.target_network:
-            for actor_target, state_dict in zip(agent.actors_target, data['actors_target']):
-                actor_target.load_state_dict(state_dict)
-            for critic_target, state_dict in zip(agent.critics_target, data['critics_target']):
-                critic_target.load_state_dict(state_dict)
+        for actor_target, state_dict in zip(agent.actors_target, data['actors_target']):
+            actor_target.load_state_dict(state_dict)
+        for critic_target, state_dict in zip(agent.critics_target, data['critics_target']):
+            critic_target.load_state_dict(state_dict)
 
         # If you've saved optimizers' states, you can initialize and load them similarly (optional)
-        agent.actors_optimizer = [torch.optim.Adam(actor.parameters()) for actor in agent.actors]
-        agent.critics_optimizer = [torch.optim.Adam(critic.parameters()) for critic in agent.critics]
+        agent.actors_optimizer = [torch.optim.SGD(actor.parameters()) for actor in agent.actors]
+        agent.critics_optimizer = [torch.optim.SGD(critic.parameters()) for critic in agent.critics]
         for optimizer, state_dict in zip(agent.actors_optimizer, data.get('actors_optimizer', [])):
             optimizer.load_state_dict(state_dict)
         for optimizer, state_dict in zip(agent.critics_optimizer, data.get('critics_optimizer', [])):
@@ -207,11 +199,9 @@ class MADDPG(RLC):
     # We do not need all of these values now. Just future proofing. 
     def get_constraint_cost(self, observations, actions, next_observations):
         costs = [] 
-
         for agent_num, (obs, action, next_obs) in enumerate(zip(observations, actions, next_observations)): # Enumerate the agents
             sample_cost = 0.0
-
-            cost = []
+            #cost = [] not used ?
             building = self.env.buildings[agent_num]
             if building.chargers:
                 for j, charger in enumerate(building.chargers): # Enumerate the chargers for the specific agent
@@ -220,45 +210,38 @@ class MADDPG(RLC):
                     if real_power > charger.max_charging_power or real_power < charger.min_charging_power:
                         sample_cost += 1
             costs.append([sample_cost])
-        return costs
+        #return costs
+        #Add Device Handling
+        return torch.tensor(costs, dtype=torch.float32, device=self.device).view(-1, 1)
                 
                 
-            
-        
-
-    
     #def update(self, observations, actions, reward, next_observations, constraint_value, done): #ADD Constraint
         #self.replay_buffer.push(observations, actions, reward, next_observations,constraint_value, done) #updated
     def update(self, observations, actions, reward, next_observations, done): #ADD Constraint
-
+        # Pre-encode observations
+        # CPU Operations (slow)
+        encoded_obs = [self.get_encoded_observations(i, obs) for i, obs in enumerate(observations)]
+        encoded_next_obs = [self.get_encoded_observations(i, next_obs) for i, next_obs in enumerate(next_observations)]
+    
         cons = self.get_constraint_cost(observations, actions, next_observations)
-        self.replay_buffer.push(observations, actions, reward, next_observations, cons, done) #updated
-        #added 13.02.2025
-        #print(f"Replay Buffer Size: {len(self.replay_buffer)} / {self.batch_size}") ## commented NEW
-        ###
+        self.replay_buffer.push(encoded_obs, actions, reward, encoded_next_obs, cons, done)
 
         if len(self.replay_buffer) < self.batch_size:
-            print("returned due to buffer") ## commented NEW
             return None, None, None
 
         if not self.exploration_done:
             if self.time_step < self.end_exploration_time_step:
-                #print("returned due to minor") ## commented NEW
                 return None, None, None
             elif self.time_step == self.end_exploration_time_step:
                 self.exploration_done = True
                 print("Ended exploration")
                 return None, None, None
                 
-        print(f"Current time step: {self.time_step}, Training every: {self.steps_between_training_updates}")
-
         if self.time_step % self.steps_between_training_updates != 0:
-            print("Not time to train")
             return None, None, None
 
-        print("training")
         obs_batch, actions_batch, rewards_batch, next_obs_batch, constraint_batch, dones_batch = self.replay_buffer.sample(
-            self.batch_size) #sampling from the replay buffe
+            self.batch_size)
 
         obs_tensors = []
         next_obs_tensors = []
@@ -268,48 +251,44 @@ class MADDPG(RLC):
         dones_tensors = []
 
         for agent_num in range(len(self.action_space)):
+            # Moving to GPU (slow transfer)
             obs_tensors.append(
-                torch.stack([torch.FloatTensor(self.get_encoded_observations(agent_num, obs)).to(self.device)
-                             for obs in obs_batch[agent_num]]))
-            constraint_tensor.append(
-                torch.stack([torch.FloatTensor(cons).to(self.device) for cons in constraint_batch[agent_num]]) )
+                torch.stack([torch.FloatTensor(obs).to(self.device)
+                            for obs in obs_batch[agent_num]]))
             next_obs_tensors.append(
-                torch.stack([torch.FloatTensor(self.get_encoded_observations(agent_num, next_obs)).to(self.device)
-                             for next_obs in next_obs_batch[agent_num]]))
+                torch.stack([torch.FloatTensor(next_obs).to(self.device)
+                            for next_obs in next_obs_batch[agent_num]]))
             actions_tensors.append(
                 torch.stack([torch.FloatTensor(action).to(self.device)
-                             for action in actions_batch[agent_num]]))
+                            for action in actions_batch[agent_num]]))
             reward_tensors.append(
                 torch.tensor(rewards_batch[agent_num], dtype=torch.float32).to(self.device).view(-1, 1))
-            dones_tensors.append(torch.tensor(dones_batch[agent_num], dtype=torch.float32).to(self.device).view(-1, 1))
-
+            constraint_tensor.append(
+                torch.stack([torch.FloatTensor(cons).to(self.device) 
+                            for cons in constraint_batch[agent_num]]))
+            dones_tensors.append(
+                torch.tensor(dones_batch[agent_num], dtype=torch.float32).to(self.device).view(-1, 1))
 
         obs_full = torch.cat(obs_tensors, dim=1)
         next_obs_full = torch.cat(next_obs_tensors, dim=1)
         action_full = torch.cat(actions_tensors, dim=1)
 
-
-        ### NEW #### To aggregate constraint costs for dual update across agents
-        # ***
         global_constraint_costs = []
-        # ***
 
-        ### NEW ### Loop over each agent to update Q critic, constraint critic, and actor
-        # ***
-
-        # This is done instead of rewriting the whole logic code inside the for loop.
-        # A reference is cheap, I benchmarked this on the hub, it took around 1e-6 seconds 
-        if self.target_network == False:
+        # If not using target networks, use main networks as targets
+        if not self.target_network:
             self.actors_target = self.actors
             self.critics_target = self.critics
             self.constraint_critics_target = self.constraint_critics
 
-        # Why do we have this huge enumerate with a zip in it. Can we make it _cleaner_, probably? Only worth the time if we are doing major rewrites
-        for agent_num, (actor, critic, constraint_critic, actor_target, critic_target, constraint_critic_target, actor_optim, critic_optim, constraint_optim) in enumerate(
-                zip(self.actors, self.critics, self.constraint_critics, self.actors_target, self.critics_target, self.constraint_critics_target, self.actors_optimizer,
-                    self.critics_optimizer, self.constraint_critics_optimizer)):
+        for agent_num, (actor, critic, constraint_critic, actor_target, critic_target, constraint_critic_target, 
+                        actor_optim, critic_optim, constraint_optim) in enumerate(
+                zip(self.actors, self.critics, self.constraint_critics, 
+                    self.actors_target, self.critics_target, self.constraint_critics_target,
+                    self.actors_optimizer, self.critics_optimizer, self.constraint_critics_optimizer)):
+            
             with autocast():
-                # Update critic # ------ Q-Critic Update ------
+                # Update critic
                 Q_expected = critic(obs_full, action_full)
                 next_actions = [self.actors_target[i](next_obs_tensors[i]) for i in range(self.num_agents)]
                 next_actions_full = torch.cat(next_actions, dim=1)
@@ -322,120 +301,85 @@ class MADDPG(RLC):
             critic_optim.zero_grad()
             self.scaler.update()
 
-
-            # Can this slow down the process?
-            #print("Allocated GPU memory:", torch.cuda.memory_allocated(self.device)) ###NEW to debug GPU Memory Usage
-
-
-            ### NEW ### Constraint Critic Update
-            #***
-            with autocast():  #Mixed Precision Context: enables mixed-precision training (using float16 where appropriate) for performance gains on the GPU.
-                # ------ Constraint Critic Update ------
+            with autocast():
+                # Update constraint critic
                 constraint_expected = constraint_critic(obs_full, action_full)
-                # Compute constraint cost for current actions for this agent
-                #constraint_cost = self.compute_constraint_cost(agent_num, actions_tensors[agent_num]) #OLD LINE - ANTON 2025-03-07
                 constraint_cost = constraint_tensor[agent_num]
-                
-                # For next target, we use the actor target to get next actions
                 next_actions = [self.actors_target[i](next_obs_tensors[i]) for i in range(self.num_agents)]
                 next_actions_full = torch.cat(next_actions, dim=1)
                 constraint_targets_next = constraint_critic_target(next_obs_full, next_actions_full)
-                #Compute Bellman Target:
-                
                 constraint_targets = constraint_cost + (self.gamma * constraint_targets_next * (1 - dones_tensors[agent_num]))
-                #Loss Calculation
                 constraint_loss = F.mse_loss(constraint_expected, constraint_targets.detach())
-
-            #Backpropagation and Optimizer Step
 
             self.scaler.scale(constraint_loss).backward()
             self.scaler.step(constraint_optim)
             constraint_optim.zero_grad()
             self.scaler.update()
-            #***
-        
-            ### NEW ### # Collect constraint cost for lambda update
-            #***
+
             global_constraint_costs.append(constraint_cost)
-            #***
-            
-            ### NEW ### # Actor Update (with gradient subtraction from Q Network and Constraint Network)
-            #***
+
             with autocast():
-                # ------ Actor Update (with gradient subtraction) ------
+                # Update actor
                 predicted_actions = [self.actors[i](obs_tensors[i]) for i in range(self.num_agents)]
                 predicted_actions_full = torch.cat(predicted_actions, dim=1)
-                # The loss here is constructed so that minimizing it results in:
-                # update = gradient_Q - gradient_constraint, as desired.
-                actor_loss = -critic(obs_full, predicted_actions_full).mean() + self.lagrangian* constraint_critic(obs_full, predicted_actions_full).mean()
+                actor_loss = -critic(obs_full, predicted_actions_full).mean() + self.lagrangian * constraint_critic(obs_full, predicted_actions_full).mean()
 
             self.scaler.scale(actor_loss).backward()
             self.scaler.step(actor_optim)
             actor_optim.zero_grad()
             self.scaler.update()
-            #***
 
-            ### NEW ### # added the constraint target network (to be uodated when we use TGELU)
-            #***
-            # ------ Target Network Soft Update for Q and Constraint Critics, and Actor ------
+            # Update target networks if using them
             if self.target_network and self.time_step % self.target_update_interval == 0:
                 self.soft_update(critic, critic_target, self.tau)
                 self.soft_update(actor, actor_target, self.tau)
                 self.soft_update(constraint_critic, constraint_critic_target, self.tau)
-            #***
 
-        
-        ### NEW ### to double check with Arun , gradient zero ? lambda constant .. ? 
-        #***
-        
-        # ------ Global Lagrangian (Dual) Update ------
-        # Aggregate the constraint cost from all agents (here we average over agents and batch samples)
+        # Update Lagrangian multiplier
         global_constraint_cost = torch.mean(torch.cat(global_constraint_costs, dim=0))
         with autocast():
-            # For dual ascent, we update lambda by ascending the gradient of the constraint cost.
-            # By minimizing lambda_loss = -lambda * (global_constraint_cost), gradient descent on this loss
-            # results in lambda ← lambda + lr_dual * global_constraint_cost.
-            lambda_loss = - self.lagrangian * global_constraint_cost
+            lambda_loss = -self.lagrangian * global_constraint_cost
         self.scaler.scale(lambda_loss).backward()
         self.scaler.step(self.lambda_optimizer)
         self.lambda_optimizer.zero_grad()
         self.scaler.update()
-        
-        return constraint_loss.item(), critic_loss.item(), lambda_loss.item() #q-loss for both critics, return lamda, 
-        #***
-            
-    
+
+        return constraint_loss.item(), critic_loss.item(), lambda_loss.item()
+
     def soft_update(self, local_model, target_model, tau=1e-3):
         for target_param, local_param in zip(target_model.parameters(), local_model.parameters()):
             target_param.data.copy_(tau * local_param.data + (1.0 - tau) * target_param.data)
 
     def get_deterministic_actions(self, observations):
         with torch.no_grad():
+        # Pre-encode observations
             encoded_observations = [self.get_encoded_observations(i, obs) for i, obs in enumerate(observations)]
             to_return = [actor(torch.FloatTensor(obs).to(self.device)).cpu().numpy()
-                    for actor, obs in zip(self.actors, encoded_observations)]
+                         for actor, obs in zip(self.actors, encoded_observations)]
             return to_return
 
+
     def predict(self, observations, deterministic=False):
+        # Pre-encode observations
+        encoded_observations = [self.get_encoded_observations(i, obs) for i, obs in enumerate(observations)]
+        
         actions_return = None
         if self.time_step > self.end_exploration_time_step or deterministic:
             if deterministic:
-                actions_return = self.get_deterministic_actions(observations)
+                actions_return = self.predict_deterministic(encoded_observations)
             else:
-                actions_return = self.get_exploration_prediction(observations)
+                actions_return = self.get_exploration_prediction(observations)  # This will encode internally
         else:
-            actions_return = self.get_exploration_prediction(observations)
+            actions_return = self.get_exploration_prediction(observations)  # This will encode internally
 
-        data_to_append = [self.get_encoded_observations(i, obs) for i, obs in enumerate(observations)]
-
-        #print(data_to_append)
-        #print(type(data_to_append))
-        # Append the data to the file
-        with open('method_calls.pkl', 'ab') as f:
-            pickle.dump(data_to_append, f)
+        # Save encoded observations if needed
+        #with open('method_calls.pkl', 'ab') as f:
+        #    pickle.dump(encoded_observations, f)
 
         self.next_time_step()
         return actions_return
+
+    
 
     def predict_deterministic(self, encoded_observations):
         actions_return = None
@@ -445,17 +389,9 @@ class MADDPG(RLC):
         return actions_return
 
     def get_exploration_prediction(self, states: List[List[float]]) -> List[float]:
-        """Return random actions`.
-
-        Returns
-        -------
-        actions: List[float]
-            Action values.
-        """
-        #actions = [self.noise[i].sample() + action for i, action in
-        #           enumerate(self.get_deterministic_actions(states))]
-
-        deterministic_actions = self.get_deterministic_actions(states)
+        # Pre-encode states for deterministic actions
+        encoded_states = [self.get_encoded_observations(i, state) for i, state in enumerate(states)]
+        deterministic_actions = self.predict_deterministic(encoded_states)
 
         # Generate random noise and print its sign for each action
         random_noises = []
@@ -468,7 +404,7 @@ class MADDPG(RLC):
         clipped_actions = [np.clip(action, -1, 1) for action in actions]
         actions_return = [action.tolist() for action in clipped_actions]
 
-        #Hard Constraints to exploration           #### DOUBLE CHECK THIS ! WE DONT WANT HARD CONSTRAINTS
+        # Hard Constraints to exploration
         for i, b in enumerate(self.env.buildings):
             if b.chargers:
                 for charger_index, charger in reversed(list(enumerate(b.chargers))):
@@ -542,8 +478,11 @@ class MADDPG(RLC):
         data = {
             'actors': [actor.state_dict() for actor in agent.actors],
             'critics': [critic.state_dict() for critic in agent.critics],
+            'actors_target': [actor_target.state_dict() for actor_target in agent.actors_target],
+            'critics_target': [critic_target.state_dict() for critic_target in agent.critics_target],
             'actors_optimizer': [optimizer.state_dict() for optimizer in agent.actors_optimizer],
             'critics_optimizer': [optimizer.state_dict() for optimizer in agent.critics_optimizer],
+
             # Additional data for reinitializing the agent
             'observation_dimension': agent.observation_dimension,
             'action_dimension': agent.action_dimension,
@@ -553,13 +492,8 @@ class MADDPG(RLC):
             'critic_units': agent.critic_units,
             'device': agent.device.type,  # just save the type (e.g., 'cuda' or 'cpu')
             'total_observation_dimension': sum(agent.observation_dimension),
-            'total_action_dimension': sum(agent.action_dimension),
-            "using_target_network": agent.target_network,
+            'total_action_dimension': sum(agent.action_dimension)
         }
-        if agent.target_network:
-            data['actors_target'] = [actor_target.state_dict() for actor_target in agent.actors_target],
-            data['critics_target'] = [critic_target.state_dict() for critic_target in agent.critics_target],
-
         torch.save(data, filename)
 
     def load_model(self, filename):
@@ -709,3 +643,433 @@ class MADDPGV2GRBC(MADDPGRBC):
     def __init__(self, env: CityLearnEnv, **kwargs: Any):
         super().__init__(env, **kwargs)
         self.rbc = V2GRBC(env, **kwargs)
+
+# Example of optimized GPU usage
+class OptimizedMADDPG(MADDPGOptimizedRBC):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Pre-allocate GPU tensors
+        self.obs_buffer = torch.zeros((self.batch_size, sum(self.observation_dimension)), 
+                                    device=self.device)
+        self.action_buffer = torch.zeros((self.batch_size, sum(self.action_dimension)), 
+                                       device=self.device)
+        self.reward_buffer = torch.zeros((self.batch_size, self.num_agents), 
+                                       device=self.device)
+        
+    def update(self, observations, actions, reward, next_observations, done):
+        # Batch encode on GPU
+        encoded_obs = torch.stack([
+            torch.FloatTensor(self.get_encoded_observations(i, obs)).to(self.device)
+            for i, obs in enumerate(observations)
+        ])
+        
+        # Keep data on GPU
+        self.obs_buffer.copy_(encoded_obs)
+        self.action_buffer.copy_(torch.FloatTensor(actions).to(self.device))
+        self.reward_buffer.copy_(torch.FloatTensor(reward).to(self.device))
+        
+        # Process all agents in parallel
+        with autocast():
+            # All networks process data simultaneously
+            Q_values = torch.stack([critic(self.obs_buffer, self.action_buffer) 
+                                  for critic in self.critics])
+            constraint_values = torch.stack([constraint_critic(self.obs_buffer, self.action_buffer) 
+                                          for constraint_critic in self.constraint_critics])
+            
+        # Update all networks in parallel
+        self.optimize_networks(Q_values, constraint_values)
+
+
+        #Why this helps:
+        #Instead of creating new tensors for each batch, we reuse pre-allocated memory
+
+        #Tensors are already on GPU, eliminating transfer overhead
+        #Fixed memory layout improves cache utilization
+        #Reduces memory fragmentation
+
+
+class OptimizedMADDPG_V2(MADDPGOptimizedRBC):
+    """Optimized version of MADDPG with improved GPU utilization and parallel processing."""
+    
+    def __init__(self, env: CityLearnEnv, actor_units: list = [256, 128], critic_units: list = [256, 128],
+                 buffer_size: int = int(1e5), batch_size: int = 1024, gamma: float = 0.99, sigma=0.2,
+                 target_update_interval: int = 2, lr_actor: float = 1e-5, lr_critic: float = 1e-4,
+                 lr_dual: float = 1e-5, steps_between_training_updates: int = 5, decay_percentage=0.995, tau=1e-3,
+                 target_network=False, *args, **kwargs):
+        
+        super().__init__(env, actor_units, critic_units, buffer_size, batch_size, gamma, sigma,
+                        target_update_interval, lr_actor, lr_critic, lr_dual, steps_between_training_updates,
+                        decay_percentage, tau, target_network, *args, **kwargs)
+        
+        # Pre-allocate GPU tensors for efficient memory usage
+        self.obs_buffer = torch.zeros((self.batch_size, sum(self.observation_dimension)), 
+                                    device=self.device)
+        self.action_buffer = torch.zeros((self.batch_size, sum(self.action_dimension)), 
+                                       device=self.device)
+        self.reward_buffer = torch.zeros((self.batch_size, self.num_agents), 
+                                       device=self.device)
+        self.dones_buffer = torch.zeros((self.batch_size, self.num_agents), 
+                                      device=self.device)
+        self.constraint_buffer = torch.zeros((self.batch_size, self.num_agents), 
+                                           device=self.device)
+        
+        # Initialize incremental mean calculator for constraint costs
+        self.constraint_mean = self.IncrementalMean()
+    
+    class IncrementalMean:
+        """Helper class for computing mean incrementally."""
+        def __init__(self):
+            self.mean = 0.0
+            self.count = 0
+            
+        def update(self, new_value):
+            self.count += 1
+            self.mean = self.mean + (new_value - self.mean) / self.count
+            return self.mean
+    
+    def update(self, observations, actions, reward, next_observations, done):
+        """Optimized update method with improved GPU utilization."""
+        # Pre-encode observations and move to GPU
+        encoded_obs = torch.stack([
+            torch.FloatTensor(self.get_encoded_observations(i, obs)).to(self.device)
+            for i, obs in enumerate(observations)
+        ])
+        encoded_next_obs = torch.stack([
+            torch.FloatTensor(self.get_encoded_observations(i, next_obs)).to(self.device)
+            for i, next_obs in enumerate(next_observations)
+        ])
+        
+        # Compute constraint costs
+        cons = self.get_constraint_cost(observations, actions, next_observations)
+        
+        # Push to replay buffer
+        self.replay_buffer.push(encoded_obs.cpu().numpy(), actions, reward, 
+                              encoded_next_obs.cpu().numpy(), cons, done)
+        
+        if len(self.replay_buffer) < self.batch_size:
+            return None, None, None
+        
+        if not self.exploration_done:
+            if self.time_step < self.end_exploration_time_step:
+                return None, None, None
+            elif self.time_step == self.end_exploration_time_step:
+                self.exploration_done = True
+                print("Ended exploration")
+                return None, None, None
+                
+        if self.time_step % self.steps_between_training_updates != 0:
+            return None, None, None
+        
+        # Sample from buffer and move to GPU efficiently
+        obs_batch, actions_batch, rewards_batch, next_obs_batch, constraint_batch, dones_batch = \
+            self.replay_buffer.sample(self.batch_size)
+        
+        # Efficient tensor creation and transfer
+        self.obs_buffer.copy_(torch.FloatTensor(np.concatenate(obs_batch, axis=1)).to(self.device))
+        self.action_buffer.copy_(torch.FloatTensor(np.concatenate(actions_batch, axis=1)).to(self.device))
+        self.reward_buffer.copy_(torch.FloatTensor(np.stack(rewards_batch, axis=1)).to(self.device))
+        self.dones_buffer.copy_(torch.FloatTensor(np.stack(dones_batch, axis=1)).to(self.device))
+        self.constraint_buffer.copy_(torch.FloatTensor(np.stack(constraint_batch, axis=1)).to(self.device))
+        
+        # Process all networks in parallel
+        with autocast():
+            # Forward pass for all networks
+            Q_values = torch.stack([critic(self.obs_buffer, self.action_buffer) 
+                                  for critic in self.critics])
+            constraint_values = torch.stack([constraint_critic(self.obs_buffer, self.action_buffer) 
+                                          for constraint_critic in self.constraint_critics])
+        
+        # Optimize networks
+        return self.optimize_networks(Q_values, constraint_values)
+    
+    def optimize_networks(self, Q_values, constraint_values):
+        """Optimized parallel network updates for all agents."""
+        # 1. Prepare all gradients at once
+        with autocast():
+            # Compute all losses in parallel
+            critic_losses = []
+            constraint_losses = []
+            actor_losses = []
+            
+            for agent_num in range(self.num_agents):
+                # Critic loss
+                Q_expected = self.critics[agent_num](self.obs_buffer, self.action_buffer)
+                Q_targets = self.reward_buffer[:, agent_num].unsqueeze(1) + \
+                           (self.gamma * Q_values[agent_num] * (1 - self.dones_buffer[:, agent_num].unsqueeze(1)))
+                critic_loss = F.mse_loss(Q_expected, Q_targets.detach())
+                critic_losses.append(critic_loss)
+                
+                # Constraint critic loss
+                constraint_expected = self.constraint_critics[agent_num](self.obs_buffer, self.action_buffer)
+                constraint_targets = self.constraint_buffer[:, agent_num].unsqueeze(1) + \
+                                   (self.gamma * constraint_values[agent_num] * (1 - self.dones_buffer[:, agent_num].unsqueeze(1)))
+                constraint_loss = F.mse_loss(constraint_expected, constraint_targets.detach())
+                constraint_losses.append(constraint_loss)
+                
+                # Actor loss
+                predicted_actions = self.actors[agent_num](self.obs_buffer)
+                actor_loss = -self.critics[agent_num](self.obs_buffer, predicted_actions).mean() + \
+                            self.lagrangian * self.constraint_critics[agent_num](self.obs_buffer, predicted_actions).mean()
+                actor_losses.append(actor_loss)
+        
+        # 2. Update all networks in parallel
+        # Critic updates
+        for critic_loss, critic_optim in zip(critic_losses, self.critics_optimizer):
+            self.scaler.scale(critic_loss).backward()
+            self.scaler.step(critic_optim)
+            critic_optim.zero_grad()
+        
+        # Constraint critic updates
+        for constraint_loss, constraint_optim in zip(constraint_losses, self.constraint_critics_optimizer):
+            self.scaler.scale(constraint_loss).backward()
+            self.scaler.step(constraint_optim)
+            constraint_optim.zero_grad()
+        
+        # Actor updates
+        for actor_loss, actor_optim in zip(actor_losses, self.actors_optimizer):
+            self.scaler.scale(actor_loss).backward()
+            self.scaler.step(actor_optim)
+            actor_optim.zero_grad()
+        
+        # 3. Update target networks if using them
+        if self.target_network and self.time_step % self.target_update_interval == 0:
+            for critic, critic_target, actor, actor_target, constraint_critic, constraint_critic_target in \
+                zip(self.critics, self.critics_target, self.actors, self.actors_target, 
+                    self.constraint_critics, self.constraint_critics_target):
+                self.soft_update(critic, critic_target, self.tau)
+                self.soft_update(actor, actor_target, self.tau)
+                self.soft_update(constraint_critic, constraint_critic_target, self.tau)
+        
+        # 4. Update Lagrangian multiplier using incremental mean
+        global_constraint_cost = self.constraint_mean.update(torch.mean(torch.stack(constraint_losses)))
+        with autocast():
+            lambda_loss = -self.lagrangian * global_constraint_cost
+        self.scaler.scale(lambda_loss).backward()
+        self.scaler.step(self.lambda_optimizer)
+        self.lambda_optimizer.zero_grad()
+        
+        self.scaler.update()
+        
+        return (torch.mean(torch.stack(constraint_losses)).item(),
+                torch.mean(torch.stack(critic_losses)).item(),
+                lambda_loss.item())
+    
+
+class OptimizedMADDPG_AppleGPU(MADDPGOptimizedRBC):
+    """Optimized version of MADDPG with improved GPU utilization and parallel processing."""
+    
+    def __init__(self, env: CityLearnEnv, actor_units: list = [256, 128], critic_units: list = [256, 128],
+                 buffer_size: int = int(1e5), batch_size: int = 1024, gamma: float = 0.99, sigma=0.2,
+                 target_update_interval: int = 2, lr_actor: float = 1e-5, lr_critic: float = 1e-4,
+                 lr_dual: float = 1e-5, steps_between_training_updates: int = 5, decay_percentage=0.995, tau=1e-3,
+                 target_network=False, *args, **kwargs):
+        
+        super().__init__(env, actor_units, critic_units, buffer_size, batch_size, gamma, sigma,
+                        target_update_interval, lr_actor, lr_critic, lr_dual, steps_between_training_updates,
+                        decay_percentage, tau, target_network, *args, **kwargs)
+        
+        # Determine device (MPS for Apple Silicon)
+        self.device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+        print(f"Using device: {self.device}")
+        print(f"MPS available: {torch.backends.mps.is_available()}")
+        
+        # Pre-allocate GPU tensors with memory-efficient shapes
+        self.obs_buffer = torch.zeros((self.batch_size, sum(self.observation_dimension)), 
+                                    device=self.device, dtype=torch.float32)
+        self.action_buffer = torch.zeros((self.batch_size, sum(self.action_dimension)), 
+                                       device=self.device, dtype=torch.float32)
+        self.reward_buffer = torch.zeros((self.batch_size, self.num_agents), 
+                                       device=self.device, dtype=torch.float32)
+        self.dones_buffer = torch.zeros((self.batch_size, self.num_agents), 
+                                      device=self.device, dtype=torch.float32)
+        self.constraint_buffer = torch.zeros((self.batch_size, self.num_agents), 
+                                           device=self.device, dtype=torch.float32)
+        
+        # Initialize incremental mean calculator for constraint costs
+        self.constraint_mean = self.IncrementalMean()
+        
+        # Move all networks to the appropriate device
+        for actor in self.actors:
+            actor.to(self.device)
+        for critic in self.critics:
+            critic.to(self.device)
+        for constraint_critic in self.constraint_critics:
+            constraint_critic.to(self.device)
+        if self.target_network:
+            for actor_target in self.actors_target:
+                actor_target.to(self.device)
+            for critic_target in self.critics_target:
+                critic_target.to(self.device)
+            for constraint_critic_target in self.constraint_critics_target:
+                constraint_critic_target.to(self.device)
+        
+        # Move Lagrangian parameter to device
+        self.lagrangian = self.lagrangian.to(self.device)
+    
+    class IncrementalMean:
+        """Helper class for computing mean incrementally."""
+        def __init__(self):
+            self.mean = 0.0
+            self.count = 0
+            
+        def update(self, new_value):
+            self.count += 1
+            self.mean = self.mean + (new_value - self.mean) / self.count
+            return self.mean
+    
+    def update(self, observations, actions, reward, next_observations, done):
+        """Optimized update method with improved GPU utilization."""
+        # Pre-encode observations and move to GPU
+        encoded_obs = torch.stack([
+            torch.FloatTensor(self.get_encoded_observations(i, obs)).to(self.device)
+            for i, obs in enumerate(observations)
+        ])
+        encoded_next_obs = torch.stack([
+            torch.FloatTensor(self.get_encoded_observations(i, next_obs)).to(self.device)
+            for i, next_obs in enumerate(next_observations)
+        ])
+        
+        # Compute constraint costs
+        cons = self.get_constraint_cost(observations, actions, next_observations)
+        
+        # Push to replay buffer
+        self.replay_buffer.push(encoded_obs.cpu().numpy(), actions, reward, 
+                              encoded_next_obs.cpu().numpy(), cons, done)
+        
+        if len(self.replay_buffer) < self.batch_size:
+            return None, None, None
+        
+        if not self.exploration_done:
+            if self.time_step < self.end_exploration_time_step:
+                return None, None, None
+            elif self.time_step == self.end_exploration_time_step:
+                self.exploration_done = True
+                print("Ended exploration")
+                return None, None, None
+                
+        if self.time_step % self.steps_between_training_updates != 0:
+            return None, None, None
+        
+        # Sample from buffer and move to GPU efficiently
+        obs_batch, actions_batch, rewards_batch, next_obs_batch, constraint_batch, dones_batch = \
+            self.replay_buffer.sample(self.batch_size)
+        
+        # Efficient tensor creation and transfer
+        self.obs_buffer.copy_(torch.FloatTensor(np.concatenate(obs_batch, axis=1)).to(self.device))
+        self.action_buffer.copy_(torch.FloatTensor(np.concatenate(actions_batch, axis=1)).to(self.device))
+        self.reward_buffer.copy_(torch.FloatTensor(np.stack(rewards_batch, axis=1)).to(self.device))
+        self.dones_buffer.copy_(torch.FloatTensor(np.stack(dones_batch, axis=1)).to(self.device))
+        self.constraint_buffer.copy_(torch.FloatTensor(np.stack(constraint_batch, axis=1)).to(self.device))
+        
+        # Process all networks in parallel
+        with autocast():
+            # Forward pass for all networks
+            Q_values = torch.stack([critic(self.obs_buffer, self.action_buffer) 
+                                  for critic in self.critics])
+            constraint_values = torch.stack([constraint_critic(self.obs_buffer, self.action_buffer) 
+                                          for constraint_critic in self.constraint_critics])
+        
+        # Optimize networks
+        return self.optimize_networks(Q_values, constraint_values)
+    
+    def optimize_networks(self, Q_values, constraint_values):
+        """Optimized parallel network updates for all agents."""
+        # 1. Prepare all gradients at once
+        with autocast():
+            # Compute all losses in parallel
+            critic_losses = []
+            constraint_losses = []
+            actor_losses = []
+            
+            for agent_num in range(self.num_agents):
+                # Critic loss
+                Q_expected = self.critics[agent_num](self.obs_buffer, self.action_buffer)
+                Q_targets = self.reward_buffer[:, agent_num].unsqueeze(1) + \
+                           (self.gamma * Q_values[agent_num] * (1 - self.dones_buffer[:, agent_num].unsqueeze(1)))
+                critic_loss = F.mse_loss(Q_expected, Q_targets.detach())
+                critic_losses.append(critic_loss)
+                
+                # Constraint critic loss
+                constraint_expected = self.constraint_critics[agent_num](self.obs_buffer, self.action_buffer)
+                constraint_targets = self.constraint_buffer[:, agent_num].unsqueeze(1) + \
+                                   (self.gamma * constraint_values[agent_num] * (1 - self.dones_buffer[:, agent_num].unsqueeze(1)))
+                constraint_loss = F.mse_loss(constraint_expected, constraint_targets.detach())
+                constraint_losses.append(constraint_loss)
+                
+                # Actor loss
+                predicted_actions = self.actors[agent_num](self.obs_buffer)
+                actor_loss = -self.critics[agent_num](self.obs_buffer, predicted_actions).mean() + \
+                            self.lagrangian * self.constraint_critics[agent_num](self.obs_buffer, predicted_actions).mean()
+                actor_losses.append(actor_loss)
+        
+        # 2. Update all networks in parallel
+        # Critic updates
+        for critic_loss, critic_optim in zip(critic_losses, self.critics_optimizer):
+            self.scaler.scale(critic_loss).backward()
+            self.scaler.step(critic_optim)
+            critic_optim.zero_grad()
+        
+        # Constraint critic updates
+        for constraint_loss, constraint_optim in zip(constraint_losses, self.constraint_critics_optimizer):
+            self.scaler.scale(constraint_loss).backward()
+            self.scaler.step(constraint_optim)
+            constraint_optim.zero_grad()
+        
+        # Actor updates
+        for actor_loss, actor_optim in zip(actor_losses, self.actors_optimizer):
+            self.scaler.scale(actor_loss).backward()
+            self.scaler.step(actor_optim)
+            actor_optim.zero_grad()
+        
+        # 3. Update target networks if using them
+        if self.target_network and self.time_step % self.target_update_interval == 0:
+            for critic, critic_target, actor, actor_target, constraint_critic, constraint_critic_target in \
+                zip(self.critics, self.critics_target, self.actors, self.actors_target, 
+                    self.constraint_critics, self.constraint_critics_target):
+                self.soft_update(critic, critic_target, self.tau)
+                self.soft_update(actor, actor_target, self.tau)
+                self.soft_update(constraint_critic, constraint_critic_target, self.tau)
+        
+        # 4. Update Lagrangian multiplier using incremental mean
+        global_constraint_cost = self.constraint_mean.update(torch.mean(torch.stack(constraint_losses)))
+        with autocast():
+            lambda_loss = -self.lagrangian * global_constraint_cost
+        self.scaler.scale(lambda_loss).backward()
+        self.scaler.step(self.lambda_optimizer)
+        self.lambda_optimizer.zero_grad()
+        
+        self.scaler.update()
+        
+        return (torch.mean(torch.stack(constraint_losses)).item(),
+                torch.mean(torch.stack(critic_losses)).item(),
+                lambda_loss.item())
+    
+    def predict(self, observations, deterministic=False):
+        """Optimized predict method with efficient GPU usage."""
+        # Pre-encode observations
+        encoded_observations = torch.stack([
+            torch.FloatTensor(self.get_encoded_observations(i, obs)).to(self.device)
+            for i, obs in enumerate(observations)
+        ])
+        
+        actions_return = None
+        if self.time_step > self.end_exploration_time_step or deterministic:
+            if deterministic:
+                actions_return = self.predict_deterministic(encoded_observations)
+            else:
+                actions_return = self.get_exploration_prediction(observations)
+        else:
+            actions_return = self.get_exploration_prediction(observations)
+        
+        self.next_time_step()
+        return actions_return
+    
+    def predict_deterministic(self, encoded_observations):
+        """Optimized deterministic prediction with efficient GPU usage."""
+        with torch.no_grad():
+            actions = torch.stack([
+                actor(obs) for actor, obs in zip(self.actors, encoded_observations)
+            ])
+            return actions.cpu().numpy()
+    
+    
