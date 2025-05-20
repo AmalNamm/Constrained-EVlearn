@@ -185,3 +185,10 @@ reward_exploration.sh
 test_notebooks/
 CityLearn-tmp/
 method_calls.pkl
+# generated experiment artefacts
+Pre-trained/
+citylearn_learning_*/
+*.pkl
+*.csv
+*.png
+*.json

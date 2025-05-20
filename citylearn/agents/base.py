@@ -8,6 +8,8 @@ from gym import spaces
 from citylearn.base import Environment
 from citylearn.citylearn import CityLearnEnv
 import time
+from torch.utils.tensorboard import SummaryWriter
+
 
 LOGGER = logging.getLogger()
 logging.getLogger('matplotlib.font_manager').disabled = True
@@ -101,40 +103,23 @@ class Agent(Environment):
 
     def learn(
             self, episodes: int = None, keep_env_history: bool = None, env_history_directory: Union[str, Path] = None, 
-            deterministic: bool = None, deterministic_finish: bool = None, logging_level: int = None
+            deterministic: bool = None, deterministic_finish: bool = None, logging_level: int = None,
+            writer: SummaryWriter = None
         ):
-        """Train agent.
+        """Train agent with optional TensorBoard logging."""
 
-        Parameters
-        ----------
-        episodes: int, default: 1
-            Number of training episode greater :math:`\ge 1`.
-        keep_env_history: bool, default: False
-            Indicator to store environment state at the end of each episode.
-        env_history_directory: Union[str, Path], optional
-            Directory to save environment history to.
-        deterministic: bool, default: False
-            Indicator to take deterministic actions i.e. strictly exploit the learned policy.
-        deterministic_finish: bool, default: False
-            Indicator to take deterministic actions in the final episode.
-        logging_level: int, default: 30
-            Logging level where increasing the number silences lower level information.      
-        """
-        
         episodes = 1 if episodes is None else episodes
         keep_env_history = False if keep_env_history is None else keep_env_history
         deterministic_finish = False if deterministic_finish is None else deterministic_finish
         deterministic = False if deterministic is None else deterministic
         self.__set_logger(logging_level)
-
     
-
         if keep_env_history:
             env_history_directory = Path(f'citylearn_learning_{self.env.uid}') if env_history_directory is None else env_history_directory
             os.makedirs(env_history_directory, exist_ok=True)
-            
         else:
             pass
+    
         constraint_all = []
         q_critic_all = []
         lambda_all = []
@@ -143,6 +128,9 @@ class Agent(Environment):
         average_runtime = 0
         kpis_list = []
         observations_ep = []
+
+        global_step = 0
+    
         for episode in range(episodes):
             deterministic = deterministic or (deterministic_finish and episode >= episodes - 1)
             observations = self.env.reset()
@@ -150,45 +138,21 @@ class Agent(Environment):
             constraint_all_ep = []
             q_critic_all_ep = []
             lambda_all_ep = []
-
+    
             while not self.env.done:
-                #print("\n \n ------TIME STEP------") ## commented NEW
-                #print(f"{episode} - {self.env.time_step}") ## commented NEW
-#
-                #print("------Electric vehicles------")
-                #for e in self.env.evs:
-                #    print(e)
-                #    print()
-                #print("------Buildings------")
-                #for b in self.env.buildings:
-                #    print(b)
-                #    print()
-##
-#                print("------Observations------")
-#                print(observations)
-##
-##
-#                print("------Predict------")
+                print("\n \n ------TIME STEP------")
+                print(f"{episode} - {self.env.time_step}")
+
+                #print("------Predict------")
                 observations_ep.append(observations)
-                start_time = time.time()  # Get the current time
+                start_time = time.time() # Get the current time
                 actions = self.predict(observations, deterministic=deterministic)
-                end_time = time.time()  # Get the current time again after the function has run
-
-                elapsed_time = end_time - start_time  # Calculate the elapsed time
-                individual_runtimes_predict.append(elapsed_time)
-
-
-#
-#                print("------Actions------")
-#                print(actions)
-
-                # apply actions to citylearn_env
+                end_time = time.time() # Get the current time again after the function has run
+                individual_runtimes_predict.append(end_time - start_time)
+    
                 next_observations, rewards, _, _ = self.env.step(actions)
                 rewards_ep.append(rewards)
-
-#                print("------Rewards------")
-#                print(rewards)
-
+                
                 # update
                 if not deterministic:
                     constraint_loss, critic_loss, lambda_loss = self.update(observations, actions, rewards, next_observations, done=self.env.done)
@@ -196,39 +160,44 @@ class Agent(Environment):
                         constraint_all_ep.append(constraint_loss)
                         q_critic_all_ep.append(critic_loss)
                         lambda_all_ep.append(lambda_loss)
-                else:
-                    pass
+    
+                        if writer is not None:
+                            #step = self.env.time_step
+                            #for i in range(self.num_agents):
+                                #writer.add_scalar(f"Loss/Critic/Agent_{i}", critic_loss, step)
+                                #writer.add_scalar(f"Loss/ConstraintCritic/Agent_{i}", constraint_loss, step)
+                                #writer.add_scalar(f"Lagrangian/Agent_{i}", lambda_loss[i] if hasattr(lambda_loss, '__getitem__') else lambda_loss, step)
+                            #avg_reward = sum(map(sum, rewards_ep)) / len(rewards_ep) if rewards_ep else 0
+                            #writer.add_scalar("Reward/Step", avg_reward, step)
+                            for i in range(self.num_agents):
+                                writer.add_scalar(f"Loss/Critic/Agent_{i}", critic_loss, global_step)
+                                writer.add_scalar(f"Loss/ConstraintCritic/Agent_{i}", constraint_loss, global_step)
+                                writer.add_scalar(f"Lagrangian/Agent_{i}", lambda_loss[i] if hasattr(lambda_loss, '__getitem__') else lambda_loss, global_step)
+                                # NEW: Log reward per agent
+                                writer.add_scalar(f"Reward/Agent_{i}", rewards[i], global_step)
+                            avg_reward = sum(map(sum, rewards_ep)) / len(rewards_ep) if rewards_ep else 0
+                            writer.add_scalar("Reward/Step", avg_reward, global_step)
+                        global_step += 1
 
+
+    
                 observations = [o for o in next_observations]
-
-                #logging.debug(   ## commented NEW
-                #    f'Time step: {self.env.time_step}/{self.env.time_steps - 1},'\
-                #        f' Episode: {episode}/{episodes - 1},'\
-                #            f' Actions: {actions},'\
-                #                f' Rewards: {rewards}'
-                #)
-
-            # Calculate the average runtime
+    
             average_runtime = sum(individual_runtimes_predict) / len(individual_runtimes_predict)
-
-            #Save kpis
+    
             kpis = self.env.evaluate().pivot(index='cost_function', columns='name', values='value')
             kpis = kpis.dropna(how='all')
             kpis_list.append(kpis)
-
+    
             constraint_all.append(constraint_all_ep)
             q_critic_all.append(q_critic_all_ep)
             lambda_all.append(lambda_all_ep)
             rewards_ep = [reward for reward in rewards_ep if isinstance(reward, List)]
-            rewards_all.append(rewards_ep) #rewards all is a list, of lists, of lists [[ep1[ts1][ts2]], [ep2[B1][B2]], ....]
-
-            # store episode's env to disk
+            rewards_all.append(rewards_ep)
+    
             if keep_env_history:
                 self.__save_env(episode, env_history_directory)
-            else:
-                pass
-
-        #return rewards_all, average_runtime, kpis_list
+    
         return rewards_all, average_runtime, kpis_list, observations_ep, constraint_all, q_critic_all, lambda_all
 
     def get_env_history(self, directory: Union[str, Path], episodes: List[int] = None) -> Tuple[CityLearnEnv]:

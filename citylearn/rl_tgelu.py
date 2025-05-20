@@ -237,8 +237,14 @@ class Critic(nn.Module):
 
         # If there are more than 2 fc_units, the last fc_layer will output the Q-value.
         # Otherwise, fc2 is responsible for that.
-        if len(fc_units) > 2:
-            self.fc_layers.append(nn.Linear(fc_units[-1], 1))
+        #if len(fc_units) > 2: #COMMENTED 13.05.2025
+         #   self.fc_layers.append(nn.Linear(fc_units[-1], 1))
+
+        # === Constraint Critic Final Layer Initialization ===
+        # In your Critic class __init__ method, after defining the last layer:
+        if len(fc_units) > 2: #ADDED 13.05.2025
+            nn.init.constant_(self.fc_layers[-1].weight, 0.01)
+            nn.init.constant_(self.fc_layers[-1].bias, 0.0)
 
         # ModuleList to register the layers with PyTorch
         self.fc_layers = nn.ModuleList(self.fc_layers)
@@ -332,14 +338,26 @@ class ReplayBuffer2: #new replay buffer that accounts for constraints values
 
             # For each agent's batch, separate the experiences into state, action, reward, next_state, done
             state_i, action_i, reward_i, next_state_i, cons_i, done_i = zip(*batch)
+
+            # Convert tensors to CPU and then to numpy if they are tensors
+            state_i = [s.cpu().numpy() if torch.is_tensor(s) else s for s in state_i]
+            action_i = [a.cpu().numpy() if torch.is_tensor(a) else a for a in action_i]
+            reward_i = [r.cpu().numpy() if torch.is_tensor(r) else r for r in reward_i]
+            next_state_i = [ns.cpu().numpy() if torch.is_tensor(ns) else ns for ns in next_state_i]
+            cons_i = [c.cpu().numpy() if torch.is_tensor(c) else c for c in cons_i]
+            done_i = [d.cpu().numpy() if torch.is_tensor(d) else d for d in done_i]
+
+            ###TO CHECK ABOVE Added it because of an error
+            
             state.append(np.stack(state_i))
             action.append(np.stack(action_i))
             reward.append(np.stack(reward_i))
+            
             constraint_value.append(np.stack(cons_i))
             next_state.append(np.stack(next_state_i)) 
             done.append(np.stack(done_i))
 
-        print("In sample ReplayBuffer2!")
+        #print("In sample ReplayBuffer2!")
         return state, action, reward, next_state, constraint_value, done
 
     def __len__(self):

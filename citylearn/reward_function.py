@@ -289,11 +289,11 @@ class V2GPenaltyReward(RewardFunction):
                     penalty += self.PENALTY_NO_CAR_CHARGING * penalty_multiplier
 
                 # 3. Penalty for exceeding the battery's limits  ###Should we remove this one since we have now the constraints critic??? TODO
-                if last_connected_car is not None:
-                   if last_connected_car.battery.soc[-2] + last_charged_value > last_connected_car.battery.capacity:
-                       penalty += self.PENALTY_BATTERY_LIMITS * penalty_multiplier
-                   if last_connected_car.battery.soc[-2] + last_charged_value < last_connected_car.min_battery_soc:
-                       penalty += self.PENALTY_BATTERY_LIMITS * penalty_multiplier
+                #if last_connected_car is not None:
+                 #  if last_connected_car.battery.soc[-2] + last_charged_value > last_connected_car.battery.capacity:
+                  #     penalty += self.PENALTY_BATTERY_LIMITS * penalty_multiplier
+                  # if last_connected_car.battery.soc[-2] + last_charged_value < last_connected_car.min_battery_soc:
+                   #    penalty += self.PENALTY_BATTERY_LIMITS * penalty_multiplier
 
 
                 # 4. Penalties (or Reward) for SoC differences
