@@ -9,7 +9,8 @@ from citylearn.agents.EVs.maddpgOptimized import MADDPGOptimizedRBC as RLAgent
 #from citylearn.agents.EVs.maddpg import MADDPGOptimizedRBC as RLAgent
 
 from citylearn.reward_function import V2GPenaltyReward
-
+#from citylearn.reward_function import SolarPenaltyReward
+from citylearn.reward_function import IndependentSACReward
 #python Train_CMaddpg.py
 #tensorboard --logdir=./logs_Tensorboard
 
@@ -18,7 +19,9 @@ def main(schema_path: str, log_dir: str, episodes: int):
     writer = SummaryWriter(log_dir=log_dir)
     print(f"Logging to TensorBoard at: {log_dir}")
 
-    reward_function = V2GPenaltyReward
+    #reward_function = V2GPenaltyReward
+    #reward_function = IndependentSACReward
+    reward_function = SolarPenaltyReward
     env = CityLearnEnv(schema=schema_path, central_agent=False, reward_function=reward_function)
 
     model = RLAgent(

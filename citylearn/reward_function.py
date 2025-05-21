@@ -555,3 +555,136 @@ class SolarPenaltyAndComfortReward(RewardFunction):
         reward = reward.sum(axis=0).tolist()
 
         return reward
+
+class SimpleEVReward(RewardFunction):
+    """A simplified reward function for EV charging optimization.
+    
+    This reward function focuses on:
+    1. Basic electricity consumption minimization
+    2. Rewarding charging during excess solar production
+    3. Rewarding V2G support to the building
+    4. Simple penalties for not meeting SOC targets
+    
+    Parameters
+    ----------
+    env: citylearn.citylearn.CityLearnEnv
+        CityLearn environment.
+    reward_scaling: float, optional
+        Scaling factor to adjust reward magnitude to match constraint scale.
+    log_rewards: bool, optional
+        Whether to log reward components for analysis.
+    """
+    
+    def __init__(self, env: CityLearnEnv, reward_scaling: float = 0.001, log_rewards: bool = True):
+        super().__init__(env)
+        # Constants for reward scaling - matching constraint scale (typically ~0.001-0.01)
+        self.REWARD_SCALING = reward_scaling  # Global scaling to match constraint magnitude
+        self.REWARD_FACTOR = 0.5
+        self.SOLAR_CHARGING_BONUS = 0.2
+        self.V2G_SUPPORT_BONUS = 0.3
+        self.SOC_TARGET_PENALTY = -0.5
+        
+        # Tracking
+        self.log_rewards = log_rewards
+        self.reward_history = []
+        self.reward_components = {
+            'base_energy': [],
+            'solar_charging': [],
+            'v2g_support': [],
+            'soc_penalty': []
+        }
+        
+    def calculate(self) -> List[float]:
+        """Calculate rewards for each building."""
+        reward_list = []
+        
+        # Reset component tracking for this step
+        if self.log_rewards:
+            for key in self.reward_components:
+                self.reward_components[key] = [0] * len(self.env.buildings)
+        
+        for b_idx, b in enumerate(self.env.buildings):
+            # Start with basic electricity consumption (negative reward for consumption)
+            net_energy = b.net_electricity_consumption[b.time_step]
+            base_reward = -abs(net_energy) * self.REWARD_FACTOR
+            
+            # Track components
+            if self.log_rewards:
+                self.reward_components['base_energy'][b_idx] = base_reward
+            
+            # Process chargers in the building
+            if b.chargers:
+                for c in b.chargers:
+                    # Get data about the charger's recent behavior
+                    last_connected_car = c.past_connected_evs[-2] if len(c.past_connected_evs) >= 2 else None
+                    last_charged_value = c.past_charging_action_values[-2] if len(c.past_charging_action_values) >= 2 else 0
+                    net_energy_before = b.net_electricity_consumption[b.time_step-1] if b.time_step > 0 else 0
+                    
+                    # Only apply EV-related rewards when a car was connected
+                    if last_connected_car is not None:
+                        # Reward for charging during excess self-production (net export)
+                        if last_charged_value > 0 and net_energy_before < 0:
+                            base_reward += self.SOLAR_CHARGING_BONUS
+                            if self.log_rewards:
+                                self.reward_components['solar_charging'][b_idx] += self.SOLAR_CHARGING_BONUS
+                            
+                        # Reward for V2G support to building (discharging during import)
+                        if last_charged_value < 0 and net_energy_before > 0:
+                            base_reward += self.V2G_SUPPORT_BONUS
+                            if self.log_rewards:
+                                self.reward_components['v2g_support'][b_idx] += self.V2G_SUPPORT_BONUS
+                            
+                        # Check SOC at departure if the car is about to leave
+                        hours_until_departure = last_connected_car.ev_simulation.estimated_departure_time[-1]
+                        if hours_until_departure == 0:
+                            required_soc = last_connected_car.ev_simulation.required_soc_departure[-1]
+                            actual_soc = last_connected_car.battery.soc[-1]
+                            actual_soc_pct = (actual_soc * 100) / last_connected_car.battery.capacity
+                            
+                            # Simple penalty for not meeting SOC target at departure
+                            if abs(actual_soc_pct - required_soc) > 10:  # More than 10% off target
+                                base_reward += self.SOC_TARGET_PENALTY
+                                if self.log_rewards:
+                                    self.reward_components['soc_penalty'][b_idx] += self.SOC_TARGET_PENALTY
+            
+            # Apply global scaling to match constraint scale
+            scaled_reward = base_reward * self.REWARD_SCALING
+            reward_list.append(scaled_reward)
+            
+        # Store rewards for analysis
+        if self.log_rewards:
+            self.reward_history.append(reward_list.copy())
+            
+        # Print average reward stats every 100 steps for monitoring
+        if self.log_rewards and len(self.reward_history) % 100 == 0 and len(self.reward_history) > 0:
+            recent_rewards = np.array(self.reward_history[-100:])
+            avg_reward = np.mean(recent_rewards)
+            min_reward = np.min(recent_rewards)
+            max_reward = np.max(recent_rewards)
+            print(f"Reward stats (step {len(self.reward_history)}): avg={avg_reward:.6f}, min={min_reward:.6f}, max={max_reward:.6f}")
+                
+        # Handle central agent case
+        if self.env.central_agent:
+            return [sum(reward_list)]
+        else:
+            return reward_list
+            
+    def get_reward_stats(self):
+        """Return statistics about rewards for analysis."""
+        if not self.log_rewards or len(self.reward_history) == 0:
+            return None
+            
+        recent_rewards = np.array(self.reward_history[-100:] if len(self.reward_history) >= 100 else self.reward_history)
+        stats = {
+            'avg_reward': np.mean(recent_rewards),
+            'min_reward': np.min(recent_rewards),
+            'max_reward': np.max(recent_rewards),
+            'std_reward': np.std(recent_rewards)
+        }
+        
+        # Component contribution
+        for component in self.reward_components:
+            if len(self.reward_components[component]) > 0:
+                stats[f'avg_{component}'] = np.mean(self.reward_components[component])
+                
+        return stats 

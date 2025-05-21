@@ -173,7 +173,7 @@ class SoftQNetwork(nn.Module):
 class Actor(nn.Module):
     """Actor (Policy) Model."""
 
-    def __init__(self, state_size, action_size, seed, fc_units=[256, 128], tgelu_range=[-1,1]):
+    def __init__(self, state_size, action_size, seed, fc_units=[256, 128], tgelu_range=None, gamma=0.99): #Updated to include gamma as a parameter
         """Initialize parameters and build model.
         Params
         ======
@@ -181,11 +181,23 @@ class Actor(nn.Module):
             action_size (int): Dimension of each action
             seed (int): Random seed
             fc_units (list): List of node counts in the hidden layers.
+            tgelu_range (list): Range for TGeLU activation [min, max]. If None, calculated dynamically.
+            gamma (float): Discount factor for calculating TGeLU range if not provided.
         """
         super(Actor, self).__init__()
         self.seed = torch.manual_seed(seed)
-
-        self.tgelu = TGeLU(tgelu_range[0], tgelu_range[1],device)
+        
+        # If tgelu_range is not provided, calculate a reasonable default based on theoretical bounds
+        if tgelu_range is None: #updated to include a tgelu range = max_reward/(1-discount_factor)
+            # Estimate max value using max_reward/(1-gamma) with a safety factor
+            # Assume max_reward ~= 10.0 (this is a hyperparameter to be tuned)
+            max_reward = 10.0
+            safety_factor = 2.0
+            value_bound = safety_factor * max_reward / (1 - gamma)
+            tgelu_range = [-value_bound, value_bound]
+            print(f"Using calculated TGeLU range: {tgelu_range}")
+            
+        self.tgelu = TGeLU(tgelu_range[0], tgelu_range[1], device)
         # Input layer
         self.fc_layers = [nn.Linear(state_size, fc_units[0])]
 

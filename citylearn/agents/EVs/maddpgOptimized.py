@@ -50,7 +50,7 @@ class MADDPG(RLC):
 
         ##added 06.05.2025 
         #set up a CSV log file
-        self.lagrangian_logfile = "lagrangian_monitoring_New_Cost_inequality_Layer_Update.csv"
+        self.lagrangian_logfile = "lagrangian_monitoring_New_Cost_inequality_Layer_Update_simpleEV resward.csv"
         if not os.path.exists(self.lagrangian_logfile):
             with open(self.lagrangian_logfile, "w", newline="") as f:
                 writer = csv.writer(f)
@@ -59,10 +59,15 @@ class MADDPG(RLC):
 
         # Initialize actors and critics
         # Each actor network handles its agent's local observation and action space, learning its own policy.
-        self.actors = [
-            Actor(self.observation_dimension[i], self.action_space[i].shape[0], self.seed, actor_units).to(
-                self.device) for i in range(len(self.action_space))
+       # self.actors = [
+       #     Actor(self.observation_dimension[i], self.action_space[i].shape[0], self.seed, actor_units).to(
+        #        self.device) for i in range(len(self.action_space))
         ]  ##decentrailised Actor 20.02.2025
+        self.actors = [
+            Actor(self.observation_dimension[i], self.action_space[i].shape[0], self.seed, actor_units, tgelu_range=None, gamma=self.gamma).to(
+                self.device) for i in range(len(self.action_space))
+        ] #updated to include gamma
+        
         
         #Each critic network, receiving global information, can assess the overall quality of the joint actions taken by all agents, which is particularly useful in cooperative or competitive multi-agent settings.
         
@@ -74,9 +79,12 @@ class MADDPG(RLC):
         # Initialize target networks if target_network is True
         if self.target_network:
             self.actors_target = [
-                Actor(self.observation_dimension[i], self.action_space[i].shape[0], self.seed, actor_units).to(
+              #  Actor(self.observation_dimension[i], self.action_space[i].shape[0], self.seed, actor_units).to(
+               #     self.device) for i in range(len(self.action_space))
+            #]
+                Actor(self.observation_dimension[i], self.action_space[i].shape[0], self.seed, actor_units, tgelu_range=None, gamma=self.gamma).to(
                     self.device) for i in range(len(self.action_space))
-            ]
+            ] #updated to include gamma 
             self.critics_target = [
                 Critic(sum(self.observation_dimension), sum(self.action_dimension), self.seed, critic_units).to(
                     self.device) for _ in range(len(self.action_space))
