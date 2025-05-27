@@ -62,7 +62,7 @@ class MADDPG(RLC):
        # self.actors = [
        #     Actor(self.observation_dimension[i], self.action_space[i].shape[0], self.seed, actor_units).to(
         #        self.device) for i in range(len(self.action_space))
-        ]  ##decentrailised Actor 20.02.2025
+        #]  ##decentrailised Actor 20.02.2025
         self.actors = [
             Actor(self.observation_dimension[i], self.action_space[i].shape[0], self.seed, actor_units, tgelu_range=None, gamma=self.gamma).to(
                 self.device) for i in range(len(self.action_space))
@@ -70,7 +70,7 @@ class MADDPG(RLC):
         
         
         #Each critic network, receiving global information, can assess the overall quality of the joint actions taken by all agents, which is particularly useful in cooperative or competitive multi-agent settings.
-        
+        #update Critic to QCritic
         self.critics = [
             Critic(sum(self.observation_dimension), sum(self.action_dimension), self.seed, critic_units).to(
                 self.device) for _ in range(len(self.action_space))
@@ -97,6 +97,7 @@ class MADDPG(RLC):
 
         ### NEW ### Constraint Critic and its target networks ***
         #***
+        #update Critic to ConstraintCritic
         self.constraint_critics = [
             Critic(sum(self.observation_dimension), sum(self.action_dimension), self.seed, critic_units).to(
                 self.device) for _ in range(len(self.action_space))
@@ -240,7 +241,7 @@ class MADDPG(RLC):
     
             if building.chargers:
                 for j, charger in enumerate(building.chargers):
-                    real_power = action[j] * charger.nominal_power
+                    real_power = action[j] * charger.nominal_power ### Double check actions // we need action + SOE_previous
     
                     over = max(0.0, real_power - charger.max_charging_power - tolerance)
                     under = max(0.0, charger.min_charging_power - real_power - tolerance)
@@ -431,7 +432,7 @@ class MADDPG(RLC):
             with open(self.lagrangian_logfile, "a", newline="") as f:
                 writer = csv.writer(f)
                 writer.writerow([
-                    self.time_step,  # or global_step if you have one
+                    self.time_step,  # or global_step if we have one
                     i,
                     float(self.lagrangians[i].item()),
                     float(mean_constraint_violations[i].item())

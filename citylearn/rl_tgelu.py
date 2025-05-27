@@ -255,6 +255,8 @@ class Critic(nn.Module):
         # === Constraint Critic Final Layer Initialization ===
         # In your Critic class __init__ method, after defining the last layer:
         if len(fc_units) > 2: #ADDED 13.05.2025
+            self.fc_layers.append(nn.Linear(fc_units[-1], 1))
+            #initialize its weights
             nn.init.constant_(self.fc_layers[-1].weight, 0.01)
             nn.init.constant_(self.fc_layers[-1].bias, 0.0)
 
@@ -375,3 +377,209 @@ class ReplayBuffer2: #new replay buffer that accounts for constraints values
     def __len__(self):
         return min(len(self.buffer[i]) for i in range(self.num_agents))
 
+class QCritic(nn.Module):
+    """Q-value Critic for reward estimation."""
+    
+    def __init__(self, state_size, action_size, seed, fc_units=[256, 128], tgelu_range=None, gamma=0.99):
+        super(QCritic, self).__init__()
+        self.seed = torch.manual_seed(seed)
+        
+        # Calculate appropriate TGeLU range for Q-values if not provided
+        if tgelu_range is None:
+            max_reward = 10.0
+            safety_factor = 3.0  # Larger for Q-values
+            value_bound = safety_factor * max_reward / (1 - gamma)
+            tgelu_range = [-value_bound, value_bound]
+            print(f"Using calculated Q-Critic TGeLU range: {tgelu_range}")
+        
+        self.tgelu = TGeLU(tgelu_range[0], tgelu_range[1], device)
+        
+        # Network layers (same structure as original Critic)
+        self.fc1 = nn.Linear(state_size, fc_units[0])
+        self.fc2 = nn.Linear(fc_units[0] + action_size, fc_units[1] if len(fc_units) > 1 else 1)
+        
+        # Additional layers if needed
+        self.fc_layers = []
+        for i in range(1, len(fc_units) - 1):
+            self.fc_layers.append(nn.Linear(fc_units[i], fc_units[i + 1]))
+        
+        # Output layer with normal initialization for Q-values
+        if len(fc_units) > 2:
+            self.fc_layers.append(nn.Linear(fc_units[-1], 1))
+            # Use standard initialization for Q-critic
+            nn.init.xavier_normal_(self.fc_layers[-1].weight)
+            nn.init.constant_(self.fc_layers[-1].bias, 0.1)  # Slight optimism
+        
+        self.fc_layers = nn.ModuleList(self.fc_layers)
+    
+    # Forward method remains the same
+    def forward(self, state, action):
+        x = self.tgelu(self.fc1(state))
+        x = torch.cat((x, action), dim=1)
+        x = self.tgelu(self.fc2(x))
+        
+        for fc in self.fc_layers:
+            x = self.tgelu(fc(x))
+        
+        return x
+
+
+class ConstraintCritic(nn.Module):
+    """Constraint Critic (Value) Model - specialized for constraint estimation."""
+
+    def __init__(self, state_size, action_size, seed, fc_units=[256, 128], tgelu_range=None, gamma=0.99):
+        """Initialize parameters and build model.
+        Params
+        ======
+            state_size (int): Dimension of each state
+            action_size (int): Dimension of each action
+            seed (int): Random seed
+            fc_units (list): List of node counts in the hidden layers.
+            tgelu_range (list): Range for TGeLU activation [min, max]. If None, calculated dynamically.
+            gamma (float): Discount factor for calculating TGeLU range if not provided.
+        """
+        super(ConstraintCritic, self).__init__()
+        self.seed = torch.manual_seed(seed)
+        
+        # Calculate appropriate TGeLU range for constraint costs if not provided
+        if tgelu_range is None:
+            max_constraint = 1.0  # Constraint costs are typically smaller
+            safety_factor = 2.0  
+            value_bound = safety_factor * max_constraint / (1 - gamma)
+            tgelu_range = [-value_bound, value_bound]
+            print(f"Using calculated Constraint-Critic TGeLU range: {tgelu_range}")
+            
+        self.tgelu = TGeLU(tgelu_range[0], tgelu_range[1], device)
+        
+        # Initial layer
+        self.fc1 = nn.Linear(state_size, fc_units[0])
+
+        # Concatenation layer (adding action_size to the width)
+        self.fc2 = nn.Linear(fc_units[0] + action_size, fc_units[1] if len(fc_units) > 1 else 1)
+
+        # Additional layers if any
+        self.fc_layers = []
+        for i in range(1, len(fc_units) - 1):
+            self.fc_layers.append(nn.Linear(fc_units[i], fc_units[i + 1]))
+
+        # If there are more than 2 fc_units, the last fc_layer will output the Q-value
+        if len(fc_units) > 2:
+            self.fc_layers.append(nn.Linear(fc_units[-1], 1))
+            # Initialize with small weights to prevent initially large constraint estimates
+            nn.init.uniform_(self.fc_layers[-1].weight, -3e-3, 3e-3)
+            nn.init.uniform_(self.fc_layers[-1].bias, -3e-3, 3e-3)
+            
+            # Initialize hidden layers with appropriate non-zero values
+            for i in range(len(self.fc_layers) - 1):
+                nn.init.xavier_uniform_(self.fc_layers[i].weight)
+                nn.init.constant_(self.fc_layers[i].bias, 0.01)
+
+        # ModuleList to register the layers with PyTorch
+        self.fc_layers = nn.ModuleList(self.fc_layers)
+
+    def forward(self, state, action):
+        """Build a critic (value) network that maps (state, action) pairs -> Q-values."""
+        x = self.tgelu(self.fc1(state))
+
+        # Concatenate the action values with the output from the previous layer
+        x = torch.cat((x, action), dim=1)
+        x = self.tgelu(self.fc2(x))
+
+        for fc in self.fc_layers:
+            x = self.tgelu(fc(x))
+
+        return x
+
+
+class QCritic_(nn.Module):
+    """Q-value Critic for reward estimation."""
+    
+    def __init__(self, state_size, action_size, seed, fc_units=[256, 128], tgelu_range=None, gamma=0.99):
+        super(QCritic, self).__init__()
+        self.seed = torch.manual_seed(seed)
+        
+        # Calculate appropriate TGeLU range for Q-values if not provided
+        if tgelu_range is None:
+            max_reward = 10.0
+            safety_factor = 3.0  # Larger for Q-values
+            value_bound = safety_factor * max_reward / (1 - gamma)
+            tgelu_range = [-value_bound, value_bound]
+            print(f"Using calculated Q-Critic TGeLU range: {tgelu_range}")
+        
+        self.tgelu = TGeLU(tgelu_range[0], tgelu_range[1], device)
+        
+        # Network layers (same structure as original Critic)
+        self.fc1 = nn.Linear(state_size, fc_units[0])
+        self.fc2 = nn.Linear(fc_units[0] + action_size, fc_units[1] if len(fc_units) > 1 else 1)
+        
+        # Additional layers if needed
+        self.fc_layers = []
+        for i in range(1, len(fc_units) - 1):
+            self.fc_layers.append(nn.Linear(fc_units[i], fc_units[i + 1]))
+        
+        # Output layer with normal initialization for Q-values
+        if len(fc_units) > 2:
+            self.fc_layers.append(nn.Linear(fc_units[-1], 1))
+            # Use standard initialization for Q-critic
+            nn.init.xavier_normal_(self.fc_layers[-1].weight)
+            nn.init.constant_(self.fc_layers[-1].bias, 0.1)  # Slight optimism
+        
+        self.fc_layers = nn.ModuleList(self.fc_layers)
+    
+    # Forward method remains the same
+    def forward(self, state, action):
+        x = self.tgelu(self.fc1(state))
+        x = torch.cat((x, action), dim=1)
+        x = self.tgelu(self.fc2(x))
+        
+        for fc in self.fc_layers:
+            x = self.tgelu(fc(x))
+        
+        return x
+
+
+class ConstraintCritic_(nn.Module):
+    """Constraint Critic for estimating constraint violations."""
+    
+    def __init__(self, state_size, action_size, seed, fc_units=[256, 128], tgelu_range=None, gamma=0.99):
+        super(ConstraintCritic, self).__init__()
+        self.seed = torch.manual_seed(seed)
+        
+        # Calculate appropriate TGeLU range for constraint costs if not provided
+        if tgelu_range is None:
+            max_constraint = 1.0  # Constraint costs are typically smaller
+            safety_factor = 2.0  
+            value_bound = safety_factor * max_constraint / (1 - gamma)
+            tgelu_range = [-value_bound, value_bound]
+            print(f"Using calculated Constraint-Critic TGeLU range: {tgelu_range}")
+        
+        self.tgelu = TGeLU(tgelu_range[0], tgelu_range[1], device)
+        
+        # Network layers (same structure as original Critic)
+        self.fc1 = nn.Linear(state_size, fc_units[0])
+        self.fc2 = nn.Linear(fc_units[0] + action_size, fc_units[1] if len(fc_units) > 1 else 1)
+        
+        # Additional layers if needed
+        self.fc_layers = []
+        for i in range(1, len(fc_units) - 1):
+            self.fc_layers.append(nn.Linear(fc_units[i], fc_units[i + 1]))
+        
+        # Output layer with conservative initialization for constraint costs
+        if len(fc_units) > 2:
+            self.fc_layers.append(nn.Linear(fc_units[-1], 1))
+            # Small initialization for constraint critic
+            nn.init.constant_(self.fc_layers[-1].weight, 0.01)
+            nn.init.constant_(self.fc_layers[-1].bias, 0.0)
+        
+        self.fc_layers = nn.ModuleList(self.fc_layers)
+    
+    # Forward method remains the same
+    def forward(self, state, action):
+        x = self.tgelu(self.fc1(state))
+        x = torch.cat((x, action), dim=1)
+        x = self.tgelu(self.fc2(x))
+        
+        for fc in self.fc_layers:
+            x = self.tgelu(fc(x))
+        
+        return x
